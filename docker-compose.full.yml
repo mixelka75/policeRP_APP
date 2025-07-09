@@ -1,4 +1,4 @@
-# РП Сервер - Полная система
+# docker-compose.full.yml - Полная система с БД, бэкендом и фронтендом
 version: '3.8'
 
 services:
@@ -10,10 +10,10 @@ services:
     environment:
       POSTGRES_DB: rp_server_db
       POSTGRES_USER: rp_user
-      POSTGRES_PASSWORD: rp_password_2024
+      POSTGRES_PASSWORD: rp_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -27,7 +27,7 @@ services:
   # Бэкенд API
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     container_name: rp-server-backend
     restart: unless-stopped
@@ -35,8 +35,8 @@ services:
       database:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://rp_user:rp_password_2024@database:5432/rp_server_db
-      - SECRET_KEY=super-secret-production-key-change-me-in-production-2024
+      - DATABASE_URL=postgresql://rp_user:rp_password@database:5432/rp_server_db
+      - SECRET_KEY=super-secret-production-key-change-me-in-production
       - DEBUG=false
       - PROJECT_NAME=RP Server Backend
       - ADMIN_USERNAME=admin
@@ -45,7 +45,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./logs:/app/logs
+      - ./backend/logs:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -72,7 +72,7 @@ services:
     ports:
       - "3000:80"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -80,7 +80,57 @@ services:
     networks:
       - rp-network
 
-  # Redis для кэширования (опционально)
+  # Reverse proxy (опционально)
+  nginx:
+    image: nginx:alpine
+    container_name: rp-server-nginx
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    networks:
+      - rp-network
+
+  # Monitoring with Prometheus (опционально)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: rp-server-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - rp-network
+
+  # Grafana for dashboards (опционально)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: rp-server-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - rp-network
+
+  # Redis for caching (опционально)
   redis:
     image: redis:7-alpine
     container_name: rp-server-redis
@@ -89,12 +139,15 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
     networks:
       - rp-network
 
 volumes:
   postgres_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local
   redis_data:
     driver: local

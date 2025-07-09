@@ -1,28 +1,34 @@
-FROM python:3.11-slim
+# Dockerfile
+# Multi-stage build for production
 
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y \
-    gcc \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Build stage
+FROM node:18-alpine as builder
 
-# Создаем рабочую директорию
 WORKDIR /app
 
-# Копируем файл зависимостей
-COPY requirements.txt .
+# Copy package files
+COPY package*.json ./
 
-# Устанавливаем Python зависимости
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies
+RUN npm ci --only=production
 
-# Копируем весь код приложения
+# Copy source code
 COPY . .
 
-# Создаем директорию для логов
-RUN mkdir -p /app/logs
+# Build application
+RUN npm run build
 
-# Открываем порт
-EXPOSE 8000
+# Production stage
+FROM nginx:alpine
 
-# Запускаем приложение с Gunicorn для продакшена
-CMD ["gunicorn", "app.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000", "--log-level", "info"]
+# Copy built assets from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Expose port
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

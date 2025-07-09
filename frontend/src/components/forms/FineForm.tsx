@@ -1,0 +1,274 @@
+// src/components/forms/FineForm.tsx
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { FileText, DollarSign, MessageSquare, User } from 'lucide-react';
+import { Fine, FineCreate, FineUpdate, Passport } from '@/types';
+import { Button, Input, Select, Modal } from '@/components/ui';
+import { apiService } from '@/services/api';
+import { useApi } from '@/hooks/useApi';
+import { validateForm, formatMoney } from '@/utils';
+
+interface FineFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  fine?: Fine;
+  selectedPassportId?: number;
+  onSuccess?: () => void;
+}
+
+const FineForm: React.FC<FineFormProps> = ({
+  isOpen,
+  onClose,
+  fine,
+  selectedPassportId,
+  onSuccess,
+}) => {
+  const isEditing = !!fine;
+  const [formData, setFormData] = useState({
+    passport_id: '',
+    article: '',
+    amount: '',
+    description: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [passportOptions, setPassportOptions] = useState<{ value: string; label: string }[]>([]);
+
+  const { execute: createFine, isLoading: isCreating } = useApi(
+    apiService.createFine,
+    {
+      showSuccessToast: true,
+      successMessage: 'Штраф создан успешно',
+      onSuccess: () => {
+        onSuccess?.();
+        onClose();
+      },
+    }
+  );
+
+  const { execute: updateFine, isLoading: isUpdating } = useApi(
+    apiService.updateFine,
+    {
+      showSuccessToast: true,
+      successMessage: 'Штраф обновлен успешно',
+      onSuccess: () => {
+        onSuccess?.();
+        onClose();
+      },
+    }
+  );
+
+  const { execute: fetchPassports } = useApi(apiService.getPassports);
+
+  const isLoading = isCreating || isUpdating;
+
+  useEffect(() => {
+    if (isOpen) {
+      loadPassports();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (fine) {
+      setFormData({
+        passport_id: fine.passport_id.toString(),
+        article: fine.article,
+        amount: fine.amount.toString(),
+        description: fine.description || '',
+      });
+    } else {
+      setFormData({
+        passport_id: selectedPassportId ? selectedPassportId.toString() : '',
+        article: '',
+        amount: '',
+        description: '',
+      });
+    }
+    setErrors({});
+  }, [fine, selectedPassportId, isOpen]);
+
+  const loadPassports = async () => {
+    try {
+      const passports = await fetchPassports();
+      const options = passports.map((passport: Passport) => ({
+        value: passport.id.toString(),
+        label: `${passport.first_name} ${passport.last_name} (@${passport.nickname})`,
+      }));
+      setPassportOptions(options);
+    } catch (error) {
+      console.error('Failed to load passports:', error);
+    }
+  };
+
+  const handleChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const validationRules = {
+      passport_id: {
+        required: true,
+        label: 'Паспорт',
+      },
+      article: {
+        required: true,
+        minLength: 5,
+        maxLength: 200,
+        label: 'Статья нарушения',
+      },
+      amount: {
+        required: true,
+        min: 1,
+        max: 1000000,
+        label: 'Сумма штрафа',
+      },
+      description: {
+        maxLength: 1000,
+        label: 'Описание',
+      },
+    };
+
+    const formErrors = validateForm(formData, validationRules);
+    setErrors(formErrors);
+
+    if (Object.keys(formErrors).length === 0) {
+      const submitData = {
+        passport_id: parseInt(formData.passport_id),
+        article: formData.article,
+        amount: parseInt(formData.amount),
+        description: formData.description || undefined,
+      };
+
+      try {
+        if (isEditing) {
+          await updateFine(fine.id, submitData);
+        } else {
+          await createFine(submitData);
+        }
+      } catch (error) {
+        // Error handling is done in the useApi hook
+      }
+    }
+  };
+
+  const commonArticles = [
+    { value: 'Превышение скорости', label: 'Превышение скорости' },
+    { value: 'Проезд на красный свет', label: 'Проезд на красный свет' },
+    { value: 'Парковка в неположенном месте', label: 'Парковка в неположенном месте' },
+    { value: 'Вождение в нетрезвом виде', label: 'Вождение в нетрезвом виде' },
+    { value: 'Неподчинение сотруднику полиции', label: 'Неподчинение сотруднику полиции' },
+    { value: 'Хулиганство', label: 'Хулиганство' },
+    { value: 'Нарушение общественного порядка', label: 'Нарушение общественного порядка' },
+    { value: 'Незаконное оружие', label: 'Незаконное оружие' },
+  ];
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={isEditing ? 'Редактировать штраф' : 'Выписать штраф'}
+      size="md"
+    >
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Select
+          label="Гражданин"
+          options={passportOptions}
+          value={formData.passport_id}
+          onChange={(value) => handleChange('passport_id', value)}
+          error={errors.passport_id}
+          placeholder="Выберите гражданина"
+          disabled={isLoading || isEditing}
+          fullWidth
+        />
+
+        <div className="space-y-2">
+          <Select
+            label="Статья нарушения"
+            options={commonArticles}
+            value={formData.article}
+            onChange={(value) => handleChange('article', value)}
+            error={errors.article}
+            placeholder="Выберите статью или введите свою"
+            disabled={isLoading}
+            fullWidth
+          />
+          <Input
+            placeholder="Или введите свою статью"
+            value={formData.article}
+            onChange={(e) => handleChange('article', e.target.value)}
+            leftIcon={<FileText className="h-4 w-4" />}
+            disabled={isLoading}
+            fullWidth
+          />
+        </div>
+
+        <Input
+          label="Сумма штрафа"
+          type="number"
+          value={formData.amount}
+          onChange={(e) => handleChange('amount', e.target.value)}
+          error={errors.amount}
+          leftIcon={<DollarSign className="h-4 w-4" />}
+          placeholder="Введите сумму"
+          min="1"
+          max="1000000"
+          disabled={isLoading}
+          fullWidth
+        />
+
+        {formData.amount && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4"
+          >
+            <p className="text-primary-400 text-sm">
+              Сумма штрафа: {formatMoney(parseInt(formData.amount) || 0)}
+            </p>
+          </motion.div>
+        )}
+
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-dark-200">
+            Описание (необязательно)
+          </label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => handleChange('description', e.target.value)}
+            placeholder="Дополнительное описание нарушения..."
+            rows={4}
+            disabled={isLoading}
+            className="w-full bg-dark-800 border border-dark-600 text-dark-100 placeholder-dark-400 rounded-lg px-4 py-3 text-base transition-all duration-200 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed resize-none"
+          />
+          {errors.description && (
+            <p className="text-sm text-red-400">{errors.description}</p>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Отмена
+          </Button>
+          <Button
+            type="submit"
+            variant="danger"
+            loading={isLoading}
+          >
+            {isEditing ? 'Обновить штраф' : 'Выписать штраф'}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+};
+
+export default FineForm;

@@ -1,32 +1,49 @@
-import React from 'react';
+// src/App.tsx
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
+import { Loading } from '@/components/ui';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
+import Passports from '@/pages/Passports';
+import Fines from '@/pages/Fines';
+import Users from '@/pages/Users';
+import Logs from '@/pages/Logs';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuthStore();
-  
+const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({
+  children,
+  adminOnly = false
+}) => {
+  const { isAuthenticated, user } = useAuthStore();
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
+  if (adminOnly && user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 };
 
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuthStore();
-  
+
   return !isAuthenticated ? <>{children}</> : <Navigate to="/dashboard" replace />;
 };
 
 const App: React.FC = () => {
-  const { checkAuth } = useAuthStore();
+  const { checkAuth, isLoading } = useAuthStore();
 
-  React.useEffect(() => {
+  useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  if (isLoading) {
+    return <Loading fullScreen text="Инициализация..." />;
+  }
 
   return (
     <Router>
@@ -45,6 +62,38 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/passports"
+            element={
+              <ProtectedRoute>
+                <Passports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/fines"
+            element={
+              <ProtectedRoute>
+                <Fines />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute adminOnly>
+                <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/logs"
+            element={
+              <ProtectedRoute adminOnly>
+                <Logs />
               </ProtectedRoute>
             }
           />

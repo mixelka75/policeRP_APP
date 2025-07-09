@@ -1,3 +1,4 @@
+// src/store/auth.ts
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, LoginCredentials, ApiError } from '@/types';

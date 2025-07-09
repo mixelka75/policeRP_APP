@@ -1,28 +1,20 @@
-FROM python:3.11-slim
+# Dockerfile.dev
+FROM node:18-alpine
 
-# Устанавливаем системные зависимости
-RUN apt-get update && apt-get install -y \
-    gcc \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Создаем рабочую директорию
+# Set working directory
 WORKDIR /app
 
-# Копируем файл зависимостей
-COPY requirements.txt .
+# Copy package files
+COPY package*.json ./
 
-# Устанавливаем Python зависимости
-RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r requirements.txt
+# Install dependencies
+RUN npm ci
 
-# Копируем весь код приложения
+# Copy source code
 COPY . .
 
-# Создаем директорию для логов
-RUN mkdir -p /app/logs
+# Expose port
+EXPOSE 3000
 
-# Открываем порт
-EXPOSE 8000
-
-# Запускаем в режиме разработки с автоперезагрузкой
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Start development server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

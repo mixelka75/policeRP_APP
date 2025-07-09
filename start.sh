@@ -95,13 +95,19 @@ case $MODE in
             exit 1
         fi
 
-        if ! command -v docker-compose &> /dev/null; then
+        # Проверяем Docker Compose (новая и старая версии)
+        DOCKER_COMPOSE_CMD=""
+        if command -v docker-compose &> /dev/null; then
+            DOCKER_COMPOSE_CMD="docker-compose"
+        elif docker compose version &> /dev/null; then
+            DOCKER_COMPOSE_CMD="docker compose"
+        else
             echo "❌ Docker Compose не установлен"
             exit 1
         fi
 
         echo "🏗️ Сборка и запуск контейнеров..."
-        docker-compose up -d
+        $DOCKER_COMPOSE_CMD up -d
 
         echo "✅ Приложение запущено в Docker"
         echo "🌐 Frontend: http://localhost:3000"
@@ -110,7 +116,19 @@ case $MODE in
 
     "stop")
         echo "⏹️ Остановка Docker контейнеров..."
-        docker-compose down
+
+        # Определяем команду Docker Compose
+        DOCKER_COMPOSE_CMD=""
+        if command -v docker-compose &> /dev/null; then
+            DOCKER_COMPOSE_CMD="docker-compose"
+        elif docker compose version &> /dev/null; then
+            DOCKER_COMPOSE_CMD="docker compose"
+        else
+            echo "❌ Docker Compose не найден"
+            exit 1
+        fi
+
+        $DOCKER_COMPOSE_CMD down
         echo "✅ Контейнеры остановлены"
         ;;
 

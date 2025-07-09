@@ -2,6 +2,40 @@
 version: '3.8'
 
 services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: rp_server_db
+      POSTGRES_USER: rp_user
+      POSTGRES_PASSWORD: rp_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - rp-network
+
+  # Backend service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://rp_user:rp_password@postgres:5432/rp_server_db
+      - DEBUG=true
+      - ENVIRONMENT=development
+    depends_on:
+      - postgres
+    networks:
+      - rp-network
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+
   # Frontend development
   frontend:
     build:
@@ -26,13 +60,8 @@ services:
     networks:
       - rp-network
 
-  # Backend service
-  backend:
-    image: rp-server-backend
-    ports:
-      - "8000:8000"
-    networks:
-      - rp-network
+volumes:
+  postgres_data:
 
 networks:
   rp-network:

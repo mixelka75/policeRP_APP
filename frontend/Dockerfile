@@ -1,36 +1,18 @@
-# Development Dockerfile for frontend
-
 FROM node:18-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Install curl for health checks
-RUN apk add --no-cache curl
-
-# Copy package files first for better caching
+# Копирование файлов зависимостей
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --ignore-scripts
+# Установка зависимостей
+RUN npm ci --only=production
 
-# Copy all source files
+# Копирование исходного кода
 COPY . .
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
-# Change ownership
-RUN chown -R nextjs:nodejs /app
-USER nextjs
-
-# Expose port
+# Открытие порта
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:3000 || exit 1
-
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+# Команда запуска в режиме разработки
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]

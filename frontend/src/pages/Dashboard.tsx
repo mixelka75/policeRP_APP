@@ -18,7 +18,9 @@ import { useAuthStore } from '@/store/auth';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Passport, Fine } from '@/types';
-import { Button, Card, StatCard, Loading, Input } from '@/components/ui';
+import { Button, Loading, Input } from '@/components/ui';
+import Card from '@/components/ui/Card';
+import StatCard from '@/components/ui/StatCard';
 import { formatDate, formatMoney } from '@/utils';
 
 const Dashboard: React.FC = () => {

@@ -5,7 +5,7 @@ from alembic import context
 import os
 import sys
 
-# Добавляем корневую папку проекта в sys.path
+# Добавляем папку backend в sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 # Импортируем модели

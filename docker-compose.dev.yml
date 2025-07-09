@@ -20,7 +20,7 @@ services:
   # Бэкэнд приложение (режим разработки)
   backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile.dev
     restart: unless-stopped
     depends_on:
@@ -38,7 +38,7 @@ services:
       - "8000:8000"
     volumes:
       # Монтируем код для hot reload
-      - ./app:/app/app
+      - ./backend/app:/app/app
       - ./logs:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

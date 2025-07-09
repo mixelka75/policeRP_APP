@@ -39,6 +39,7 @@ source venv/bin/activate  # Linux/Mac
 pip install -r requirements.txt
 
 # 4. Настраиваем окружение
+cd backend
 cp .env.example .env
 
 # 5. Запускаем сервер

@@ -27,6 +27,9 @@ source venv/bin/activate  # Linux/Mac
 # 3. Устанавливаем зависимости
 pip install -r requirements.txt
 
+# 3. Переходим в папку backend
+cd backend
+
 # 4. Копируем настройки
 cp .env.example .env
 

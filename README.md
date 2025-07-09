@@ -1,6 +1,12 @@
-# РП Сервер - Бэкэнд
+# РП Сервер - Система управления
 
-Бэкэнд для управления паспортами жителей и штрафами на РП сервере.
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/your-repo/rp-server)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
+[![Node.js](https://img.shields.io/badge/node.js-18+-green.svg)](https://nodejs.org)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://docker.com)
+
+> Современная веб-система для управления паспортами жителей и штрафами на РП сервере
 
 ## Функциональность
 

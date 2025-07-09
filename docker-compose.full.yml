@@ -1,0 +1,108 @@
+# РП Сервер - Полная система
+version: '3.8'
+
+services:
+  # База данных PostgreSQL
+  database:
+    image: postgres:15-alpine
+    container_name: rp-server-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rp_server_db
+      POSTGRES_USER: rp_user
+      POSTGRES_PASSWORD: rp_password_2024
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rp_user -d rp_server_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rp-network
+
+  # Бэкенд API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rp-server-backend
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://rp_user:rp_password_2024@database:5432/rp_server_db
+      - SECRET_KEY=super-secret-production-key-change-me-in-production-2024
+      - DEBUG=false
+      - PROJECT_NAME=RP Server Backend
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin123
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - rp-network
+
+  # Фронтенд приложение
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: rp-server-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_APP_NAME=РП Сервер
+      - VITE_APP_VERSION=1.0.0
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - rp-network
+
+  # Redis для кэширования (опционально)
+  redis:
+    image: redis:7-alpine
+    container_name: rp-server-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - rp-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  rp-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16

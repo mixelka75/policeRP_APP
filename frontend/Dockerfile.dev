@@ -5,13 +5,16 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Copy package files first for better caching
 COPY package*.json ./
 
 # Install dependencies
 RUN npm ci --ignore-scripts
 
-# Copy source code
+# Copy all source files
 COPY . .
 
 # Create non-root user
@@ -24,6 +27,10 @@ USER nextjs
 
 # Expose port
 EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3000 || exit 1
 
 # Start development server
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -16,6 +16,11 @@ services:
       - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - rp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rp_user -d rp_server_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Backend service
   backend:
@@ -28,37 +33,52 @@ services:
       - DATABASE_URL=postgresql://rp_user:rp_password@postgres:5432/rp_server_db
       - DEBUG=true
       - ENVIRONMENT=development
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin123
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - rp-network
-    volumes:
-      - ./backend:/app
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Frontend development
+  # Frontend service
   frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
-      - ./src:/app/src
-      - ./public:/app/public
-      - ./index.html:/app/index.html
-      - ./package.json:/app/package.json
-      - ./tailwind.config.js:/app/tailwind.config.js
-      - ./vite.config.ts:/app/vite.config.ts
-      - ./tsconfig.json:/app/tsconfig.json
-      - ./postcss.config.js:/app/postcss.config.js
+      # Монтируем исходный код для hot reload
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/package.json:/app/package.json
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+      - ./frontend/.env:/app/.env
+      # Исключаем node_modules чтобы не перезаписать
+      - /app/node_modules
     environment:
       - NODE_ENV=development
       - VITE_API_URL=http://localhost:8000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - rp-network
+    restart: unless-stopped
 
 volumes:
   postgres_data:

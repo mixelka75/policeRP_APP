@@ -19,27 +19,28 @@ services:
       timeout: 5s
       retries: 5
 
-  # Бэкэнд приложение
+  # Бэкэнд приложение (режим разработки)
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://rp_user:rp_password@db:5432/rp_server_db
-      - SECRET_KEY=super-secret-production-key-change-me
-      - DEBUG=False
-      - PROJECT_NAME=RP Server Backend
+      - SECRET_KEY=dev-secret-key
+      - DEBUG=True
+      - PROJECT_NAME=RP Server Backend (Dev)
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=admin123
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
     ports:
       - "8000:8000"
     volumes:
-      # Для логов (опционально)
+      # Монтируем код для hot reload
+      - ./app:/app/app
       - ./logs:/app/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]

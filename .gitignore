@@ -2,3 +2,4 @@
 /.env
 /answer.md
 .idea
+.env.production

@@ -66,9 +66,13 @@ create_env_files() {
     fi
 }
 
+# Переменная для хранения текущего режима
+CURRENT_MODE=""
+
 # Основная функция запуска
 start_services() {
     local mode=${1:-production}
+    CURRENT_MODE=$mode
 
     print_color "🔄 Запуск в режиме: $mode" $BLUE
 
@@ -100,7 +104,14 @@ check_services() {
 
     local max_attempts=30
     local attempt=1
+    local compose_file_arg=""
 
+    # Определяем compose файл в зависимости от режима
+    if [[ "$CURRENT_MODE" == "dev" || "$CURRENT_MODE" == "development" ]]; then
+        compose_file_arg="-f docker-compose.dev.yml"
+    fi
+
+    # Проверка backend
     while [ $attempt -le $max_attempts ]; do
         if curl -f -s http://localhost:8000/health > /dev/null 2>&1; then
             print_color "✅ Backend готов" $GREEN
@@ -115,27 +126,32 @@ check_services() {
     if [ $attempt -gt $max_attempts ]; then
         print_color "❌ Backend не запустился в течение времени ожидания" $RED
         print_color "📋 Логи backend:" $BLUE
-        docker compose logs backend | tail -20
+        docker compose $compose_file_arg logs backend | tail -20
         exit 1
     fi
 
-    attempt=1
-    while [ $attempt -le $max_attempts ]; do
-        if curl -f -s http://localhost:3000 > /dev/null 2>&1; then
-            print_color "✅ Frontend готов" $GREEN
-            break
-        else
-            print_color "⏳ Ожидание frontend... ($attempt/$max_attempts)" $YELLOW
-            sleep 2
-            ((attempt++))
-        fi
-    done
+    # Проверка frontend (только если сервис существует в compose файле)
+    if docker compose $compose_file_arg ps --services | grep -q "^frontend$"; then
+        attempt=1
+        while [ $attempt -le $max_attempts ]; do
+            if curl -f -s http://localhost:3000 > /dev/null 2>&1; then
+                print_color "✅ Frontend готов" $GREEN
+                break
+            else
+                print_color "⏳ Ожидание frontend... ($attempt/$max_attempts)" $YELLOW
+                sleep 2
+                ((attempt++))
+            fi
+        done
 
-    if [ $attempt -gt $max_attempts ]; then
-        print_color "❌ Frontend не запустился в течение времени ожидания" $RED
-        print_color "📋 Логи frontend:" $BLUE
-        docker compose logs frontend | tail -20
-        exit 1
+        if [ $attempt -gt $max_attempts ]; then
+            print_color "❌ Frontend не запустился в течение времени ожидания" $RED
+            print_color "📋 Логи frontend:" $BLUE
+            docker compose $compose_file_arg logs frontend | tail -20
+            exit 1
+        fi
+    else
+        print_color "ℹ️  Frontend сервис не определен в compose файле, пропускаем проверку" $YELLOW
     fi
 }
 
@@ -143,6 +159,7 @@ check_services() {
 stop_services() {
     print_color "⏹️  Остановка сервисов..." $YELLOW
     docker compose down
+    docker compose -f docker-compose.dev.yml down
     print_color "✅ Сервисы остановлены" $GREEN
 }
 

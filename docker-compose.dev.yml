@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # База данных PostgreSQL
   db:
@@ -48,6 +46,32 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Фронтэнд приложение (режим разработки)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_APP_NAME=РП Сервер (Dev)
+      - VITE_APP_VERSION=1.0.0-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Монтируем код для hot reload
+      - ./frontend:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 volumes:
   postgres_data:

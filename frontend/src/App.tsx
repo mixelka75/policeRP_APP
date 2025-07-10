@@ -49,6 +49,7 @@ const App: React.FC = () => {
     <Router>
       <div className="min-h-screen bg-dark-950">
         <Routes>
+          {/* Public routes */}
           <Route
             path="/login"
             element={
@@ -57,6 +58,8 @@ const App: React.FC = () => {
               </PublicRoute>
             }
           />
+
+          {/* Protected routes */}
           <Route
             path="/dashboard"
             element={
@@ -81,6 +84,8 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+
+          {/* Admin only routes */}
           <Route
             path="/users"
             element={
@@ -97,6 +102,8 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+
+          {/* Redirects */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

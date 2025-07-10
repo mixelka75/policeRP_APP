@@ -23,6 +23,7 @@ const Button: React.FC<ButtonProps> = ({
   fullWidth = false,
   className,
   disabled,
+  onClick,
   ...props
 }) => {
   const baseClasses = cn(
@@ -51,12 +52,19 @@ const Button: React.FC<ButtonProps> = ({
       variant === 'danger',
   });
 
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disabled && !loading && onClick) {
+      onClick(e);
+    }
+  };
+
   return (
     <motion.button
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={cn(baseClasses, variantClasses, className)}
       disabled={disabled || loading}
+      onClick={handleClick}
       {...props}
     >
       {loading && (

@@ -15,15 +15,17 @@ interface UseApiReturn<T> extends UseApiState<T> {
   reset: () => void;
 }
 
+interface UseApiOptions {
+  showSuccessToast?: boolean;
+  showErrorToast?: boolean;
+  successMessage?: string;
+  onSuccess?: (data: any) => void;
+  onError?: (error: string) => void;
+}
+
 export function useApi<T>(
   apiFunction: (...args: any[]) => Promise<T>,
-  options?: {
-    showSuccessToast?: boolean;
-    showErrorToast?: boolean;
-    successMessage?: string;
-    onSuccess?: (data: T) => void;
-    onError?: (error: string) => void;
-  }
+  options: UseApiOptions = {}
 ): UseApiReturn<T> {
   const [state, setState] = useState<UseApiState<T>>({
     data: null,
@@ -32,10 +34,15 @@ export function useApi<T>(
   });
 
   const execute = useCallback(
-    async (...args: any[]) => {
+    async (...args: any[]): Promise<T> => {
       setState(prev => ({ ...prev, isLoading: true, error: null }));
 
       try {
+        // Проверяем, что apiFunction существует и является функцией
+        if (!apiFunction || typeof apiFunction !== 'function') {
+          throw new Error('API function is not provided or is not a function');
+        }
+
         const result = await apiFunction(...args);
 
         setState({
@@ -44,17 +51,30 @@ export function useApi<T>(
           error: null,
         });
 
-        if (options?.showSuccessToast) {
+        if (options.showSuccessToast) {
           toast.success(options.successMessage || 'Операция выполнена успешно');
         }
 
-        if (options?.onSuccess) {
+        if (options.onSuccess) {
           options.onSuccess(result);
         }
 
         return result;
       } catch (error) {
-        const errorMessage = getErrorMessage(error);
+        console.error('API Error:', error);
+
+        let errorMessage: string;
+
+        // Обработка различных типов ошибок
+        if (error && typeof error === 'object' && 'detail' in error) {
+          errorMessage = (error as ApiError).detail;
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        } else {
+          errorMessage = 'Произошла неизвестная ошибка';
+        }
 
         setState({
           data: null,
@@ -62,11 +82,11 @@ export function useApi<T>(
           error: errorMessage,
         });
 
-        if (options?.showErrorToast !== false) {
+        if (options.showErrorToast !== false) {
           toast.error(errorMessage);
         }
 
-        if (options?.onError) {
+        if (options.onError) {
           options.onError(errorMessage);
         }
 

@@ -16,7 +16,6 @@ import {
   ApiError
 } from '@/types';
 import { isTokenExpired } from '@/utils';
-import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -33,6 +32,28 @@ class ApiService {
     });
 
     this.setupInterceptors();
+
+    // Привязываем методы к контексту класса
+    this.login = this.login.bind(this);
+    this.loginJson = this.loginJson.bind(this);
+    this.getMe = this.getMe.bind(this);
+    this.getUsers = this.getUsers.bind(this);
+    this.createUser = this.createUser.bind(this);
+    this.updateUser = this.updateUser.bind(this);
+    this.deleteUser = this.deleteUser.bind(this);
+    this.getPassports = this.getPassports.bind(this);
+    this.getPassport = this.getPassport.bind(this);
+    this.createPassport = this.createPassport.bind(this);
+    this.updatePassport = this.updatePassport.bind(this);
+    this.deletePassport = this.deletePassport.bind(this);
+    this.getFines = this.getFines.bind(this);
+    this.getFine = this.getFine.bind(this);
+    this.createFine = this.createFine.bind(this);
+    this.updateFine = this.updateFine.bind(this);
+    this.deleteFine = this.deleteFine.bind(this);
+    this.getLogs = this.getLogs.bind(this);
+    this.getMyLogs = this.getMyLogs.bind(this);
+    this.healthCheck = this.healthCheck.bind(this);
   }
 
   private setupInterceptors() {

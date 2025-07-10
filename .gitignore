@@ -4,6 +4,7 @@
 .idea
 .env
 node_modules
+.pyc
 
 # Python cache files
 __pycache__/

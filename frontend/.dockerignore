@@ -1,4 +1,4 @@
-# Node.js
+# Node modules
 node_modules/
 npm-debug.log*
 yarn-debug.log*
@@ -7,17 +7,14 @@ yarn-error.log*
 # Build outputs
 dist/
 build/
-.next/
-.nuxt/
-.vuepress/dist/
 
-# Environment variables
+# Environment variables (кроме production)
 .env
 .env.local
-.env.production
+.env.development
 .env.development.local
+.env.test
 .env.test.local
-.env.production.local
 
 # IDE
 .vscode/
@@ -41,12 +38,11 @@ pids/
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
+# Coverage directory
 coverage/
 *.lcov
 
 # Dependency directories
-node_modules/
 jspm_packages/
 
 # TypeScript cache
@@ -76,10 +72,6 @@ temp/
 docs/
 
 # Testing
-.jest/
 test-results/
 e2e-results/
-
-# Playwright
 playwright-report/
-test-results/

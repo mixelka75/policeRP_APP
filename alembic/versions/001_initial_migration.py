@@ -1,8 +1,8 @@
-"""initial migration with correct enums
+"""Initial migration
 
-Revision ID: 2025_07_10_1500_initial
+Revision ID: 0001
 Revises:
-Create Date: 2025-07-10 15:00:00.000000
+Create Date: 2025-01-11 10:00:00.000000
 
 """
 from alembic import op
@@ -10,14 +10,14 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '2025_07_10_1500_initial'
+revision = '0001'
 down_revision = None
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
-    # Create enums with correct values
+    # Create enums
     op.execute("CREATE TYPE userrole AS ENUM ('admin', 'police')")
     op.execute("CREATE TYPE gender AS ENUM ('male', 'female')")
 

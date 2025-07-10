@@ -47,6 +47,9 @@ run_migrations() {
     if [ -z "$(ls -A alembic/versions 2>/dev/null)" ]; then
         echo "🆕 No migrations found, creating initial migration..."
         python -m alembic revision --autogenerate -m "Initial migration"
+    else
+        echo "📋 Found existing migrations:"
+        ls -la alembic/versions/
     fi
 
     # Выполняем миграции

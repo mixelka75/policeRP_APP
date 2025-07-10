@@ -1,4 +1,6 @@
-from sqlalchemy import Column, String, Boolean, Enum
+# app/models/user.py
+from sqlalchemy import Column, String, Boolean
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.orm import relationship
 import enum
 
@@ -18,12 +20,13 @@ class User(BaseModel):
     Модель пользователя системы
     """
     __tablename__ = "users"
-    
+
     username = Column(String(50), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.POLICE)
+    # Используем строковые значения для PostgreSQL enum
+    role = Column(ENUM('admin', 'police', name='userrole', create_type=False), nullable=False, default='police')
     is_active = Column(Boolean, default=True, nullable=False)
-    
+
     # Связи
     created_fines = relationship("Fine", back_populates="created_by", foreign_keys="Fine.created_by_user_id")
     logs = relationship("Log", back_populates="user")

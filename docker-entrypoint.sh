@@ -10,7 +10,7 @@ wait_for_db() {
     echo "⏳ Waiting for database connection..."
 
     # Простое ожидание базы данных
-    for i in {1..30}; do
+    for i in {1..60}; do
         if python -c "
 import psycopg2
 import os
@@ -19,18 +19,55 @@ try:
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     conn.close()
     sys.exit(0)
-except:
+except Exception as e:
+    print(f'Database not ready: {e}')
     sys.exit(1)
 " > /dev/null 2>&1; then
             echo "✅ Database is ready!"
             return 0
         fi
-        echo "Database is not ready yet. Retrying in 2 seconds... ($i/30)"
+        echo "Database is not ready yet. Retrying in 2 seconds... ($i/60)"
         sleep 2
     done
 
-    echo "❌ Database connection failed after 60 seconds"
+    echo "❌ Database connection failed after 120 seconds"
     exit 1
+}
+
+# Функция для создания enum типов в базе данных
+create_enums() {
+    echo "🔧 Creating enum types if they don't exist..."
+    python -c "
+import psycopg2
+import os
+
+try:
+    conn = psycopg2.connect(os.environ['DATABASE_URL'])
+    cur = conn.cursor()
+
+    # Проверяем и создаем enum типы
+    cur.execute(\"SELECT 1 FROM pg_type WHERE typname = 'userrole'\")
+    if not cur.fetchone():
+        cur.execute(\"CREATE TYPE userrole AS ENUM ('admin', 'police')\")
+        print('✅ Created userrole enum')
+    else:
+        print('✅ userrole enum already exists')
+
+    cur.execute(\"SELECT 1 FROM pg_type WHERE typname = 'gender'\")
+    if not cur.fetchone():
+        cur.execute(\"CREATE TYPE gender AS ENUM ('male', 'female')\")
+        print('✅ Created gender enum')
+    else:
+        print('✅ gender enum already exists')
+
+    conn.commit()
+    cur.close()
+    conn.close()
+    print('✅ Enum types ready')
+except Exception as e:
+    print(f'❌ Error creating enums: {e}')
+    # Не завершаем выполнение, миграции могут создать типы
+" || echo "⚠️ Could not create enums manually, will try via migrations"
 }
 
 # Функция для выполнения миграций
@@ -44,12 +81,19 @@ run_migrations() {
     fi
 
     # Проверяем есть ли файлы миграций
-    if [ -z "$(ls -A alembic/versions 2>/dev/null)" ]; then
+    migration_count=$(find alembic/versions -name "*.py" -not -name "__init__.py" | wc -l)
+
+    if [ "$migration_count" -eq 0 ]; then
         echo "🆕 No migrations found, creating initial migration..."
-        python -m alembic revision --autogenerate -m "Initial migration"
+
+        # Создаем enum типы перед созданием миграции
+        create_enums
+
+        # Создаем миграцию
+        python -m alembic revision --autogenerate -m "Initial migration with proper enums"
     else
-        echo "📋 Found existing migrations:"
-        ls -la alembic/versions/
+        echo "📋 Found $migration_count existing migrations:"
+        ls -la alembic/versions/ | grep "\.py$" | grep -v "__init__"
     fi
 
     # Выполняем миграции

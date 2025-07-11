@@ -1,6 +1,6 @@
 from typing import List, Optional
-
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.crud.base import CRUDBase
 from app.models.passport import Passport
@@ -14,50 +14,45 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
 
     def create(self, db: Session, *, obj_in: PassportCreate) -> Passport:
         """
-        Создать новый паспорт с обработкой enum
+        Создать паспорт с автоматическим подсчетом нарушений
         """
         obj_in_data = obj_in.model_dump()
-
-        # ИСПРАВЛЕНИЕ: обработка gender enum - преобразуем в строку
-        if "gender" in obj_in_data:
-            gender_value = obj_in_data["gender"]
-            if hasattr(gender_value, 'value'):
-                obj_in_data["gender"] = gender_value.value
-            else:
-                obj_in_data["gender"] = str(gender_value)
-
-        # city_entry_date устанавливается автоматически в модели через default=func.now()
-
+        obj_in_data["violations_count"] = 0  # При создании нарушений еще нет
+        obj_in_data["is_emergency"] = False  # По умолчанию не в ЧС
         db_obj = Passport(**obj_in_data)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
         return db_obj
 
-    def update(
-            self,
-            db: Session,
-            *,
-            db_obj: Passport,
-            obj_in: PassportUpdate
-    ) -> Passport:
+    def update_violations_count(self, db: Session, *, passport_id: int) -> None:
         """
-        Обновить паспорт с обработкой enum
+        Обновить количество нарушений для паспорта
         """
-        update_data = obj_in.model_dump(exclude_unset=True)
+        from app.models.fine import Fine
 
-        # ИСПРАВЛЕНИЕ: обработка gender enum - преобразуем в строку
-        if "gender" in update_data:
-            gender_value = update_data["gender"]
-            if hasattr(gender_value, 'value'):
-                update_data["gender"] = gender_value.value
-            else:
-                update_data["gender"] = str(gender_value)
+        violations_count = db.query(func.count(Fine.id)).filter(
+            Fine.passport_id == passport_id
+        ).scalar()
 
-        # Убираем city_entry_date из обновления, если оно случайно попало
-        update_data.pop('city_entry_date', None)
+        db.query(Passport).filter(Passport.id == passport_id).update({
+            "violations_count": violations_count
+        })
+        db.commit()
 
-        return super().update(db, db_obj=db_obj, obj_in=update_data)
+    def set_emergency_status(self, db: Session, *, passport_id: int, is_emergency: bool) -> Optional[Passport]:
+        """
+        Установить ЧС статус для паспорта
+        """
+        passport = self.get(db, id=passport_id)
+        if not passport:
+            return None
+
+        passport.is_emergency = is_emergency
+        db.add(passport)
+        db.commit()
+        db.refresh(passport)
+        return passport
 
     def get_by_nickname(self, db: Session, *, nickname: str) -> Optional[Passport]:
         """
@@ -107,49 +102,32 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         """
         return db.query(Passport).filter(Passport.gender == gender).all()
 
+    def get_emergency_passports(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[Passport]:
+        """
+        Получить паспорта с ЧС статусом
+        """
+        return (
+            db.query(Passport)
+            .filter(Passport.is_emergency == True)
+            .order_by(Passport.updated_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
     def get_multi_with_fines(
             self, db: Session, *, skip: int = 0, limit: int = 100
     ) -> List[Passport]:
         """
         Получить список паспортов с информацией о штрафах
         """
-        from sqlalchemy.orm import joinedload
         return (
             db.query(Passport)
-            .options(joinedload(Passport.fines))
+            .options(db.joinedload(Passport.fines))
             .offset(skip)
             .limit(limit)
             .all()
         )
-
-    def get_with_violations_count(
-            self, db: Session, *, skip: int = 0, limit: int = 100
-    ) -> List[dict]:
-        """
-        Получить паспорта с подсчетом нарушений
-        """
-        from sqlalchemy import func
-        from app.models.fine import Fine
-
-        result = (
-            db.query(
-                Passport,
-                func.count(Fine.id).label('violations_count')
-            )
-            .outerjoin(Fine, Passport.id == Fine.passport_id)
-            .group_by(Passport.id)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-
-        return [
-            {
-                **passport.__dict__,
-                'violations_count': violations_count
-            }
-            for passport, violations_count in result
-        ]
 
     def check_nickname_exists(self, db: Session, *, nickname: str, exclude_id: int = None) -> bool:
         """

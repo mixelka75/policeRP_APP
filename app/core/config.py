@@ -6,7 +6,7 @@ import os
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql://rp_user:rp_password@database:5432/rp_server_db"
+    DATABASE_URL: str = "postgresql://rp_user:rp_password@localhost:5432/rp_server_db"
 
     # Security
     SECRET_KEY: str = "your-super-secret-key-here-please-change-this-in-production"

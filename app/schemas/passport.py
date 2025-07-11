@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, computed_field
-from typing import Optional, List
+from pydantic import BaseModel, Field
+from typing import Optional
 from datetime import datetime
 from app.models.passport import Gender
 
@@ -20,7 +20,9 @@ class PassportCreate(PassportBase):
     """
     Схема для создания паспорта
     """
-    # city_entry_date устанавливается автоматически при создании
+    # entry_date устанавливается автоматически при создании
+    # violations_count вычисляется автоматически
+    # is_emergency по умолчанию False
     pass
 
 
@@ -34,7 +36,14 @@ class PassportUpdate(BaseModel):
     age: Optional[int] = Field(None, ge=16, le=100)
     gender: Optional[Gender] = None
     city: Optional[str] = Field(None, min_length=2, max_length=100)
-    # city_entry_date НЕ включено - дата входа не изменяется при редактировании
+
+
+class PassportEmergencyUpdate(BaseModel):
+    """
+    Схема для изменения ЧС статуса
+    """
+    is_emergency: bool = Field(..., description="ЧС статус")
+    reason: Optional[str] = Field(None, max_length=500, description="Причина добавления/удаления из ЧС")
 
 
 class Passport(PassportBase):
@@ -42,18 +51,11 @@ class Passport(PassportBase):
     Схема паспорта для ответа
     """
     id: int
-    city_entry_date: datetime
+    violations_count: int
+    entry_date: datetime
+    is_emergency: bool
     created_at: datetime
     updated_at: datetime
-
-    # Вычисляемое поле для количества нарушений
-    @computed_field
-    @property
-    def violations_count(self) -> int:
-        """Количество нарушений (штрафов)"""
-        if hasattr(self, 'fines') and self.fines:
-            return len(self.fines)
-        return 0
 
     class Config:
         from_attributes = True
@@ -68,18 +70,21 @@ class PassportInfo(BaseModel):
     last_name: str
     nickname: str
     city: str
-    violations_count: int = 0
+    violations_count: int
+    is_emergency: bool
 
     class Config:
         from_attributes = True
 
 
-class PassportWithFines(Passport):
+class PassportEmergencyResponse(BaseModel):
     """
-    Паспорт с полной информацией о штрафах
+    Ответ на изменение ЧС статуса
     """
-    from app.schemas.fine import FineInPassport
-    fines: List[FineInPassport] = []
+    id: int
+    nickname: str
+    is_emergency: bool
+    message: str
 
     class Config:
         from_attributes = True

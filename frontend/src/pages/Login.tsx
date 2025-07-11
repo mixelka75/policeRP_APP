@@ -59,7 +59,7 @@ const Login: React.FC = () => {
             >
               <Shield className="w-8 h-8 text-white" />
             </motion.div>
-            <h1 className="text-2xl font-bold text-white mb-2">РП Сервер</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">PR Police</h1>
             <p className="text-gray-400">Система управления паспортами и штрафами</p>
           </div>
 

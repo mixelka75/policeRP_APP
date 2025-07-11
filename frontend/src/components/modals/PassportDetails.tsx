@@ -80,7 +80,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                 <h2 className="text-2xl font-bold text-white">
                   {passport.first_name} {passport.last_name}
                 </h2>
-                <p className="text-dark-400">@{passport.nickname}</p>
+                <p className="text-dark-400">{passport.nickname}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">

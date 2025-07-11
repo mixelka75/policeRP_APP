@@ -10,10 +10,8 @@ import {
   Plus,
   Search,
   Filter,
-  Download,
   Eye,
-  Edit,
-  Trash2
+  Edit
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { apiService } from '@/services/api';
@@ -93,12 +91,6 @@ const Dashboard: React.FC = () => {
       icon: AlertTriangle,
       color: 'red' as const,
     },
-    {
-      title: 'Активность',
-      value: '24/7',
-      icon: Activity,
-      color: 'purple' as const,
-    },
   ];
 
   const tabs = [
@@ -121,11 +113,6 @@ const Dashboard: React.FC = () => {
 
   const handleNavigateToFines = () => {
     navigate('/fines');
-  };
-
-  const handleExport = () => {
-    // TODO: Implement export functionality
-    console.log('Export clicked');
   };
 
   const handleFormSuccess = () => {
@@ -222,14 +209,6 @@ const Dashboard: React.FC = () => {
               </Button>
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                leftIcon={<Download className="h-4 w-4" />}
-                onClick={handleExport}
-              >
-                Экспорт
-              </Button>
               <Button
                 variant="primary"
                 size="sm"
@@ -398,7 +377,7 @@ const Dashboard: React.FC = () => {
                                     {passport.first_name} {passport.last_name}
                                   </h3>
                                   <p className="text-sm text-dark-400 mb-1">
-                                    @{passport.nickname}
+                                    {passport.nickname}
                                   </p>
                                   <p className="text-xs text-dark-500">
                                     {formatDate(passport.created_at)}

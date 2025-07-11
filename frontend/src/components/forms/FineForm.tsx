@@ -91,7 +91,7 @@ const FineForm: React.FC<FineFormProps> = ({
       const passports = await fetchPassports();
       const options = passports.map((passport: Passport) => ({
         value: passport.id.toString(),
-        label: `${passport.first_name} ${passport.last_name} (@${passport.nickname})`,
+        label: `${passport.first_name} ${passport.last_name} (${passport.nickname})`,
       }));
       setPassportOptions(options);
     } catch (error) {
@@ -155,17 +155,6 @@ const FineForm: React.FC<FineFormProps> = ({
     }
   };
 
-  const commonArticles = [
-    { value: 'Превышение скорости', label: 'Превышение скорости' },
-    { value: 'Проезд на красный свет', label: 'Проезд на красный свет' },
-    { value: 'Парковка в неположенном месте', label: 'Парковка в неположенном месте' },
-    { value: 'Вождение в нетрезвом виде', label: 'Вождение в нетрезвом виде' },
-    { value: 'Неподчинение сотруднику полиции', label: 'Неподчинение сотруднику полиции' },
-    { value: 'Хулиганство', label: 'Хулиганство' },
-    { value: 'Нарушение общественного порядка', label: 'Нарушение общественного порядка' },
-    { value: 'Незаконное оружие', label: 'Незаконное оружие' },
-  ];
-
   return (
     <Modal
       isOpen={isOpen}
@@ -185,26 +174,16 @@ const FineForm: React.FC<FineFormProps> = ({
           fullWidth
         />
 
-        <div className="space-y-2">
-          <Select
-            label="Статья нарушения"
-            options={commonArticles}
-            value={formData.article}
-            onChange={(value) => handleChange('article', value)}
-            error={errors.article}
-            placeholder="Выберите статью или введите свою"
-            disabled={isLoading}
-            fullWidth
-          />
-          <Input
-            placeholder="Или введите свою статью"
-            value={formData.article}
-            onChange={(e) => handleChange('article', e.target.value)}
-            leftIcon={<FileText className="h-4 w-4" />}
-            disabled={isLoading}
-            fullWidth
-          />
-        </div>
+        <Input
+          label="Статья нарушения"
+          value={formData.article}
+          onChange={(e) => handleChange('article', e.target.value)}
+          error={errors.article}
+          leftIcon={<FileText className="h-4 w-4" />}
+          placeholder="Введите статью нарушения"
+          disabled={isLoading}
+          fullWidth
+        />
 
         <Input
           label="Сумма штрафа"

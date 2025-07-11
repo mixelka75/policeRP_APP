@@ -23,10 +23,11 @@ class User(BaseModel):
 
     username = Column(String(50), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    # Используем строковые значения для PostgreSQL enum
-    role = Column(ENUM('admin', 'police', name='userrole', create_type=False), nullable=False, default='police')
+    # ИСПРАВЛЕНИЕ: используем строковое значение enum напрямую
+    role = Column(String(20), nullable=False, default='police')  # Изменено на String
     is_active = Column(Boolean, default=True, nullable=False)
 
     # Связи
     created_fines = relationship("Fine", back_populates="created_by", foreign_keys="Fine.created_by_user_id")
     logs = relationship("Log", back_populates="user")
+

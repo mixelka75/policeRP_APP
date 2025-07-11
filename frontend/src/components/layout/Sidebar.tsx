@@ -71,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay for mobile */}
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -87,24 +87,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         initial={{ x: -300 }}
         animate={{ x: isOpen ? 0 : -300 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed top-0 left-0 z-50 h-full w-64 bg-dark-800 border-r border-dark-600 shadow-xl lg:translate-x-0 lg:static lg:inset-0"
+        className="fixed top-0 left-0 z-50 h-full w-64 bg-dark-800 border-r border-dark-600 shadow-xl lg:translate-x-0 lg:static lg:inset-0 lg:h-screen"
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-dark-600">
+          <div className="p-6 border-b border-dark-600 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
                 <Shield className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">РП Сервер</h1>
+                <h1 className="text-lg font-bold text-white">PR Police</h1>
                 <p className="text-xs text-dark-400">Система управления</p>
               </div>
             </div>
           </div>
 
           {/* User Info */}
-          <div className="p-6 border-b border-dark-600">
+          <div className="p-6 border-b border-dark-600 flex-shrink-0">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center">
                 <span className="text-white font-medium text-sm">
@@ -123,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {filteredItems.map((item) => (
               <Link
                 key={item.name}
@@ -151,7 +151,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-dark-600">
+          <div className="p-4 border-t border-dark-600 flex-shrink-0">
             <button
               onClick={handleLogout}
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 text-red-400 hover:bg-red-500/10 hover:text-red-300"

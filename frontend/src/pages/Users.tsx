@@ -5,11 +5,9 @@ import {
   Plus,
   Search,
   Filter,
-  Eye,
   Edit,
   Trash2,
   Users as UsersIcon,
-  Download,
   UserCheck,
   UserX,
   Shield,
@@ -22,7 +20,7 @@ import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Modal } from '@/components/ui';
 import { UserForm } from '@/components/forms';
-import { formatDate, getInitials } from '@/utils';
+import { formatDate } from '@/utils';
 
 const Users: React.FC = () => {
   const { user: currentUser } = useAuthStore();
@@ -225,13 +223,6 @@ const Users: React.FC = () => {
         </Button>
       </div>
       <div className="flex items-center space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<Download className="h-4 w-4" />}
-        >
-          Экспорт
-        </Button>
         <Button
           variant="primary"
           size="sm"

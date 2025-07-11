@@ -19,23 +19,19 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
   const { user } = useAuthStore();
 
   return (
-    <div className="min-h-screen bg-dark-950">
+    <div className="min-h-screen bg-dark-950 flex">
       {/* Sidebar */}
       <div className="lg:hidden">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       </div>
-      <div className="hidden lg:block">
+      <div className="hidden lg:block lg:w-64">
         <Sidebar isOpen={true} onClose={() => {}} />
       </div>
 
       {/* Main Content */}
-      <div className="lg:pl-64">
+      <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <motion.header
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="bg-dark-900/50 backdrop-blur-sm border-b border-dark-600 sticky top-0 z-30"
-        >
+        <header className="bg-dark-900/50 backdrop-blur-sm border-b border-dark-600 flex-shrink-0">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Left side */}
@@ -65,22 +61,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
 
               {/* Right side */}
               <div className="flex items-center space-x-4">
-                <div className="hidden sm:block">
-                  <Input
-                    placeholder="Поиск..."
-                    leftIcon={<Search className="h-4 w-4" />}
-                    className="w-64"
-                  />
-                </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="relative"
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
-                </Button>
 
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
@@ -100,31 +81,20 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
               </div>
             </div>
           </div>
-        </motion.header>
+        </header>
+
+        {/* Actions Bar */}
+        {actions && (
+          <div className="bg-dark-900/30 border-b border-dark-600 px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
+            {actions}
+          </div>
+        )}
 
         {/* Page Content */}
         <main className="flex-1">
-          {/* Actions Bar */}
-          {actions && (
-            <motion.div
-              initial={{ y: -10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="bg-dark-900/30 border-b border-dark-600 px-4 sm:px-6 lg:px-8 py-4"
-            >
-              {actions}
-            </motion.div>
-          )}
-
-          {/* Main Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="px-4 sm:px-6 lg:px-8 py-8"
-          >
+          <div className="px-4 sm:px-6 lg:px-8 py-8">
             {children}
-          </motion.div>
+          </div>
         </main>
       </div>
     </div>

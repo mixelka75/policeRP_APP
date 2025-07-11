@@ -36,14 +36,12 @@ export function formatMoney(amount: number) {
     }
 
     return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency: 'RUB',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(amount) + ' АР';
   } catch (error) {
     console.error('Money formatting error:', error);
-    return `${amount} ₽`;
+    return `${amount} АР`;
   }
 }
 

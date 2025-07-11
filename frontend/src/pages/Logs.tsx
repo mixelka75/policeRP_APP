@@ -5,7 +5,6 @@ import {
   Search,
   Filter,
   Activity,
-  Download,
   Eye,
   User,
   FileText,
@@ -23,12 +22,15 @@ import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Card } from '@/components/ui';
+import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, formatRelativeTime } from '@/utils';
 
 const Logs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAction, setSelectedAction] = useState<string>('');
   const [usersMap, setUsersMap] = useState<Map<number, UserType>>(new Map());
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
 
   const {
     data: logs,
@@ -58,15 +60,46 @@ const Logs: React.FC = () => {
 
   const filteredLogs = logs?.filter(log => {
     const user = usersMap.get(log.user_id);
+
+    // Поиск
     const matchesSearch = !searchTerm ||
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user?.username.toLowerCase().includes(searchTerm.toLowerCase());
 
+    // Существующий фильтр по действию
     const matchesAction = !selectedAction || log.action === selectedAction;
 
-    return matchesSearch && matchesAction;
+    // Новые фильтры
+    let matchesFilters = true;
+
+    if (appliedFilters.dateRange?.start) {
+      const logDate = new Date(log.created_at);
+      const startDate = new Date(appliedFilters.dateRange.start);
+      if (logDate < startDate) matchesFilters = false;
+    }
+
+    if (appliedFilters.dateRange?.end) {
+      const logDate = new Date(log.created_at);
+      const endDate = new Date(appliedFilters.dateRange.end);
+      if (logDate > endDate) matchesFilters = false;
+    }
+
+    // Можно добавить фильтрацию по роли пользователя
+    if (appliedFilters.role && user && user.role !== appliedFilters.role) {
+      matchesFilters = false;
+    }
+
+    return matchesSearch && matchesAction && matchesFilters;
   }) || [];
+
+  const handleApplyFilters = (filters: FilterOptions) => {
+    setAppliedFilters(filters);
+  };
+
+  const handleResetFilters = () => {
+    setAppliedFilters({});
+  };
 
   const getActionIcon = (action: string) => {
     switch (action) {
@@ -302,15 +335,16 @@ const Logs: React.FC = () => {
             </option>
           ))}
         </select>
-      </div>
-      <div className="flex items-center space-x-2">
         <Button
           variant="outline"
           size="sm"
-          leftIcon={<Download className="h-4 w-4" />}
+          leftIcon={<Filter className="h-4 w-4" />}
+          onClick={() => setIsFilterModalOpen(true)}
         >
-          Экспорт
+          Фильтры
         </Button>
+      </div>
+      <div className="flex items-center space-x-2">
         <Button
           variant="outline"
           size="sm"
@@ -408,6 +442,16 @@ const Logs: React.FC = () => {
           />
         </motion.div>
       </div>
+
+      {/* Filter Modal */}
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+        type="logs"
+        currentFilters={appliedFilters}
+      />
     </Layout>
   );
 };

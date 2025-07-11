@@ -5,11 +5,9 @@ import {
   Plus,
   Search,
   Filter,
-  Eye,
   Edit,
   Trash2,
   AlertTriangle,
-  Download,
   DollarSign,
   FileText,
   TrendingUp
@@ -20,6 +18,7 @@ import { useApi } from '@/hooks/useApi';
 import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Modal } from '@/components/ui';
 import { FineForm } from '@/components/forms';
+import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, formatMoney, getInitials } from '@/utils';
 
 const Fines: React.FC = () => {
@@ -29,6 +28,8 @@ const Fines: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [fineToDelete, setFineToDelete] = useState<Fine | null>(null);
   const [passportMap, setPassportMap] = useState<Map<number, Passport>>(new Map());
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
 
   const {
     data: fines,
@@ -69,12 +70,39 @@ const Fines: React.FC = () => {
     }
   };
 
-  const filteredFines = fines?.filter(fine =>
-    fine.article.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    passportMap.get(fine.passport_id)?.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    passportMap.get(fine.passport_id)?.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    passportMap.get(fine.passport_id)?.nickname.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredFines = fines?.filter(fine => {
+    // Поиск
+    const passport = passportMap.get(fine.passport_id);
+    const matchesSearch = fine.article.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      passport?.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      passport?.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      passport?.nickname.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Фильтры
+    let matchesFilters = true;
+
+    if (appliedFilters.amount?.min && fine.amount < appliedFilters.amount.min) {
+      matchesFilters = false;
+    }
+
+    if (appliedFilters.amount?.max && fine.amount > appliedFilters.amount.max) {
+      matchesFilters = false;
+    }
+
+    if (appliedFilters.dateRange?.start) {
+      const fineDate = new Date(fine.created_at);
+      const startDate = new Date(appliedFilters.dateRange.start);
+      if (fineDate < startDate) matchesFilters = false;
+    }
+
+    if (appliedFilters.dateRange?.end) {
+      const fineDate = new Date(fine.created_at);
+      const endDate = new Date(appliedFilters.dateRange.end);
+      if (fineDate > endDate) matchesFilters = false;
+    }
+
+    return matchesSearch && matchesFilters;
+  }) || [];
 
   const handleCreateFine = () => {
     setSelectedFine(null);
@@ -101,6 +129,14 @@ const Fines: React.FC = () => {
     fetchFines();
   };
 
+  const handleApplyFilters = (filters: FilterOptions) => {
+    setAppliedFilters(filters);
+  };
+
+  const handleResetFilters = () => {
+    setAppliedFilters({});
+  };
+
   const columns = [
     {
       key: 'citizen',
@@ -120,7 +156,7 @@ const Fines: React.FC = () => {
               <p className="font-medium text-white">
                 {passport.first_name} {passport.last_name}
               </p>
-              <p className="text-sm text-dark-400">@{passport.nickname}</p>
+              <p className="text-sm text-dark-400">{passport.nickname}</p>
             </div>
           </div>
         );
@@ -228,18 +264,12 @@ const Fines: React.FC = () => {
           variant="outline"
           size="sm"
           leftIcon={<Filter className="h-4 w-4" />}
+          onClick={() => setIsFilterModalOpen(true)}
         >
           Фильтры
         </Button>
       </div>
       <div className="flex items-center space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<Download className="h-4 w-4" />}
-        >
-          Экспорт
-        </Button>
         <Button
           variant="danger"
           size="sm"
@@ -298,6 +328,16 @@ const Fines: React.FC = () => {
         onClose={() => setIsFormOpen(false)}
         fine={selectedFine}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* Filter Modal */}
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+        type="fines"
+        currentFilters={appliedFilters}
       />
 
       {/* Delete Confirmation Modal */}

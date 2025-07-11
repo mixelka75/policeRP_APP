@@ -363,7 +363,7 @@ const Settings: React.FC = () => {
                         <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
                           <Shield className="h-10 w-10 text-white" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">РП Сервер</h3>
+                        <h3 className="text-2xl font-bold text-white mb-2">PR Police</h3>
                         <p className="text-dark-400 mb-4">Система управления паспортами и штрафами</p>
                         <Badge variant="primary">Версия 1.0.0</Badge>
                       </div>

@@ -5,11 +5,9 @@ import {
   Plus,
   Search,
   Filter,
-  Eye,
   Edit,
   Trash2,
   Users,
-  Download,
   UserPlus,
   AlertTriangle
 } from 'lucide-react';
@@ -19,6 +17,7 @@ import { useApi } from '@/hooks/useApi';
 import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Modal } from '@/components/ui';
 import { PassportForm } from '@/components/forms';
+import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, getInitials } from '@/utils';
 
 const Passports: React.FC = () => {
@@ -27,6 +26,8 @@ const Passports: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [passportToDelete, setPassportToDelete] = useState<Passport | null>(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
 
   const {
     data: passports,
@@ -51,11 +52,33 @@ const Passports: React.FC = () => {
     fetchPassports();
   }, []);
 
-  const filteredPassports = passports?.filter(passport =>
-    passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    passport.nickname.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredPassports = passports?.filter(passport => {
+    // Поиск
+    const matchesSearch = passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      passport.nickname.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Фильтры
+    let matchesFilters = true;
+
+    if (appliedFilters.gender && passport.gender !== appliedFilters.gender) {
+      matchesFilters = false;
+    }
+
+    if (appliedFilters.dateRange?.start) {
+      const passportDate = new Date(passport.created_at);
+      const startDate = new Date(appliedFilters.dateRange.start);
+      if (passportDate < startDate) matchesFilters = false;
+    }
+
+    if (appliedFilters.dateRange?.end) {
+      const passportDate = new Date(passport.created_at);
+      const endDate = new Date(appliedFilters.dateRange.end);
+      if (passportDate > endDate) matchesFilters = false;
+    }
+
+    return matchesSearch && matchesFilters;
+  }) || [];
 
   const handleCreatePassport = () => {
     setSelectedPassport(null);
@@ -82,6 +105,14 @@ const Passports: React.FC = () => {
     fetchPassports();
   };
 
+  const handleApplyFilters = (filters: FilterOptions) => {
+    setAppliedFilters(filters);
+  };
+
+  const handleResetFilters = () => {
+    setAppliedFilters({});
+  };
+
   const columns = [
     {
       key: 'avatar',
@@ -103,7 +134,7 @@ const Passports: React.FC = () => {
           <p className="font-medium text-white">
             {passport.first_name} {passport.last_name}
           </p>
-          <p className="text-sm text-dark-400">@{passport.nickname}</p>
+          <p className="text-sm text-dark-400">{passport.nickname}</p>
         </div>
       ),
     },
@@ -201,18 +232,12 @@ const Passports: React.FC = () => {
           variant="outline"
           size="sm"
           leftIcon={<Filter className="h-4 w-4" />}
+          onClick={() => setIsFilterModalOpen(true)}
         >
           Фильтры
         </Button>
       </div>
       <div className="flex items-center space-x-2">
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<Download className="h-4 w-4" />}
-        >
-          Экспорт
-        </Button>
         <Button
           variant="primary"
           size="sm"
@@ -271,6 +296,16 @@ const Passports: React.FC = () => {
         onClose={() => setIsFormOpen(false)}
         passport={selectedPassport}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* Filter Modal */}
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+        type="passports"
+        currentFilters={appliedFilters}
       />
 
       {/* Delete Confirmation Modal */}

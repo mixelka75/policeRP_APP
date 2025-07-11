@@ -1,5 +1,5 @@
 # app/models/passport.py
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, String, Integer, DateTime, func
 from sqlalchemy.orm import relationship
 import enum
 
@@ -26,6 +26,9 @@ class Passport(BaseModel):
     age = Column(Integer, nullable=False)
     # ИСПРАВЛЕНИЕ: используем строковое значение enum напрямую
     gender = Column(String(10), nullable=False)  # Изменено на String
+    # НОВЫЕ ПОЛЯ
+    city = Column(String(100), nullable=False, index=True)  # Город проживания
+    city_entry_date = Column(DateTime(timezone=True), nullable=False, default=func.now())  # Дата входа в город
 
     # Связи
     fines = relationship("Fine", back_populates="passport", cascade="all, delete-orphan")

@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, computed_field
+from typing import Optional, List
 from datetime import datetime
 from app.models.passport import Gender
 
@@ -13,12 +13,14 @@ class PassportBase(BaseModel):
     nickname: str = Field(..., min_length=3, max_length=50, description="Никнейм")
     age: int = Field(..., ge=16, le=100, description="Возраст")
     gender: Gender = Field(..., description="Пол")
+    city: str = Field(..., min_length=2, max_length=100, description="Город проживания")
 
 
 class PassportCreate(PassportBase):
     """
     Схема для создания паспорта
     """
+    # city_entry_date устанавливается автоматически при создании
     pass
 
 
@@ -31,6 +33,8 @@ class PassportUpdate(BaseModel):
     nickname: Optional[str] = Field(None, min_length=3, max_length=50)
     age: Optional[int] = Field(None, ge=16, le=100)
     gender: Optional[Gender] = None
+    city: Optional[str] = Field(None, min_length=2, max_length=100)
+    # city_entry_date НЕ включено - дата входа не изменяется при редактировании
 
 
 class Passport(PassportBase):
@@ -38,9 +42,19 @@ class Passport(PassportBase):
     Схема паспорта для ответа
     """
     id: int
+    city_entry_date: datetime
     created_at: datetime
     updated_at: datetime
-    
+
+    # Вычисляемое поле для количества нарушений
+    @computed_field
+    @property
+    def violations_count(self) -> int:
+        """Количество нарушений (штрафов)"""
+        if hasattr(self, 'fines') and self.fines:
+            return len(self.fines)
+        return 0
+
     class Config:
         from_attributes = True
 
@@ -53,6 +67,19 @@ class PassportInfo(BaseModel):
     first_name: str
     last_name: str
     nickname: str
-    
+    city: str
+    violations_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class PassportWithFines(Passport):
+    """
+    Паспорт с полной информацией о штрафах
+    """
+    from app.schemas.fine import FineInPassport
+    fines: List[FineInPassport] = []
+
     class Config:
         from_attributes = True

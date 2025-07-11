@@ -26,6 +26,8 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
             else:
                 obj_in_data["gender"] = str(gender_value)
 
+        # city_entry_date устанавливается автоматически в модели через default=func.now()
+
         db_obj = Passport(**obj_in_data)
         db.add(db_obj)
         db.commit()
@@ -52,6 +54,9 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
             else:
                 update_data["gender"] = str(gender_value)
 
+        # Убираем city_entry_date из обновления, если оно случайно попало
+        update_data.pop('city_entry_date', None)
+
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def get_by_nickname(self, db: Session, *, nickname: str) -> Optional[Passport]:
@@ -74,6 +79,12 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
             query = query.filter(Passport.last_name.ilike(f"%{last_name}%"))
 
         return query.all()
+
+    def get_by_city(self, db: Session, *, city: str) -> List[Passport]:
+        """
+        Получить паспорта по городу
+        """
+        return db.query(Passport).filter(Passport.city.ilike(f"%{city}%")).all()
 
     def get_by_age_range(
             self, db: Session, *, min_age: int = None, max_age: int = None
@@ -102,13 +113,43 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         """
         Получить список паспортов с информацией о штрафах
         """
+        from sqlalchemy.orm import joinedload
         return (
             db.query(Passport)
-            .options(db.joinedload(Passport.fines))
+            .options(joinedload(Passport.fines))
             .offset(skip)
             .limit(limit)
             .all()
         )
+
+    def get_with_violations_count(
+            self, db: Session, *, skip: int = 0, limit: int = 100
+    ) -> List[dict]:
+        """
+        Получить паспорта с подсчетом нарушений
+        """
+        from sqlalchemy import func
+        from app.models.fine import Fine
+
+        result = (
+            db.query(
+                Passport,
+                func.count(Fine.id).label('violations_count')
+            )
+            .outerjoin(Fine, Passport.id == Fine.passport_id)
+            .group_by(Passport.id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            {
+                **passport.__dict__,
+                'violations_count': violations_count
+            }
+            for passport, violations_count in result
+        ]
 
     def check_nickname_exists(self, db: Session, *, nickname: str, exclude_id: int = None) -> bool:
         """

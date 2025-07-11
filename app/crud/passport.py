@@ -11,7 +11,49 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
     """
     CRUD операции для паспортов
     """
-    
+
+    def create(self, db: Session, *, obj_in: PassportCreate) -> Passport:
+        """
+        Создать новый паспорт с обработкой enum
+        """
+        obj_in_data = obj_in.model_dump()
+
+        # ИСПРАВЛЕНИЕ: обработка gender enum - преобразуем в строку
+        if "gender" in obj_in_data:
+            gender_value = obj_in_data["gender"]
+            if hasattr(gender_value, 'value'):
+                obj_in_data["gender"] = gender_value.value
+            else:
+                obj_in_data["gender"] = str(gender_value)
+
+        db_obj = Passport(**obj_in_data)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+
+    def update(
+            self,
+            db: Session,
+            *,
+            db_obj: Passport,
+            obj_in: PassportUpdate
+    ) -> Passport:
+        """
+        Обновить паспорт с обработкой enum
+        """
+        update_data = obj_in.model_dump(exclude_unset=True)
+
+        # ИСПРАВЛЕНИЕ: обработка gender enum - преобразуем в строку
+        if "gender" in update_data:
+            gender_value = update_data["gender"]
+            if hasattr(gender_value, 'value'):
+                update_data["gender"] = gender_value.value
+            else:
+                update_data["gender"] = str(gender_value)
+
+        return super().update(db, db_obj=db_obj, obj_in=update_data)
+
     def get_by_nickname(self, db: Session, *, nickname: str) -> Optional[Passport]:
         """
         Получить паспорт по никнейму
@@ -19,44 +61,43 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         return db.query(Passport).filter(Passport.nickname == nickname).first()
 
     def search_by_name(
-        self, db: Session, *, first_name: str = None, last_name: str = None
+            self, db: Session, *, first_name: str = None, last_name: str = None
     ) -> List[Passport]:
         """
         Поиск паспортов по имени или фамилии
         """
         query = db.query(Passport)
-        
+
         if first_name:
             query = query.filter(Passport.first_name.ilike(f"%{first_name}%"))
         if last_name:
             query = query.filter(Passport.last_name.ilike(f"%{last_name}%"))
-        
+
         return query.all()
 
     def get_by_age_range(
-        self, db: Session, *, min_age: int = None, max_age: int = None
+            self, db: Session, *, min_age: int = None, max_age: int = None
     ) -> List[Passport]:
         """
         Получить паспорта в определенном возрастном диапазоне
         """
         query = db.query(Passport)
-        
+
         if min_age is not None:
             query = query.filter(Passport.age >= min_age)
         if max_age is not None:
             query = query.filter(Passport.age <= max_age)
-        
+
         return query.all()
 
     def get_by_gender(self, db: Session, *, gender: str) -> List[Passport]:
         """
         Получить паспорта по полу
         """
-        from app.models.passport import Gender
-        return db.query(Passport).filter(Passport.gender == Gender(gender)).all()
+        return db.query(Passport).filter(Passport.gender == gender).all()
 
     def get_multi_with_fines(
-        self, db: Session, *, skip: int = 0, limit: int = 100
+            self, db: Session, *, skip: int = 0, limit: int = 100
     ) -> List[Passport]:
         """
         Получить список паспортов с информацией о штрафах

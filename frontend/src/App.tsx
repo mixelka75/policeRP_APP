@@ -8,6 +8,7 @@ import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Passports from '@/pages/Passports';
 import Fines from '@/pages/Fines';
+import Emergency from '@/pages/Emergency'; // ✨ НОВЫЙ ИМПОРТ
 import Users from '@/pages/Users';
 import Logs from '@/pages/Logs';
 
@@ -81,6 +82,15 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <Fines />
+              </ProtectedRoute>
+            }
+          />
+          {/* ✨ НОВЫЙ РОУТ для страницы ЧС */}
+          <Route
+            path="/emergency"
+            element={
+              <ProtectedRoute>
+                <Emergency />
               </ProtectedRoute>
             }
           />

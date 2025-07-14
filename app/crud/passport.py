@@ -17,13 +17,40 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         Создать паспорт с автоматическим подсчетом нарушений
         """
         obj_in_data = obj_in.model_dump()
+
+        # ИСПРАВЛЕНИЕ: Преобразуем enum в строку
+        if hasattr(obj_in_data.get('gender'), 'value'):
+            obj_in_data['gender'] = obj_in_data['gender'].value
+        elif isinstance(obj_in_data.get('gender'), str):
+            # Если уже строка, оставляем как есть
+            pass
+
         obj_in_data["violations_count"] = 0  # При создании нарушений еще нет
         obj_in_data["is_emergency"] = False  # По умолчанию не в ЧС
+
         db_obj = Passport(**obj_in_data)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
         return db_obj
+
+    def update(
+            self, db: Session, *, db_obj: Passport, obj_in: PassportUpdate
+    ) -> Passport:
+        """
+        Обновить паспорт с правильным преобразованием enum
+        """
+        update_data = obj_in.model_dump(exclude_unset=True)
+
+        # ИСПРАВЛЕНИЕ: Преобразуем enum в строку при обновлении
+        if 'gender' in update_data:
+            gender_value = update_data['gender']
+            if hasattr(gender_value, 'value'):
+                update_data['gender'] = gender_value.value
+            elif isinstance(gender_value, str):
+                pass  # Уже строка
+
+        return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def update_violations_count(self, db: Session, *, passport_id: int) -> None:
         """

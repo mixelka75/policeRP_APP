@@ -1,5 +1,4 @@
 from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
-import enum
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -30,11 +29,11 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     def _process_enum_values(self, data: dict) -> dict:
         """
-        Обработка enum значений - преобразование в строки для базы данных
+        Преобразует enum значения в строки
         """
         processed_data = {}
         for key, value in data.items():
-            if isinstance(value, enum.Enum):
+            if hasattr(value, 'value'):  # Если это enum
                 processed_data[key] = value.value
             else:
                 processed_data[key] = value
@@ -58,9 +57,8 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         Создать новый объект
         """
-        obj_in_data = jsonable_encoder(obj_in)
-        # ИСПРАВЛЕНИЕ: обрабатываем enum значения
-        obj_in_data = self._process_enum_values(obj_in_data)
+        obj_in_data = obj_in.model_dump()
+        obj_in_data = self._process_enum_values(obj_in_data)  # Обрабатываем enum
         db_obj = self.model(**obj_in_data)  # type: ignore
         db.add(db_obj)
         db.commit()
@@ -81,10 +79,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
-            update_data = obj_in.dict(exclude_unset=True)
+            update_data = obj_in.model_dump(exclude_unset=True)
 
-        # ИСПРАВЛЕНИЕ: обрабатываем enum значения
-        update_data = self._process_enum_values(update_data)
+        update_data = self._process_enum_values(update_data)  # Обрабатываем enum
 
         for field in obj_data:
             if field in update_data:

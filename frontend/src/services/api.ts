@@ -9,6 +9,8 @@ import {
   Passport,
   PassportCreate,
   PassportUpdate,
+  PassportEmergencyUpdate,
+  PassportEmergencyResponse,
   Fine,
   FineCreate,
   FineUpdate,
@@ -46,6 +48,9 @@ class ApiService {
     this.createPassport = this.createPassport.bind(this);
     this.updatePassport = this.updatePassport.bind(this);
     this.deletePassport = this.deletePassport.bind(this);
+    // ✨ НОВЫЕ методы для ЧС
+    this.updatePassportEmergency = this.updatePassportEmergency.bind(this);
+    this.getEmergencyPassports = this.getEmergencyPassports.bind(this);
     this.getFines = this.getFines.bind(this);
     this.getFine = this.getFine.bind(this);
     this.createFine = this.createFine.bind(this);
@@ -175,11 +180,17 @@ class ApiService {
     }
   }
 
-  // Passport endpoints
-  async getPassports(skip: number = 0, limit: number = 100, search?: string): Promise<Passport[]> {
+  // ✨ ОБНОВЛЕННЫЕ Passport endpoints
+  async getPassports(
+    skip: number = 0,
+    limit: number = 100,
+    search?: string,
+    city?: string,
+    emergency_only?: boolean
+  ): Promise<Passport[]> {
     try {
       const response = await this.axiosInstance.get<Passport[]>('/passports/', {
-        params: { skip, limit, search },
+        params: { skip, limit, search, city, emergency_only },
       });
       return response.data;
     } catch (error) {
@@ -217,6 +228,33 @@ class ApiService {
   async deletePassport(id: number): Promise<Passport> {
     try {
       const response = await this.axiosInstance.delete<Passport>(`/passports/${id}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  // ✨ НОВЫЕ методы для работы с ЧС
+  async updatePassportEmergency(
+    passportId: number,
+    emergencyData: PassportEmergencyUpdate
+  ): Promise<PassportEmergencyResponse> {
+    try {
+      const response = await this.axiosInstance.post<PassportEmergencyResponse>(
+        `/passports/${passportId}/emergency`,
+        emergencyData
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getEmergencyPassports(skip: number = 0, limit: number = 100): Promise<Passport[]> {
+    try {
+      const response = await this.axiosInstance.get<Passport[]>('/passports/emergency', {
+        params: { skip, limit },
+      });
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError);

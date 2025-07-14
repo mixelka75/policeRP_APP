@@ -1,7 +1,6 @@
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, Literal
 from datetime import datetime
-from app.models.passport import Gender
 
 
 class PassportBase(BaseModel):
@@ -12,17 +11,21 @@ class PassportBase(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=100, description="Фамилия")
     nickname: str = Field(..., min_length=3, max_length=50, description="Никнейм")
     age: int = Field(..., ge=16, le=100, description="Возраст")
-    gender: Gender = Field(..., description="Пол")
+    gender: Literal["male", "female"] = Field(..., description="Пол")  # Изменено на Literal
     city: str = Field(..., min_length=2, max_length=100, description="Город проживания")
+
+    @field_validator('gender')
+    @classmethod
+    def validate_gender(cls, v):
+        if hasattr(v, 'value'):  # Если это enum
+            return v.value
+        return v
 
 
 class PassportCreate(PassportBase):
     """
     Схема для создания паспорта
     """
-    # entry_date устанавливается автоматически при создании
-    # violations_count вычисляется автоматически
-    # is_emergency по умолчанию False
     pass
 
 
@@ -34,8 +37,17 @@ class PassportUpdate(BaseModel):
     last_name: Optional[str] = Field(None, min_length=2, max_length=100)
     nickname: Optional[str] = Field(None, min_length=3, max_length=50)
     age: Optional[int] = Field(None, ge=16, le=100)
-    gender: Optional[Gender] = None
+    gender: Optional[Literal["male", "female"]] = None
     city: Optional[str] = Field(None, min_length=2, max_length=100)
+
+    @field_validator('gender')
+    @classmethod
+    def validate_gender(cls, v):
+        if v is None:
+            return v
+        if hasattr(v, 'value'):  # Если это enum
+            return v.value
+        return v
 
 
 class PassportEmergencyUpdate(BaseModel):

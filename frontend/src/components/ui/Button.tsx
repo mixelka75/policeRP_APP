@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/utils';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success'; // ✨ ДОБАВЛЕН success
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   leftIcon?: React.ReactNode;
@@ -50,6 +50,9 @@ const Button: React.FC<ButtonProps> = ({
       variant === 'ghost',
     'bg-red-600 border-red-600 text-white hover:bg-red-700 hover:border-red-700 active:bg-red-800':
       variant === 'danger',
+    // ✨ НОВЫЙ вариант success
+    'bg-green-600 border-green-600 text-white hover:bg-green-700 hover:border-green-700 active:bg-green-800':
+      variant === 'success',
   });
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {

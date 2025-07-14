@@ -12,6 +12,7 @@ import {
   Shield,
   Activity,
   UserCheck,
+  ShieldAlert, // ✨ НОВАЯ ИКОНКА для ЧС
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { cn } from '@/utils';
@@ -43,6 +44,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       href: '/fines',
       icon: AlertTriangle,
       current: location.pathname === '/fines',
+    },
+    // ✨ НОВЫЙ пункт меню для ЧС
+    {
+      name: 'Список ЧС',
+      href: '/emergency',
+      icon: ShieldAlert,
+      current: location.pathname === '/emergency',
+      description: 'Управление паспортами в ЧС',
     },
     {
       name: 'Логи',
@@ -138,14 +147,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     'text-dark-300 hover:text-white': !item.current,
                   }
                 )}
+                title={item.description || item.name}
               >
                 <item.icon
                   className={cn('h-5 w-5', {
                     'text-primary-400': item.current,
                     'text-dark-400 group-hover:text-white': !item.current,
+                    // ✨ Специальная подсветка для ЧС
+                    'text-red-400': item.href === '/emergency' && !item.current,
                   })}
                 />
                 <span className="font-medium">{item.name}</span>
+                {/* ✨ Индикатор для ЧС */}
+                {item.href === '/emergency' && (
+                  <div className="ml-auto">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                  </div>
+                )}
               </Link>
             ))}
           </nav>

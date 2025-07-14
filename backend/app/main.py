@@ -6,15 +6,13 @@ import uvicorn
 from app.core.config import settings
 from app.core.database import engine, get_db
 from app.api.v1 import api_router
-# Убираем импорт Base - он не нужен для автоматического создания таблиц
-# from app.models import Base
+from app.models import Base
 from app.crud.user import user_crud
 from app.schemas.user import UserCreate
 from app.models.user import UserRole
 
-# УБИРАЕМ автоматическое создание таблиц!
-# Таблицы должны создаваться только через Alembic миграции
-# Base.metadata.create_all(bind=engine)
+# Создание таблиц в базе данных
+Base.metadata.create_all(bind=engine)
 
 # Создание приложения FastAPI
 app = FastAPI(
@@ -77,7 +75,7 @@ def health_check():
         from sqlalchemy import text
         db.execute(text("SELECT 1"))
         db.close()
-
+        
         return {
             "status": "healthy",
             "database": "connected",
@@ -93,11 +91,10 @@ async def startup_event():
     События при запуске приложения
     """
     print(f"🚀 Запуск {settings.PROJECT_NAME} v{settings.VERSION}")
-
+    
     # Создаем администратора по умолчанию, если его нет
-    # Это работает только ПОСЛЕ применения миграций Alembic
+    db = next(get_db())
     try:
-        db = next(get_db())
         admin_user = user_crud.get_by_username(db, username=settings.ADMIN_USERNAME)
         if not admin_user:
             admin_create = UserCreate(
@@ -110,11 +107,11 @@ async def startup_event():
             print(f"✅ Создан администратор: {admin_user.username}")
         else:
             print(f"✅ Администратор уже существует: {admin_user.username}")
-        db.close()
     except Exception as e:
-        print(f"⚠️ Не удалось проверить/создать администратора: {e}")
-        print("🔧 Возможно, миграции еще не применены")
-
+        print(f"❌ Ошибка при создании администратора: {e}")
+    finally:
+        db.close()
+    
     print("✅ Приложение готово к работе!")
 
 

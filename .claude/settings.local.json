@@ -11,7 +11,10 @@
       "Bash(for:*)",
       "Bash(do echo \"=== $file ===\")",
       "Bash(done)",
-      "Bash(docker volume rm:*)"
+      "Bash(docker volume rm:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

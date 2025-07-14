@@ -23,15 +23,15 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         """
         Создать нового пользователя с хешированием пароля
         """
-        # ИСПРАВЛЕНО: преобразуем enum в строку
-        role_value = obj_in.role.value if hasattr(obj_in.role, 'value') else str(obj_in.role)
+        # Подготавливаем данные
+        obj_in_data = obj_in.model_dump()
 
-        db_obj = User(
-            username=obj_in.username,
-            password_hash=get_password_hash(obj_in.password),
-            role=role_value,  # Используем строковое значение
-            is_active=obj_in.is_active,
-        )
+        # Хешируем пароль
+        obj_in_data["password_hash"] = get_password_hash(obj_in_data.pop("password"))
+
+        # ИСПРАВЛЕНИЕ: обработка роли enum - базовый класс сам обработает enum
+        # Просто создаем пользователя через базовый метод, который обработает enum
+        db_obj = User(**self._process_enum_values(obj_in_data))
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
@@ -51,14 +51,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             del update_data["password"]
             update_data["password_hash"] = hashed_password
 
-        # ИСПРАВЛЕНО: обработка роли - преобразуем enum в строку
-        if "role" in update_data:
-            role_value = update_data["role"]
-            if hasattr(role_value, 'value'):
-                update_data["role"] = role_value.value
-            else:
-                update_data["role"] = str(role_value)
-
+        # ИСПРАВЛЕНИЕ: используем базовый метод update, который обработает enum автоматически
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
     def authenticate(self, db: Session, *, username: str, password: str) -> Optional[User]:

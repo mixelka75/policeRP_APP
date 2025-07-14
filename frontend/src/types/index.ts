@@ -41,24 +41,47 @@ export interface Passport {
   nickname: string;
   age: number;
   gender: 'male' | 'female';
+  city: string;
+  violations_count: number;
+  entry_date: string;
+  is_emergency: boolean;
   created_at: string;
   updated_at: string;
 }
 
+// ✨ ОБНОВЛЕННЫЙ интерфейс PassportCreate с entry_date
 export interface PassportCreate {
   first_name: string;
   last_name: string;
   nickname: string;
   age: number;
   gender: 'male' | 'female';
+  city: string;
+  entry_date?: string;  // ✨ НОВОЕ ПОЛЕ: дата въезда (опциональное)
 }
 
+// ✨ ОБНОВЛЕННЫЙ интерфейс PassportUpdate
 export interface PassportUpdate {
   first_name?: string;
   last_name?: string;
   nickname?: string;
   age?: number;
   gender?: 'male' | 'female';
+  city?: string;
+  entry_date?: string;  // ✨ НОВОЕ ПОЛЕ: дата въезда
+}
+
+// Интерфейсы для работы с ЧС
+export interface PassportEmergencyUpdate {
+  is_emergency: boolean;
+  reason?: string;
+}
+
+export interface PassportEmergencyResponse {
+  id: number;
+  nickname: string;
+  is_emergency: boolean;
+  message: string;
 }
 
 export interface Fine {

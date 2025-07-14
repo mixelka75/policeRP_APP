@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str = "your-super-secret-key-here-please-change-this-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    # Устанавливаем очень большое время жизни токена (1 год = 525600 минут)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 525600  # 1 год
 
     # App
     PROJECT_NAME: str = "RP Server Backend"

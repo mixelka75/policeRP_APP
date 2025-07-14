@@ -86,6 +86,7 @@ export const useAuthStore = create<AuthState>()(
       refreshUser: async () => {
         const { token } = get();
         if (!token || isTokenExpired(token)) {
+          // ✨ Тихо очищаем данные если токен истек
           get().logout();
           return;
         }
@@ -95,7 +96,21 @@ export const useAuthStore = create<AuthState>()(
           set({ user, error: null });
         } catch (error) {
           console.error('Failed to refresh user:', error);
-          get().logout();
+          // ✨ Проверяем, не истекла ли сессия
+          if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
+            // Тихо выходим без показа тоста
+            set({
+              user: null,
+              token: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: null,
+            });
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          } else {
+            get().logout();
+          }
         }
       },
 
@@ -106,7 +121,7 @@ export const useAuthStore = create<AuthState>()(
       checkAuth: () => {
         const token = localStorage.getItem('token');
         const userStr = localStorage.getItem('user');
-        
+
         if (token && userStr && !isTokenExpired(token)) {
           try {
             const user = JSON.parse(userStr);
@@ -122,8 +137,15 @@ export const useAuthStore = create<AuthState>()(
             localStorage.removeItem('user');
           }
         } else {
+          // ✨ Тихо очищаем истекшие данные
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            error: null,
+          });
         }
       },
     }),

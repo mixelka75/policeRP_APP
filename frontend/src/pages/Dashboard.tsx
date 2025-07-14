@@ -11,51 +11,72 @@ import {
   Search,
   Filter,
   Eye,
-  Edit
+  Edit,
+  ShieldAlert,
+  MapPin,
+  TrendingUp
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Passport, Fine } from '@/types';
-import { Button, Loading, Input } from '@/components/ui';
+import { Button, Loading, Input, Badge, Card } from '@/components/ui';
 import { Layout } from '@/components/layout';
-import Card from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
 import { PassportForm, FineForm } from '@/components/forms';
-import { formatDate, formatMoney } from '@/utils';
+import { formatDate, formatMoney, getInitials } from '@/utils';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'fines' | 'passports'>('fines');
+  const [activeTab, setActiveTab] = useState<'fines' | 'passports' | 'emergency'>('emergency');
   const [searchTerm, setSearchTerm] = useState('');
   const [isPassportFormOpen, setIsPassportFormOpen] = useState(false);
   const [isFineFormOpen, setIsFineFormOpen] = useState(false);
 
-  // API hooks с правильным использованием
+  // ✨ УЛУЧШЕННЫЕ API hooks с правильной обработкой ошибок
   const {
     data: passports,
     isLoading: passportsLoading,
     execute: fetchPassports,
     error: passportsError,
-  } = useApi(apiService.getPassports);
+  } = useApi(apiService.getPassports, {
+    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+  });
 
   const {
     data: fines,
     isLoading: finesLoading,
     execute: fetchFines,
     error: finesError,
-  } = useApi(apiService.getFines);
+  } = useApi(apiService.getFines, {
+    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+  });
+
+  const {
+    data: emergencyPassports,
+    isLoading: emergencyLoading,
+    execute: fetchEmergencyPassports,
+    error: emergencyError,
+  } = useApi(apiService.getEmergencyPassports, {
+    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+  });
 
   useEffect(() => {
     const loadData = async () => {
       try {
         await Promise.all([
           fetchPassports(),
-          fetchFines()
+          fetchFines(),
+          fetchEmergencyPassports()
         ]);
       } catch (error) {
+        // ✨ Улучшенная обработка ошибок
         console.error('Error loading dashboard data:', error);
+        // Если это ошибка авторизации, не показываем ничего - пользователь будет перенаправлен
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
+          return;
+        }
       }
     };
 
@@ -65,11 +86,19 @@ const Dashboard: React.FC = () => {
   const filteredPassports = passports?.filter(passport =>
     passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    passport.nickname.toLowerCase().includes(searchTerm.toLowerCase())
+    passport.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    passport.city.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const filteredFines = fines?.filter(fine =>
     fine.article.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  const filteredEmergencyPassports = emergencyPassports?.filter(passport =>
+    passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    passport.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    passport.city.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const stats = [
@@ -78,6 +107,12 @@ const Dashboard: React.FC = () => {
       value: passports?.length || 0,
       icon: Users,
       color: 'blue' as const,
+    },
+    {
+      title: 'В списке ЧС',
+      value: emergencyPassports?.length || 0,
+      icon: ShieldAlert,
+      color: 'red' as const,
     },
     {
       title: 'Всего штрафов',
@@ -89,11 +124,12 @@ const Dashboard: React.FC = () => {
       title: 'Сумма штрафов',
       value: formatMoney(fines?.reduce((sum, fine) => sum + fine.amount, 0) || 0),
       icon: AlertTriangle,
-      color: 'red' as const,
+      color: 'yellow' as const,
     },
   ];
 
   const tabs = [
+    { id: 'emergency', label: 'ЧС', icon: ShieldAlert },
     { id: 'fines', label: 'Штрафы', icon: AlertTriangle },
     { id: 'passports', label: 'Паспорта', icon: Users },
   ];
@@ -102,8 +138,10 @@ const Dashboard: React.FC = () => {
   const handleCreateClick = () => {
     if (activeTab === 'fines') {
       setIsFineFormOpen(true);
-    } else {
+    } else if (activeTab === 'passports') {
       setIsPassportFormOpen(true);
+    } else {
+      navigate('/emergency');
     }
   };
 
@@ -115,19 +153,30 @@ const Dashboard: React.FC = () => {
     navigate('/fines');
   };
 
-  const handleFormSuccess = () => {
-    // Перезагружаем данные после успешного создания
-    fetchPassports();
-    fetchFines();
+  const handleNavigateToEmergency = () => {
+    navigate('/emergency');
   };
 
-  // Показываем лоадер только если загружаются оба ресурса
-  if (passportsLoading && finesLoading) {
+  const handleFormSuccess = () => {
+    fetchPassports();
+    fetchFines();
+    fetchEmergencyPassports();
+  };
+
+  // ✨ УЛУЧШЕННАЯ логика показа лоадера - только если все загружается впервые
+  const isInitialLoading = passportsLoading && finesLoading && emergencyLoading;
+
+  if (isInitialLoading) {
     return <Loading fullScreen text="Загрузка данных..." />;
   }
 
-  // Показываем ошибку если есть критические ошибки
-  if (passportsError && finesError) {
+  // ✨ УЛУЧШЕННАЯ логика показа ошибки - только если это критические ошибки, НЕ связанные с авторизацией
+  const hasCriticalError = (passportsError || finesError || emergencyError) &&
+    !(passportsError && typeof passportsError === 'string' && passportsError.includes('Сессия истекла')) &&
+    !(finesError && typeof finesError === 'string' && finesError.includes('Сессия истекла')) &&
+    !(emergencyError && typeof emergencyError === 'string' && emergencyError.includes('Сессия истекла'));
+
+  if (hasCriticalError) {
     return (
       <div className="min-h-screen bg-dark-950 flex items-center justify-center">
         <Card className="p-8 text-center">
@@ -167,6 +216,39 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
 
+        {/* Emergency Warning */}
+        {emergencyPassports && emergencyPassports.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="bg-red-500/10 border-red-500/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <AlertTriangle className="h-6 w-6 text-red-400" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-red-400">
+                      Активные чрезвычайные ситуации
+                    </h3>
+                    <p className="text-red-300">
+                      В системе зарегистрировано <strong>{emergencyPassports.length}</strong> человек в списке ЧС
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNavigateToEmergency}
+                  className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+                >
+                  Управлять
+                </Button>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Main Content */}
         <Card className="min-h-[600px]">
           {/* Tabs */}
@@ -175,15 +257,22 @@ const Dashboard: React.FC = () => {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as 'fines' | 'passports')}
+                  onClick={() => setActiveTab(tab.id as any)}
                   className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab.id
                       ? 'border-primary-500 text-primary-500'
                       : 'border-transparent text-dark-400 hover:text-dark-300'
                   }`}
                 >
-                  <tab.icon className="h-4 w-4" />
+                  <tab.icon className={`h-4 w-4 ${
+                    tab.id === 'emergency' ? 'text-red-400' : ''
+                  }`} />
                   <span>{tab.label}</span>
+                  {tab.id === 'emergency' && emergencyPassports && emergencyPassports.length > 0 && (
+                    <Badge variant="danger" size="sm">
+                      {emergencyPassports.length}
+                    </Badge>
+                  )}
                 </button>
               ))}
             </div>
@@ -210,18 +299,127 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                variant="primary"
+                variant={activeTab === 'emergency' ? 'danger' : 'primary'}
                 size="sm"
                 leftIcon={<Plus className="h-4 w-4" />}
                 onClick={handleCreateClick}
               >
-                Добавить {activeTab === 'fines' ? 'штраф' : 'паспорт'}
+                {activeTab === 'emergency'
+                  ? 'Управлять ЧС'
+                  : `Добавить ${activeTab === 'fines' ? 'штраф' : 'паспорт'}`
+                }
               </Button>
             </div>
           </div>
 
           {/* Content */}
           <div className="space-y-4">
+            {/* Emergency Tab */}
+            {activeTab === 'emergency' && (
+              <div className="space-y-4">
+                {emergencyLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loading text="Загрузка списка ЧС..." />
+                  </div>
+                ) : filteredEmergencyPassports.length === 0 ? (
+                  <div className="text-center py-12">
+                    <ShieldAlert className="h-12 w-12 text-dark-400 mx-auto mb-4" />
+                    <p className="text-dark-400 mb-4">
+                      {searchTerm ? 'Паспорта в ЧС не найдены' : 'В списке ЧС никого нет'}
+                    </p>
+                    {!searchTerm && (
+                      <Button
+                        variant="outline"
+                        onClick={handleNavigateToEmergency}
+                        leftIcon={<ShieldAlert className="h-4 w-4" />}
+                      >
+                        Перейти к управлению ЧС
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-dark-400">Показано {filteredEmergencyPassports.length} записей в ЧС</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNavigateToEmergency}
+                      >
+                        Управлять всеми ЧС
+                      </Button>
+                    </div>
+                    {filteredEmergencyPassports.slice(0, 5).map((passport, index) => (
+                      <motion.div
+                        key={passport.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <Card hover className="p-4 bg-red-500/5 border-red-500/20">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-4">
+                                <div className="flex-shrink-0">
+                                  <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
+                                    <ShieldAlert className="h-6 w-6 text-red-400" />
+                                  </div>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center space-x-2">
+                                    <h3 className="text-lg font-medium text-white truncate">
+                                      {passport.first_name} {passport.last_name}
+                                    </h3>
+                                    <Badge variant="danger" size="sm">ЧС</Badge>
+                                  </div>
+                                  <p className="text-sm text-dark-400 mb-1">
+                                    {passport.nickname} • {passport.city}
+                                  </p>
+                                  <p className="text-xs text-dark-500">
+                                    {passport.violations_count} нарушений • В городе с {formatDate(passport.entry_date, 'dd.MM.yyyy')}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-4">
+                              <div className="text-right">
+                                <p className="text-2xl font-bold text-red-400">
+                                  {passport.age}
+                                </p>
+                                <p className="text-xs text-dark-400">
+                                  лет
+                                </p>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="!p-2"
+                                  onClick={() => navigate(`/emergency`)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="!p-2"
+                                  onClick={() => navigate(`/emergency`)}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Остальные вкладки остаются такими же как в оригинале... */}
+            {/* Fines Tab */}
             {activeTab === 'fines' && (
               <div className="space-y-4">
                 {finesLoading ? (
@@ -322,6 +520,7 @@ const Dashboard: React.FC = () => {
               </div>
             )}
 
+            {/* Passports Tab */}
             {activeTab === 'passports' && (
               <div className="space-y-4">
                 {passportsLoading ? (
@@ -368,19 +567,32 @@ const Dashboard: React.FC = () => {
                             <div className="flex-1">
                               <div className="flex items-center space-x-4">
                                 <div className="flex-shrink-0">
-                                  <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
-                                    <Users className="h-6 w-6 text-blue-400" />
+                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                                    passport.is_emergency 
+                                      ? 'bg-red-500/20' 
+                                      : 'bg-blue-500/20'
+                                  }`}>
+                                    {passport.is_emergency ? (
+                                      <ShieldAlert className="h-6 w-6 text-red-400" />
+                                    ) : (
+                                      <Users className="h-6 w-6 text-blue-400" />
+                                    )}
                                   </div>
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <h3 className="text-lg font-medium text-white truncate">
-                                    {passport.first_name} {passport.last_name}
-                                  </h3>
+                                  <div className="flex items-center space-x-2">
+                                    <h3 className="text-lg font-medium text-white truncate">
+                                      {passport.first_name} {passport.last_name}
+                                    </h3>
+                                    {passport.is_emergency && (
+                                      <Badge variant="danger" size="sm">ЧС</Badge>
+                                    )}
+                                  </div>
                                   <p className="text-sm text-dark-400 mb-1">
-                                    {passport.nickname}
+                                    {passport.nickname} • {passport.city}
                                   </p>
                                   <p className="text-xs text-dark-500">
-                                    {formatDate(passport.created_at)}
+                                    {passport.violations_count} нарушений • {formatDate(passport.created_at)}
                                   </p>
                                 </div>
                               </div>

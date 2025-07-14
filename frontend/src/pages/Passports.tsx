@@ -9,23 +9,31 @@ import {
   Trash2,
   Users,
   UserPlus,
-  AlertTriangle
+  AlertTriangle,
+  MapPin,
+  Shield,
+  ShieldAlert
 } from 'lucide-react';
 import { Passport } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, Select, Badge } from '@/components/ui';
 import { PassportForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
+import EmergencyModal from '@/components/modals/EmergencyModal';
 import { formatDate, getInitials } from '@/utils';
 
 const Passports: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+  const [emergencyFilter, setEmergencyFilter] = useState('');
   const [selectedPassport, setSelectedPassport] = useState<Passport | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [passportToDelete, setPassportToDelete] = useState<Passport | null>(null);
+  const [passportForEmergency, setPassportForEmergency] = useState<Passport | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
 
@@ -49,8 +57,13 @@ const Passports: React.FC = () => {
   );
 
   useEffect(() => {
-    fetchPassports();
-  }, []);
+    loadPassports();
+  }, [selectedCity, emergencyFilter]);
+
+  const loadPassports = () => {
+    const emergency_only = emergencyFilter === 'true' ? true : emergencyFilter === 'false' ? false : undefined;
+    fetchPassports(0, 100, undefined, selectedCity || undefined, emergency_only);
+  };
 
   const filteredPassports = passports?.filter(passport => {
     // Поиск
@@ -58,7 +71,7 @@ const Passports: React.FC = () => {
       passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       passport.nickname.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Фильтры
+    // Дополнительные фильтры из модального окна
     let matchesFilters = true;
 
     if (appliedFilters.gender && passport.gender !== appliedFilters.gender) {
@@ -95,6 +108,11 @@ const Passports: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
+  const handleEmergencyAction = (passport: Passport) => {
+    setPassportForEmergency(passport);
+    setIsEmergencyModalOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (passportToDelete) {
       await deletePassport(passportToDelete.id);
@@ -102,7 +120,11 @@ const Passports: React.FC = () => {
   };
 
   const handleFormSuccess = () => {
-    fetchPassports();
+    loadPassports();
+  };
+
+  const handleEmergencySuccess = () => {
+    loadPassports();
   };
 
   const handleApplyFilters = (filters: FilterOptions) => {
@@ -113,13 +135,31 @@ const Passports: React.FC = () => {
     setAppliedFilters({});
   };
 
+  // ✨ Уникальные города из данных
+  const uniqueCities = [...new Set(passports?.map(p => p.city) || [])].sort();
+
+  const cityOptions = [
+    { value: '', label: 'Все города' },
+    ...uniqueCities.map(city => ({ value: city, label: city }))
+  ];
+
+  const emergencyOptions = [
+    { value: '', label: 'Все статусы' },
+    { value: 'true', label: 'Только в ЧС' },
+    { value: 'false', label: 'Только не в ЧС' },
+  ];
+
   const columns = [
     {
       key: 'avatar',
       label: '',
       width: '60px',
       render: (_: any, passport: Passport) => (
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          passport.is_emergency 
+            ? 'bg-gradient-to-br from-red-500 to-red-600'
+            : 'bg-gradient-to-br from-blue-500 to-blue-600'
+        }`}>
           <span className="text-white font-medium text-sm">
             {getInitials(passport.first_name, passport.last_name)}
           </span>
@@ -131,10 +171,29 @@ const Passports: React.FC = () => {
       label: 'Имя',
       render: (_: any, passport: Passport) => (
         <div>
-          <p className="font-medium text-white">
-            {passport.first_name} {passport.last_name}
-          </p>
+          <div className="flex items-center space-x-2">
+            <p className="font-medium text-white">
+              {passport.first_name} {passport.last_name}
+            </p>
+            {passport.is_emergency && (
+              <Badge variant="danger" size="sm">
+                ЧС
+              </Badge>
+            )}
+          </div>
           <p className="text-sm text-dark-400">{passport.nickname}</p>
+        </div>
+      ),
+    },
+    // ✨ НОВАЯ КОЛОНКА: Город
+    {
+      key: 'city',
+      label: 'Город',
+      width: '120px',
+      render: (city: string) => (
+        <div className="flex items-center space-x-2">
+          <MapPin className="h-4 w-4 text-dark-400" />
+          <span className="text-dark-300">{city}</span>
         </div>
       ),
     },
@@ -156,18 +215,32 @@ const Passports: React.FC = () => {
         </span>
       ),
     },
+    // ✨ НОВАЯ КОЛОНКА: Нарушения
     {
-      key: 'created_at',
-      label: 'Дата создания',
-      width: '150px',
+      key: 'violations_count',
+      label: 'Нарушения',
+      width: '100px',
+      render: (count: number) => (
+        <div className="flex items-center space-x-2">
+          <AlertTriangle className={`h-4 w-4 ${count > 0 ? 'text-red-400' : 'text-green-400'}`} />
+          <span className={`font-medium ${count > 0 ? 'text-red-400' : 'text-green-400'}`}>
+            {count}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: 'entry_date',
+      label: 'Въезд в город',
+      width: '130px',
       render: (date: string) => (
-        <span className="text-dark-400">{formatDate(date)}</span>
+        <span className="text-dark-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),
     },
     {
       key: 'actions',
       label: 'Действия',
-      width: '150px',
+      width: '180px',
       render: (_: any, passport: Passport) => (
         <div className="flex items-center space-x-2">
           <Button
@@ -175,14 +248,29 @@ const Passports: React.FC = () => {
             size="sm"
             onClick={() => handleEditPassport(passport)}
             className="!p-2"
+            title="Редактировать"
           >
             <Edit className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => handleEmergencyAction(passport)}
+            className={`!p-2 ${
+              passport.is_emergency 
+                ? 'text-green-400 hover:text-green-300' 
+                : 'text-red-400 hover:text-red-300'
+            }`}
+            title={passport.is_emergency ? 'Убрать из ЧС' : 'Добавить в ЧС'}
+          >
+            {passport.is_emergency ? <Shield className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => handleDeletePassport(passport)}
             className="!p-2 text-red-400 hover:text-red-300"
+            title="Удалить"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -191,12 +279,19 @@ const Passports: React.FC = () => {
     },
   ];
 
+  // ✨ ОБНОВЛЕННАЯ статистика
   const stats = [
     {
       title: 'Всего паспортов',
       value: passports?.length || 0,
       icon: Users,
       color: 'blue' as const,
+    },
+    {
+      title: 'В списке ЧС',
+      value: passports?.filter(p => p.is_emergency).length || 0,
+      icon: ShieldAlert,
+      color: 'red' as const,
     },
     {
       title: 'Мужчин',
@@ -210,12 +305,6 @@ const Passports: React.FC = () => {
       icon: UserPlus,
       color: 'purple' as const,
     },
-    {
-      title: 'Средний возраст',
-      value: passports?.length ? Math.round(passports.reduce((sum, p) => sum + p.age, 0) / passports.length) : 0,
-      icon: AlertTriangle,
-      color: 'yellow' as const,
-    },
   ];
 
   const actions = (
@@ -227,6 +316,20 @@ const Passports: React.FC = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
           className="w-80"
+        />
+        {/* ✨ НОВЫЙ фильтр по городу */}
+        <Select
+          options={cityOptions}
+          value={selectedCity}
+          onChange={setSelectedCity}
+          className="w-40"
+        />
+        {/* ✨ НОВЫЙ фильтр по ЧС статусу */}
+        <Select
+          options={emergencyOptions}
+          value={emergencyFilter}
+          onChange={setEmergencyFilter}
+          className="w-40"
         />
         <Button
           variant="outline"
@@ -282,8 +385,8 @@ const Passports: React.FC = () => {
             data={filteredPassports}
             isLoading={isLoading}
             emptyMessage={
-              searchTerm
-                ? `Паспорта не найдены по запросу "${searchTerm}"`
+              searchTerm || selectedCity || emergencyFilter
+                ? 'Паспорта не найдены по заданным критериям'
                 : 'Паспортов пока нет. Создайте первый паспорт.'
             }
           />
@@ -296,6 +399,14 @@ const Passports: React.FC = () => {
         onClose={() => setIsFormOpen(false)}
         passport={selectedPassport}
         onSuccess={handleFormSuccess}
+      />
+
+      {/* ✨ НОВОЕ: Emergency Management Modal */}
+      <EmergencyModal
+        isOpen={isEmergencyModalOpen}
+        onClose={() => setIsEmergencyModalOpen(false)}
+        passport={passportForEmergency}
+        onSuccess={handleEmergencySuccess}
       />
 
       {/* Filter Modal */}

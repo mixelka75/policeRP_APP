@@ -64,10 +64,17 @@ export function useApi<T>(
         console.error('API Error:', error);
 
         let errorMessage: string;
+        let shouldShowToast = options.showErrorToast !== false;
 
-        // Обработка различных типов ошибок
+        // ✨ Обработка различных типов ошибок с особым вниманием к истекшим токенам
         if (error && typeof error === 'object' && 'detail' in error) {
-          errorMessage = (error as ApiError).detail;
+          const apiError = error as ApiError;
+          errorMessage = apiError.detail;
+
+          // ✨ Если это ошибка истекшей сессии, не показываем тост
+          if (apiError.code === 'SESSION_EXPIRED') {
+            shouldShowToast = false;
+          }
         } else if (error instanceof Error) {
           errorMessage = error.message;
         } else if (typeof error === 'string') {
@@ -82,7 +89,8 @@ export function useApi<T>(
           error: errorMessage,
         });
 
-        if (options.showErrorToast !== false) {
+        // ✨ Показываем тост только если это не истекшая сессия
+        if (shouldShowToast) {
           toast.error(errorMessage);
         }
 

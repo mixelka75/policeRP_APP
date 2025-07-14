@@ -28,7 +28,8 @@ const PassportForm: React.FC<PassportFormProps> = ({
     nickname: '',
     age: '',
     gender: '',
-    city: '', // ✨ НОВОЕ ПОЛЕ
+    city: '', // ✨ Теперь обычное поле
+    entry_date: '', // ✨ НОВОЕ ПОЛЕ для ввода даты въезда
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -66,7 +67,9 @@ const PassportForm: React.FC<PassportFormProps> = ({
         nickname: passport.nickname,
         age: passport.age.toString(),
         gender: passport.gender,
-        city: passport.city, // ✨ НОВОЕ ПОЛЕ
+        city: passport.city,
+        // ✨ Преобразуем дату в формат для input[type="date"]
+        entry_date: passport.entry_date ? passport.entry_date.split('T')[0] : '',
       });
     } else {
       setFormData({
@@ -75,7 +78,9 @@ const PassportForm: React.FC<PassportFormProps> = ({
         nickname: '',
         age: '',
         gender: '',
-        city: '', // ✨ НОВОЕ ПОЛЕ
+        city: '',
+        // ✨ По умолчанию - сегодняшняя дата
+        entry_date: new Date().toISOString().split('T')[0],
       });
     }
     setErrors({});
@@ -122,16 +127,31 @@ const PassportForm: React.FC<PassportFormProps> = ({
         required: true,
         label: 'Пол',
       },
-      // ✨ НОВОЕ ПОЛЕ: обязательное для заполнения
+      // ✨ ОБНОВЛЕННАЯ валидация для города
       city: {
         required: true,
         minLength: 2,
         maxLength: 100,
         label: 'Город',
       },
+      // ✨ НОВАЯ валидация для даты въезда
+      entry_date: {
+        required: true,
+        label: 'Дата въезда в город',
+      },
     };
 
     const formErrors = validateForm(formData, validationRules);
+
+    // ✨ Дополнительная валидация даты
+    if (formData.entry_date) {
+      const entryDate = new Date(formData.entry_date);
+      const today = new Date();
+      if (entryDate > today) {
+        formErrors.entry_date = 'Дата въезда не может быть в будущем';
+      }
+    }
+
     setErrors(formErrors);
 
     if (Object.keys(formErrors).length === 0) {
@@ -139,6 +159,8 @@ const PassportForm: React.FC<PassportFormProps> = ({
         ...formData,
         age: parseInt(formData.age),
         gender: formData.gender as 'male' | 'female',
+        // ✨ Преобразуем дату обратно в ISO формат
+        entry_date: formData.entry_date ? new Date(formData.entry_date).toISOString() : undefined,
       };
 
       try {
@@ -156,25 +178,6 @@ const PassportForm: React.FC<PassportFormProps> = ({
   const genderOptions = [
     { value: 'male', label: 'Мужской' },
     { value: 'female', label: 'Женский' },
-  ];
-
-  // ✨ НОВЫЕ опции для городов (можно расширить или сделать динамическими)
-  const cityOptions = [
-    { value: 'Москва', label: 'Москва' },
-    { value: 'Санкт-Петербург', label: 'Санкт-Петербург' },
-    { value: 'Новосибирск', label: 'Новосибирск' },
-    { value: 'Екатеринбург', label: 'Екатеринбург' },
-    { value: 'Казань', label: 'Казань' },
-    { value: 'Нижний Новгород', label: 'Нижний Новгород' },
-    { value: 'Челябинск', label: 'Челябинск' },
-    { value: 'Самара', label: 'Самара' },
-    { value: 'Омск', label: 'Омск' },
-    { value: 'Ростов-на-Дону', label: 'Ростов-на-Дону' },
-    { value: 'Уфа', label: 'Уфа' },
-    { value: 'Красноярск', label: 'Красноярск' },
-    { value: 'Воронеж', label: 'Воронеж' },
-    { value: 'Пермь', label: 'Пермь' },
-    { value: 'Волгоград', label: 'Волгоград' },
   ];
 
   return (
@@ -245,19 +248,31 @@ const PassportForm: React.FC<PassportFormProps> = ({
           />
         </div>
 
-        {/* ✨ НОВОЕ ПОЛЕ: Город */}
-        <Select
+        {/* ✨ ИЗМЕНЕННОЕ ПОЛЕ: Теперь Input вместо Select */}
+        <Input
           label="Город проживания"
-          options={cityOptions}
           value={formData.city}
-          onChange={(value) => handleChange('city', value)}
+          onChange={(e) => handleChange('city', e.target.value)}
           error={errors.city}
-          placeholder="Выберите город"
+          leftIcon={<MapPin className="h-4 w-4" />}
+          placeholder="Введите название города"
           disabled={isLoading}
           fullWidth
         />
 
-        {/* ✨ Информационный блок для редактирования */}
+        {/* ✨ НОВОЕ ПОЛЕ: Дата въезда в город */}
+        <Input
+          label="Дата въезда в город"
+          type="date"
+          value={formData.entry_date}
+          onChange={(e) => handleChange('entry_date', e.target.value)}
+          error={errors.entry_date}
+          leftIcon={<Calendar className="h-4 w-4" />}
+          disabled={isLoading}
+          fullWidth
+        />
+
+        {/* Информационный блок для редактирования */}
         {isEditing && passport && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -274,9 +289,9 @@ const PassportForm: React.FC<PassportFormProps> = ({
                 <p className="text-blue-300 font-medium">{passport.violations_count}</p>
               </div>
               <div>
-                <p className="text-dark-400">Дата въезда в город:</p>
+                <p className="text-dark-400">Дата создания:</p>
                 <p className="text-blue-300 font-medium">
-                  {new Date(passport.entry_date).toLocaleDateString('ru-RU')}
+                  {new Date(passport.created_at).toLocaleDateString('ru-RU')}
                 </p>
               </div>
             </div>
@@ -286,6 +301,24 @@ const PassportForm: React.FC<PassportFormProps> = ({
                 <span className="text-red-400 font-medium">Находится в списке ЧС</span>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* ✨ НОВЫЙ информационный блок для создания */}
+        {!isEditing && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-green-500/10 border border-green-500/20 rounded-lg p-4"
+          >
+            <div className="flex items-center space-x-2 mb-2">
+              <Users className="h-5 w-5 text-green-400" />
+              <h4 className="font-medium text-green-400">Информация</h4>
+            </div>
+            <p className="text-green-300 text-sm">
+              Дата въезда в город используется для отслеживания времени пребывания гражданина
+              в городе. По умолчанию устанавливается сегодняшняя дата.
+            </p>
           </motion.div>
         )}
 

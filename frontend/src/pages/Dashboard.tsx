@@ -29,32 +29,38 @@ import { formatDate, formatMoney, getInitials } from '@/utils';
 const Dashboard: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'fines' | 'passports' | 'emergency'>('emergency'); // ✨ Добавлена вкладка ЧС
+  const [activeTab, setActiveTab] = useState<'fines' | 'passports' | 'emergency'>('emergency');
   const [searchTerm, setSearchTerm] = useState('');
   const [isPassportFormOpen, setIsPassportFormOpen] = useState(false);
   const [isFineFormOpen, setIsFineFormOpen] = useState(false);
 
-  // API hooks с правильным использованием
+  // ✨ УЛУЧШЕННЫЕ API hooks с правильной обработкой ошибок
   const {
     data: passports,
     isLoading: passportsLoading,
     execute: fetchPassports,
     error: passportsError,
-  } = useApi(apiService.getPassports);
+  } = useApi(apiService.getPassports, {
+    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+  });
 
   const {
     data: fines,
     isLoading: finesLoading,
     execute: fetchFines,
     error: finesError,
-  } = useApi(apiService.getFines);
+  } = useApi(apiService.getFines, {
+    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+  });
 
-  // ✨ НОВЫЙ хук для получения списка ЧС
   const {
     data: emergencyPassports,
     isLoading: emergencyLoading,
     execute: fetchEmergencyPassports,
-  } = useApi(apiService.getEmergencyPassports);
+    error: emergencyError,
+  } = useApi(apiService.getEmergencyPassports, {
+    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -62,10 +68,15 @@ const Dashboard: React.FC = () => {
         await Promise.all([
           fetchPassports(),
           fetchFines(),
-          fetchEmergencyPassports() // ✨ НОВЫЙ вызов
+          fetchEmergencyPassports()
         ]);
       } catch (error) {
+        // ✨ Улучшенная обработка ошибок
         console.error('Error loading dashboard data:', error);
+        // Если это ошибка авторизации, не показываем ничего - пользователь будет перенаправлен
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
+          return;
+        }
       }
     };
 
@@ -76,7 +87,7 @@ const Dashboard: React.FC = () => {
     passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     passport.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    passport.city.toLowerCase().includes(searchTerm.toLowerCase()) // ✨ Поиск по городу
+    passport.city.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const filteredFines = fines?.filter(fine =>
@@ -90,7 +101,6 @@ const Dashboard: React.FC = () => {
     passport.city.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  // ✨ ОБНОВЛЕННАЯ статистика
   const stats = [
     {
       title: 'Всего паспортов',
@@ -118,7 +128,6 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  // ✨ ОБНОВЛЕННЫЕ вкладки
   const tabs = [
     { id: 'emergency', label: 'ЧС', icon: ShieldAlert },
     { id: 'fines', label: 'Штрафы', icon: AlertTriangle },
@@ -132,7 +141,6 @@ const Dashboard: React.FC = () => {
     } else if (activeTab === 'passports') {
       setIsPassportFormOpen(true);
     } else {
-      // Для ЧС перенаправляем на страницу управления
       navigate('/emergency');
     }
   };
@@ -150,19 +158,25 @@ const Dashboard: React.FC = () => {
   };
 
   const handleFormSuccess = () => {
-    // Перезагружаем данные после успешного создания
     fetchPassports();
     fetchFines();
     fetchEmergencyPassports();
   };
 
-  // Показываем лоадер только если загружаются основные ресурсы
-  if (passportsLoading && finesLoading) {
+  // ✨ УЛУЧШЕННАЯ логика показа лоадера - только если все загружается впервые
+  const isInitialLoading = passportsLoading && finesLoading && emergencyLoading;
+
+  if (isInitialLoading) {
     return <Loading fullScreen text="Загрузка данных..." />;
   }
 
-  // Показываем ошибку если есть критические ошибки
-  if (passportsError && finesError) {
+  // ✨ УЛУЧШЕННАЯ логика показа ошибки - только если это критические ошибки, НЕ связанные с авторизацией
+  const hasCriticalError = (passportsError || finesError || emergencyError) &&
+    !(passportsError && typeof passportsError === 'string' && passportsError.includes('Сессия истекла')) &&
+    !(finesError && typeof finesError === 'string' && finesError.includes('Сессия истекла')) &&
+    !(emergencyError && typeof emergencyError === 'string' && emergencyError.includes('Сессия истекла'));
+
+  if (hasCriticalError) {
     return (
       <div className="min-h-screen bg-dark-950 flex items-center justify-center">
         <Card className="p-8 text-center">
@@ -202,7 +216,7 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* ✨ НОВЫЙ блок предупреждения о ЧС */}
+        {/* Emergency Warning */}
         {emergencyPassports && emergencyPassports.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -251,11 +265,9 @@ const Dashboard: React.FC = () => {
                   }`}
                 >
                   <tab.icon className={`h-4 w-4 ${
-                    // ✨ Специальная подсветка для ЧС
                     tab.id === 'emergency' ? 'text-red-400' : ''
                   }`} />
                   <span>{tab.label}</span>
-                  {/* ✨ Счетчик для ЧС */}
                   {tab.id === 'emergency' && emergencyPassports && emergencyPassports.length > 0 && (
                     <Badge variant="danger" size="sm">
                       {emergencyPassports.length}
@@ -302,7 +314,7 @@ const Dashboard: React.FC = () => {
 
           {/* Content */}
           <div className="space-y-4">
-            {/* ✨ НОВАЯ вкладка ЧС */}
+            {/* Emergency Tab */}
             {activeTab === 'emergency' && (
               <div className="space-y-4">
                 {emergencyLoading ? (
@@ -406,7 +418,8 @@ const Dashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Существующие вкладки штрафов и паспортов остаются без изменений */}
+            {/* Остальные вкладки остаются такими же как в оригинале... */}
+            {/* Fines Tab */}
             {activeTab === 'fines' && (
               <div className="space-y-4">
                 {finesLoading ? (
@@ -507,6 +520,7 @@ const Dashboard: React.FC = () => {
               </div>
             )}
 
+            {/* Passports Tab */}
             {activeTab === 'passports' && (
               <div className="space-y-4">
                 {passportsLoading ? (

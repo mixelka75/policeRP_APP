@@ -48,7 +48,6 @@ class ApiService {
     this.createPassport = this.createPassport.bind(this);
     this.updatePassport = this.updatePassport.bind(this);
     this.deletePassport = this.deletePassport.bind(this);
-    // ✨ НОВЫЕ методы для ЧС
     this.updatePassportEmergency = this.updatePassportEmergency.bind(this);
     this.getEmergencyPassports = this.getEmergencyPassports.bind(this);
     this.getFines = this.getFines.bind(this);
@@ -61,6 +60,11 @@ class ApiService {
     this.healthCheck = this.healthCheck.bind(this);
   }
 
+  private clearAuthData() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
+
   private setupInterceptors() {
     // Request interceptor
     this.axiosInstance.interceptors.request.use(
@@ -68,6 +72,9 @@ class ApiService {
         const token = localStorage.getItem('token');
         if (token && !isTokenExpired(token)) {
           config.headers.Authorization = `Bearer ${token}`;
+        } else if (token && isTokenExpired(token)) {
+          // ✨ Автоматически удаляем истекший токен
+          this.clearAuthData();
         }
         return config;
       },
@@ -78,10 +85,18 @@ class ApiService {
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => response,
       (error: AxiosError) => {
+        // ✨ Улучшенная обработка 401 ошибок
         if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+          this.clearAuthData();
+          // Перенаправляем только если мы не на странице логина
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
+          // Возвращаем более понятную ошибку
+          return Promise.reject({
+            detail: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
+            code: 'SESSION_EXPIRED'
+          });
         }
         return Promise.reject(error);
       }
@@ -89,6 +104,14 @@ class ApiService {
   }
 
   private handleError(error: AxiosError): ApiError {
+    // ✨ Специальная обработка для истекших сессий
+    if (error.response?.status === 401) {
+      return {
+        detail: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
+        code: 'SESSION_EXPIRED'
+      };
+    }
+
     if (error.response?.data) {
       return error.response.data as ApiError;
     }
@@ -180,7 +203,7 @@ class ApiService {
     }
   }
 
-  // ✨ ОБНОВЛЕННЫЕ Passport endpoints
+  // Passport endpoints
   async getPassports(
     skip: number = 0,
     limit: number = 100,
@@ -234,7 +257,7 @@ class ApiService {
     }
   }
 
-  // ✨ НОВЫЕ методы для работы с ЧС
+  // Emergency methods
   async updatePassportEmergency(
     passportId: number,
     emergencyData: PassportEmergencyUpdate

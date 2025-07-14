@@ -15,7 +15,10 @@ import {
   LogIn,
   Server,
   Calendar,
-  Clock
+  Clock,
+  Shield,
+  ShieldAlert,
+  List
 } from 'lucide-react';
 import { Log, User as UserType } from '@/types';
 import { apiService } from '@/services/api';
@@ -67,10 +70,10 @@ const Logs: React.FC = () => {
       log.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user?.username.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Существующий фильтр по действию
+    // ✨ ИСПРАВЛЕННЫЙ фильтр по действию
     const matchesAction = !selectedAction || log.action === selectedAction;
 
-    // Новые фильтры
+    // Фильтры
     let matchesFilters = true;
 
     if (appliedFilters.dateRange?.start) {
@@ -85,7 +88,7 @@ const Logs: React.FC = () => {
       if (logDate > endDate) matchesFilters = false;
     }
 
-    // Можно добавить фильтрацию по роли пользователя
+    // Фильтрация по роли пользователя
     if (appliedFilters.role && user && user.role !== appliedFilters.role) {
       matchesFilters = false;
     }
@@ -113,6 +116,10 @@ const Logs: React.FC = () => {
         return LogIn;
       case 'VIEW':
         return Eye;
+      case 'EMERGENCY_STATUS_CHANGE':  // ✨ НОВЫЙ тип лога
+        return ShieldAlert;
+      case 'VIEW_LIST':  // ✨ НОВЫЙ тип лога
+        return List;
       default:
         return Activity;
     }
@@ -130,6 +137,10 @@ const Logs: React.FC = () => {
         return 'text-purple-400';
       case 'VIEW':
         return 'text-gray-400';
+      case 'EMERGENCY_STATUS_CHANGE':  // ✨ НОВЫЙ тип лога
+        return 'text-red-500';
+      case 'VIEW_LIST':  // ✨ НОВЫЙ тип лога
+        return 'text-blue-300';
       default:
         return 'text-dark-300';
     }
@@ -143,6 +154,8 @@ const Logs: React.FC = () => {
         return AlertTriangle;
       case 'user':
         return User;
+      case 'emergency':  // ✨ НОВЫЙ тип сущности
+        return ShieldAlert;
       default:
         return FileText;
     }
@@ -156,6 +169,8 @@ const Logs: React.FC = () => {
         return 'Штраф';
       case 'user':
         return 'Пользователь';
+      case 'emergency':  // ✨ НОВЫЙ тип сущности
+        return 'ЧС статус';
       default:
         return entityType;
     }
@@ -173,6 +188,10 @@ const Logs: React.FC = () => {
         return 'Вход';
       case 'VIEW':
         return 'Просмотр';
+      case 'EMERGENCY_STATUS_CHANGE':  // ✨ НОВЫЙ тип лога
+        return 'Изменение ЧС';
+      case 'VIEW_LIST':  // ✨ НОВЫЙ тип лога
+        return 'Просмотр списка';
       default:
         return action;
     }
@@ -182,13 +201,13 @@ const Logs: React.FC = () => {
     {
       key: 'action',
       label: 'Действие',
-      width: '150px',
+      width: '180px',  // ✨ Увеличили ширину для длинных названий
       render: (action: string) => {
         const Icon = getActionIcon(action);
         return (
           <div className="flex items-center space-x-2">
             <Icon className={`h-4 w-4 ${getActionColor(action)}`} />
-            <span className={`text-sm font-medium ${getActionColor(action)}`}>
+            <span className={`text-sm font-medium ${getActionColor(action)} truncate`}>
               {getActionName(action)}
             </span>
           </div>
@@ -241,7 +260,7 @@ const Logs: React.FC = () => {
         return (
           <div className="max-w-xs">
             <p className="text-sm text-dark-300 truncate">
-              {details.username || details.nickname || details.article || 'Детали доступны'}
+              {details.username || details.nickname || details.article || details.reason || 'Детали доступны'}
             </p>
           </div>
         );
@@ -270,6 +289,7 @@ const Logs: React.FC = () => {
     },
   ];
 
+  // ✨ ОБНОВЛЕННЫЙ список фильтров действий - теперь включает все типы
   const actionFilter = [
     { value: '', label: 'Все действия' },
     { value: 'CREATE', label: 'Создание' },
@@ -277,6 +297,8 @@ const Logs: React.FC = () => {
     { value: 'DELETE', label: 'Удаление' },
     { value: 'LOGIN', label: 'Вход' },
     { value: 'VIEW', label: 'Просмотр' },
+    { value: 'EMERGENCY_STATUS_CHANGE', label: 'Изменение ЧС' },  // ✨ НОВЫЙ
+    { value: 'VIEW_LIST', label: 'Просмотр списка' },  // ✨ НОВЫЙ
   ];
 
   const uniqueActions = [...new Set(logs?.map(log => log.action) || [])];

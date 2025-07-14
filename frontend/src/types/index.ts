@@ -34,7 +34,6 @@ export interface UserUpdate {
   is_active?: boolean;
 }
 
-// ✨ ОБНОВЛЕННЫЙ интерфейс Passport с новыми полями
 export interface Passport {
   id: number;
   first_name: string;
@@ -42,22 +41,23 @@ export interface Passport {
   nickname: string;
   age: number;
   gender: 'male' | 'female';
-  city: string;                    // ✨ НОВОЕ ПОЛЕ: Город проживания
-  violations_count: number;        // ✨ НОВОЕ ПОЛЕ: Количество нарушений (автоподсчет)
-  entry_date: string;             // ✨ НОВОЕ ПОЛЕ: Дата входа в город (ISO format)
-  is_emergency: boolean;          // ✨ НОВОЕ ПОЛЕ: ЧС статус
+  city: string;
+  violations_count: number;
+  entry_date: string;
+  is_emergency: boolean;
   created_at: string;
   updated_at: string;
 }
 
-// ✨ ОБНОВЛЕННЫЙ интерфейс PassportCreate
+// ✨ ОБНОВЛЕННЫЙ интерфейс PassportCreate с entry_date
 export interface PassportCreate {
   first_name: string;
   last_name: string;
   nickname: string;
   age: number;
   gender: 'male' | 'female';
-  city: string;  // ✨ НОВОЕ ОБЯЗАТЕЛЬНОЕ ПОЛЕ
+  city: string;
+  entry_date?: string;  // ✨ НОВОЕ ПОЛЕ: дата въезда (опциональное)
 }
 
 // ✨ ОБНОВЛЕННЫЙ интерфейс PassportUpdate
@@ -67,20 +67,21 @@ export interface PassportUpdate {
   nickname?: string;
   age?: number;
   gender?: 'male' | 'female';
-  city?: string;  // ✨ НОВОЕ ПОЛЕ
+  city?: string;
+  entry_date?: string;  // ✨ НОВОЕ ПОЛЕ: дата въезда
 }
 
-// ✨ НОВЫЕ интерфейсы для работы с ЧС
+// Интерфейсы для работы с ЧС
 export interface PassportEmergencyUpdate {
   is_emergency: boolean;
-  reason?: string;  // Причина добавления/удаления из ЧС
+  reason?: string;
 }
 
 export interface PassportEmergencyResponse {
   id: number;
   nickname: string;
   is_emergency: boolean;
-  message: string;  // Человеческое сообщение для UI
+  message: string;
 }
 
 export interface Fine {

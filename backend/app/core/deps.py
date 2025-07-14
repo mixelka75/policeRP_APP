@@ -17,19 +17,28 @@ def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(security)
 ) -> User:
     """
-    Получение текущего пользователя по токену
+    Получение текущего пользователя по JWT токену
     """
     payload = verify_token(credentials.credentials)
-    username = payload.get("sub")
+    discord_id = payload.get("sub")
 
-    if not username:
+    if not discord_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Не удалось подтвердить учетные данные",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = user_crud.get_by_username(db, username=username)
+    try:
+        discord_id = int(discord_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный формат Discord ID",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = user_crud.get_by_discord_id(db, discord_id=discord_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -39,8 +48,8 @@ def get_current_user(
 
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Неактивный пользователь"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Пользователь заблокирован"
         )
 
     return user
@@ -52,11 +61,10 @@ def get_current_active_admin(
     """
     Проверка прав администратора
     """
-    # ИСПРАВЛЕНО: сравниваем строковые значения
     if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Недостаточно прав доступа"
+            detail="Недостаточно прав доступа. Требуются права администратора."
         )
     return current_user
 
@@ -67,10 +75,37 @@ def get_current_police_or_admin(
     """
     Проверка прав полицейского или администратора
     """
-    # ИСПРАВЛЕНО: сравниваем строковые значения
     if current_user.role not in ["police", "admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Недостаточно прав доступа"
+            detail="Недостаточно прав доступа. Требуются права полицейского или администратора."
+        )
+    return current_user
+
+
+def get_current_user_with_minecraft(
+        current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Проверка, что у пользователя есть привязка к Minecraft
+    """
+    if not current_user.minecraft_username:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="У вас нет привязки к Minecraft аккаунту на сервере"
+        )
+    return current_user
+
+
+def verify_discord_user(
+        current_user: User = Depends(get_current_user)
+) -> User:
+    """
+    Проверка, что пользователь прошел Discord авторизацию
+    """
+    if not current_user.discord_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Требуется авторизация через Discord"
         )
     return current_user

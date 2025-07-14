@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_police_or_admin
+from app.core.deps import get_current_police_or_admin, get_current_user_with_minecraft
 from app.crud.passport import passport_crud
 from app.schemas.passport import (
     Passport,
@@ -21,6 +21,7 @@ router = APIRouter()
 
 @router.get("/", response_model=List[Passport])
 def read_passports(
+        request: Request,
         db: Session = Depends(get_db),
         skip: int = 0,
         limit: int = 100,
@@ -36,13 +37,45 @@ def read_passports(
         passports = passport_crud.get_emergency_passports(db, skip=skip, limit=limit)
     elif city:
         passports = passport_crud.get_by_city(db, city=city)
+    elif search:
+        # Простой поиск по всем текстовым полям
+        from sqlalchemy import or_
+        from app.models.passport import Passport as PassportModel
+        passports = db.query(PassportModel).filter(
+            or_(
+                PassportModel.first_name.ilike(f"%{search}%"),
+                PassportModel.last_name.ilike(f"%{search}%"),
+                PassportModel.nickname.ilike(f"%{search}%"),
+                PassportModel.city.ilike(f"%{search}%")
+            )
+        ).offset(skip).limit(limit).all()
     else:
         passports = passport_crud.get_multi(db, skip=skip, limit=limit)
+
+    # Логируем просмотр списка паспортов
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="VIEW_LIST",
+        entity_type="passport",
+        details={
+            "count": len(passports),
+            "skip": skip,
+            "limit": limit,
+            "search": search,
+            "city_filter": city,
+            "emergency_only": emergency_only,
+            "minecraft_username": current_user.minecraft_username
+        },
+        request=request
+    )
+
     return passports
 
 
 @router.get("/emergency", response_model=List[Passport])
 def read_emergency_passports(
+        request: Request,
         db: Session = Depends(get_db),
         skip: int = 0,
         limit: int = 100,
@@ -52,6 +85,22 @@ def read_emergency_passports(
     Получить список паспортов в ЧС
     """
     passports = passport_crud.get_emergency_passports(db, skip=skip, limit=limit)
+
+    # Логируем просмотр ЧС списка
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="VIEW_EMERGENCY_LIST",
+        entity_type="passport",
+        details={
+            "count": len(passports),
+            "skip": skip,
+            "limit": limit,
+            "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+
     return passports
 
 
@@ -89,6 +138,7 @@ def create_passport(
 
 @router.get("/{passport_id}", response_model=Passport)
 def read_passport(
+        request: Request,
         *,
         db: Session = Depends(get_db),
         passport_id: int,
@@ -103,6 +153,60 @@ def read_passport(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Паспорт не найден",
         )
+
+    # Логируем просмотр конкретного паспорта
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="VIEW",
+        entity_type="passport",
+        entity_id=passport.id,
+        details={
+            "nickname": passport.nickname,
+            "city": passport.city,
+            "violations_count": passport.violations_count,
+            "is_emergency": passport.is_emergency,
+            "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+
+    return passport
+
+
+@router.get("/search/nickname/{nickname}", response_model=Passport)
+def find_passport_by_nickname(
+        request: Request,
+        *,
+        db: Session = Depends(get_db),
+        nickname: str,
+        current_user: User = Depends(get_current_police_or_admin),
+):
+    """
+    Найти паспорт по никнейму
+    """
+    passport = passport_crud.get_by_nickname(db, nickname=nickname)
+    if not passport:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Паспорт с таким никнеймом не найден",
+        )
+
+    # Логируем поиск по никнейму
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="SEARCH_BY_NICKNAME",
+        entity_type="passport",
+        entity_id=passport.id,
+        details={
+            "search_nickname": nickname,
+            "found_passport": passport.nickname,
+            "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+
     return passport
 
 
@@ -138,7 +242,9 @@ def update_passport(
         "nickname": passport.nickname,
         "first_name": passport.first_name,
         "last_name": passport.last_name,
-        "city": passport.city
+        "city": passport.city,
+        "age": passport.age,
+        "gender": passport.gender
     }
 
     passport = passport_crud.update(db, db_obj=passport, obj_in=passport_in)
@@ -197,7 +303,8 @@ def toggle_emergency_status(
             "nickname": passport.nickname,
             "is_emergency": emergency_data.is_emergency,
             "reason": emergency_data.reason,
-            "action": action
+            "action": action,
+            "officer": current_user.minecraft_username
         },
         request=request
     )
@@ -233,7 +340,10 @@ def delete_passport(
         "nickname": passport.nickname,
         "first_name": passport.first_name,
         "last_name": passport.last_name,
-        "city": passport.city
+        "city": passport.city,
+        "age": passport.age,
+        "gender": passport.gender,
+        "violations_count": passport.violations_count
     }
 
     passport = passport_crud.remove(db, id=passport_id)
@@ -248,3 +358,62 @@ def delete_passport(
     )
 
     return passport
+
+
+@router.get("/statistics/overview")
+def get_passports_statistics(
+        request: Request,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_police_or_admin),
+):
+    """
+    Получить статистику по паспортам
+    """
+    from sqlalchemy import func
+    from app.models.passport import Passport as PassportModel
+
+    # Общая статистика
+    total_passports = db.query(func.count(PassportModel.id)).scalar()
+    emergency_count = db.query(func.count(PassportModel.id)).filter(PassportModel.is_emergency == True).scalar()
+
+    # Статистика по городам
+    cities_stats = db.query(
+        PassportModel.city,
+        func.count(PassportModel.id).label('count')
+    ).group_by(PassportModel.city).all()
+
+    # Статистика по полу
+    gender_stats = db.query(
+        PassportModel.gender,
+        func.count(PassportModel.id).label('count')
+    ).group_by(PassportModel.gender).all()
+
+    # Статистика по возрасту
+    avg_age = db.query(func.avg(PassportModel.age)).scalar()
+
+    # Статистика по нарушениям
+    total_violations = db.query(func.sum(PassportModel.violations_count)).scalar()
+
+    stats = {
+        "total_passports": total_passports,
+        "emergency_count": emergency_count,
+        "cities": [{"city": city, "count": count} for city, count in cities_stats],
+        "gender_distribution": [{"gender": gender, "count": count} for gender, count in gender_stats],
+        "average_age": float(avg_age) if avg_age else 0,
+        "total_violations": total_violations or 0
+    }
+
+    # Логируем просмотр статистики
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="VIEW_STATISTICS",
+        entity_type="passport",
+        details={
+            "stats": stats,
+            "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+
+    return stats

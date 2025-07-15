@@ -34,7 +34,7 @@ class DiscordClient:
             "client_id": settings.DISCORD_CLIENT_ID,
             "redirect_uri": settings.DISCORD_REDIRECT_URI,
             "response_type": "code",
-            "scope": "identify guilds guilds.members.read"
+            "scope": "identify guilds"
         }
 
         if state:
@@ -225,32 +225,71 @@ class DiscordClient:
             print(f"Discord guild roles failed: {e}")
             return None
 
-    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]]) -> str:
+    async def get_guild_member_by_bot(self, bot_token: str, guild_id: str, user_id: int) -> Optional[Dict[str, Any]]:
+        """
+        Получение информации о пользователе в сервере через Bot API
+
+        Args:
+            bot_token: Токен бота
+            guild_id: ID сервера
+            user_id: ID пользователя
+
+        Returns:
+            Данные участника или None в случае ошибки
+        """
+        try:
+            response = await self.client.get(
+                f"/guilds/{guild_id}/members/{user_id}",
+                headers={
+                    "Authorization": f"Bot {bot_token}"
+                }
+            )
+
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f"Discord guild member (bot) error: {response.status_code} - {response.text}")
+                return None
+
+        except Exception as e:
+            print(f"Discord guild member (bot) failed: {e}")
+            return None
+
+    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None) -> str:
         """
         Определение роли пользователя на основе ролей Discord
 
         Args:
             member_data: Данные участника сервера
-            guild_roles: Список ролей сервера
+            guild_roles: Список ролей сервера (опционально)
 
         Returns:
             Роль пользователя ('admin' или 'police')
         """
         user_role_ids = member_data.get("roles", [])
 
-        # Создаем словарь для быстрого поиска ролей по ID
-        roles_dict = {role["id"]: role["name"] for role in guild_roles}
-
-        # Получаем имена ролей пользователя
-        user_role_names = [roles_dict.get(role_id, "") for role_id in user_role_ids]
-
-        # Проверяем наличие админской роли
-        if settings.DISCORD_ADMIN_ROLE_NAME in user_role_names:
+        # Проверяем по ID ролей (более надежно)
+        if settings.DISCORD_ADMIN_ROLE_ID in user_role_ids:
             return "admin"
 
-        # Проверяем наличие полицейской роли
-        if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
+        if settings.DISCORD_POLICE_ROLE_ID in user_role_ids:
             return "police"
+
+        # Дополнительная проверка по именам (резервный способ)
+        if guild_roles:
+            # Создаем словарь для быстрого поиска ролей по ID
+            roles_dict = {role["id"]: role["name"] for role in guild_roles}
+
+            # Получаем имена ролей пользователя
+            user_role_names = [roles_dict.get(role_id, "") for role_id in user_role_ids]
+
+            # Проверяем наличие админской роли по имени
+            if settings.DISCORD_ADMIN_ROLE_NAME in user_role_names:
+                return "admin"
+
+            # Проверяем наличие полицейской роли по имени
+            if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
+                return "police"
 
         # По умолчанию возвращаем роль полицейского
         return "police"

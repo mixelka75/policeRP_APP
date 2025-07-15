@@ -229,36 +229,45 @@ class RoleCheckerService:
 
         return fake_roles
 
-    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]]) -> str:
+    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None) -> str:
         """
         Определение роли пользователя на основе ролей Discord
 
         Args:
             member_data: Данные участника сервера
-            guild_roles: Список ролей сервера
+            guild_roles: Список ролей сервера (опционально)
 
         Returns:
             Роль пользователя ('admin' или 'police')
         """
         user_role_ids = member_data.get("roles", [])
 
-        # Создаем словарь для быстрого поиска ролей по ID
-        roles_dict = {role["id"]: role["name"] for role in guild_roles}
-
-        # Получаем имена ролей пользователя
-        user_role_names = [roles_dict.get(role_id, "") for role_id in user_role_ids]
-
-        # Проверяем наличие админской роли
-        if settings.DISCORD_ADMIN_ROLE_NAME in user_role_names:
+        # Проверяем по ID ролей (более надежно)
+        if settings.DISCORD_ADMIN_ROLE_ID in user_role_ids:
             return "admin"
 
-        # Проверяем наличие полицейской роли
-        if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
+        if settings.DISCORD_POLICE_ROLE_ID in user_role_ids:
             return "police"
 
-        # Если нет нужных ролей, возвращаем роль полицейского по умолчанию
-        # В реальном приложении можно деактивировать пользователя
-        return "police"
+        # Дополнительная проверка по именам (резервный способ)
+        if guild_roles:
+            # Создаем словарь для быстрого поиска ролей по ID
+            roles_dict = {role["id"]: role["name"] for role in guild_roles}
+
+            # Получаем имена ролей пользователя
+            user_role_names = [roles_dict.get(role_id, "") for role_id in user_role_ids]
+
+            # Проверяем наличие админской роли по имени
+            if settings.DISCORD_ADMIN_ROLE_NAME in user_role_names:
+                return "admin"
+
+            # Проверяем наличие полицейской роли по имени
+            if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
+                return "police"
+
+        # Если нет нужных ролей, деактивируем пользователя
+        logger.warning(f"User has no required roles. User roles: {user_role_ids}")
+        return "police"  # Можно изменить на None для полной деактивации
 
     async def check_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
         """

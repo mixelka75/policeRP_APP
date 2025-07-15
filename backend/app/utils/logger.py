@@ -232,7 +232,7 @@ class ActionLogger:
             entity_type="user",
             entity_id=user.id,
             details={
-                "username": user.username,
+                "username": user.discord_username,
                 "role": user.role
             },
             request=request
@@ -252,7 +252,7 @@ class ActionLogger:
             entity_type="user",
             entity_id=user.id,
             details={
-                "username": user.username
+                "username": user.discord_username
             },
             request=request
         )

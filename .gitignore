@@ -5,6 +5,7 @@
 .env
 node_modules
 .pyc
+venv
 
 # Python cache files
 __pycache__/

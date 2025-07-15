@@ -11,10 +11,17 @@ class Settings(BaseSettings):
     # Discord OAuth2
     DISCORD_CLIENT_ID: str = ""
     DISCORD_CLIENT_SECRET: str = ""
+    DISCORD_BOT_TOKEN: str = ""  # Токен бота для получения ролей
     DISCORD_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/discord/callback"
     DISCORD_GUILD_ID: str = ""  # ID вашего Discord сервера
+
+    # Discord Role Names (для отображения)
     DISCORD_POLICE_ROLE_NAME: str = "Полицейский"
     DISCORD_ADMIN_ROLE_NAME: str = "Администратор сайта"
+
+    # Discord Role IDs (более надежно для проверки)
+    DISCORD_POLICE_ROLE_ID: str = "1394324971416846359"
+    DISCORD_ADMIN_ROLE_ID: str = "1394325091734523994"
 
     # SP-Worlds API
     SPWORLDS_MAP_ID: str = ""

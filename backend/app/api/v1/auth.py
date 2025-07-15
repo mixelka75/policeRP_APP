@@ -43,7 +43,7 @@ async def discord_login(request: Request):
 async def discord_callback(
         request: Request,
         response: Response,
-        code: str,
+        code: Optional[str] = None,
         state: Optional[str] = None,
         db: Session = Depends(get_db)
 ):
@@ -103,23 +103,39 @@ async def discord_callback(
                 detail="Вы не состоите в требуемом Discord сервере"
             )
 
-        # Получаем информацию о пользователе на сервере
-        member_info = await discord_client.get_guild_member(access_token, settings.DISCORD_GUILD_ID)
-        if not member_info:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Не удалось получить информацию о участии в сервере"
-            )
+        # Получаем информацию о пользователе на сервере через Bot API
+        if settings.DISCORD_BOT_TOKEN:
+            # Используем Bot API для получения информации о члене сервера
+            try:
+                member_info = await discord_client.get_guild_member_by_bot(
+                    settings.DISCORD_BOT_TOKEN, 
+                    settings.DISCORD_GUILD_ID, 
+                    discord_id
+                )
+                if not member_info:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Вы не состоите в требуемом Discord сервере или бот не имеет доступа"
+                    )
+                
+                user_roles = member_info.get("roles", [])
+                print(f"DEBUG: User roles from Discord Bot API: {user_roles}")
+                print(f"DEBUG: Admin role ID from settings: {settings.DISCORD_ADMIN_ROLE_ID}")
+                print(f"DEBUG: Police role ID from settings: {settings.DISCORD_POLICE_ROLE_ID}")
 
-        # Получаем роли сервера (здесь нужен токен бота для полной информации)
-        # Для простоты определяем роль по именам ролей пользователя
-        user_roles = member_info.get("roles", [])
-
-        # Определяем роль пользователя (упрощенная версия)
-        user_role = "police"  # По умолчанию
-
-        # Проверяем наличие ролей по именам (требует дополнительной настройки)
-        # В реальном приложении нужно сохранить ID ролей в настройках
+                # Определяем роль пользователя на основе Discord ролей
+                user_role = discord_client.determine_user_role(member_info)
+                print(f"DEBUG: Determined user role: {user_role}")
+                
+            except Exception as e:
+                print(f"DEBUG: Bot API error: {e}")
+                # Fallback - назначаем роль полицейского по умолчанию
+                user_roles = []
+                user_role = "police"
+        else:
+            print("DEBUG: No bot token configured, assigning police role")
+            user_roles = []
+            user_role = "police"
 
         # Получаем данные из SP-Worlds API
         spworlds_data = await spworlds_client.find_user(str(discord_id))

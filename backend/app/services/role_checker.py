@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 
@@ -97,7 +97,7 @@ class RoleCheckerService:
         """
         try:
             # Проверяем, не истек ли Discord токен
-            if user.discord_expires_at and user.discord_expires_at < datetime.utcnow():
+            if user.discord_expires_at and user.discord_expires_at < datetime.now(timezone.utc):
                 if user.discord_refresh_token:
                     # Пытаемся обновить токен
                     token_data = await discord_client.refresh_token(user.discord_refresh_token)
@@ -105,7 +105,7 @@ class RoleCheckerService:
                         access_token = token_data["access_token"]
                         refresh_token = token_data["refresh_token"]
                         expires_in = token_data["expires_in"]
-                        expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+                        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
 
                         user_crud.update_discord_data(
                             db,
@@ -138,6 +138,19 @@ class RoleCheckerService:
             # Определяем новую роль пользователя
             new_role = self.determine_user_role(member_info, guild_roles)
             old_role = user.role
+            
+            # Если у пользователя нет нужных ролей, деактивируем его
+            if new_role is None:
+                logger.warning(f"User {user.discord_username} lost required roles, deactivating")
+                # Устанавливаем роль "none" для обозначения отсутствия доступа
+                user_crud.update_discord_data(
+                    db,
+                    user=user,
+                    role="none",
+                    discord_roles=member_info.get("roles", [])
+                )
+                user_crud.deactivate_user(db, user=user)
+                return {"has_access": False, "changed": old_role != "none"}
 
             # Получаем обновленные данные из SP-Worlds
             spworlds_data = await spworlds_client.find_user(str(user.discord_id))
@@ -158,6 +171,11 @@ class RoleCheckerService:
                 minecraft_username=minecraft_username,
                 minecraft_uuid=minecraft_uuid
             )
+            
+            # Если пользователь был деактивирован, но теперь у него есть роль, активируем его
+            if not user.is_active and new_role and new_role != "none":
+                logger.info(f"Reactivating user {user.discord_username} due to role restoration")
+                user_crud.activate_user(db, user=user)
 
             # Логируем изменения
             if old_role != new_role:
@@ -173,6 +191,22 @@ class RoleCheckerService:
                         "changed_by": "role_checker_service"
                     }
                 )
+                
+                # Отправляем уведомление о изменении роли
+                try:
+                    from app.api.v1.events import notify_role_change
+                    await notify_role_change(
+                        user_id=user.id,
+                        old_role=old_role,
+                        new_role=new_role,
+                        user_data={
+                            "discord_username": user.discord_username,
+                            "minecraft_username": minecraft_username,
+                            "is_active": user.is_active
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send role change notification: {e}")
 
             if minecraft_data_updated:
                 ActionLogger.log_action(
@@ -211,7 +245,7 @@ class RoleCheckerService:
         # Проверяем кеш (кешируем на 5 минут)
         if (self.guild_roles_cache and
                 self.cache_updated_at and
-                self.cache_updated_at > datetime.utcnow() - timedelta(minutes=5)):
+                self.cache_updated_at > datetime.now(timezone.utc) - timedelta(minutes=5)):
             return self.guild_roles_cache
 
         # Здесь нужен токен бота для получения ролей
@@ -225,11 +259,11 @@ class RoleCheckerService:
         ]
 
         self.guild_roles_cache = fake_roles
-        self.cache_updated_at = datetime.utcnow()
+        self.cache_updated_at = datetime.now(timezone.utc)
 
         return fake_roles
 
-    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None) -> str:
+    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None) -> Optional[str]:
         """
         Определение роли пользователя на основе ролей Discord
 
@@ -238,7 +272,7 @@ class RoleCheckerService:
             guild_roles: Список ролей сервера (опционально)
 
         Returns:
-            Роль пользователя ('admin' или 'police')
+            Роль пользователя ('admin' или 'police') или None, если нет нужных ролей
         """
         user_role_ids = member_data.get("roles", [])
 
@@ -265,9 +299,9 @@ class RoleCheckerService:
             if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
                 return "police"
 
-        # Если нет нужных ролей, деактивируем пользователя
+        # Если нет нужных ролей, возвращаем None
         logger.warning(f"User has no required roles. User roles: {user_role_ids}")
-        return "police"  # Можно изменить на None для полной деактивации
+        return None
 
     async def check_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
         """

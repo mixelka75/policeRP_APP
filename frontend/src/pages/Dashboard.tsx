@@ -14,7 +14,11 @@ import {
   Edit,
   ShieldAlert,
   MapPin,
-  TrendingUp
+  TrendingUp,
+  MessageCircle,
+  RefreshCw,
+  UserCheck,
+  Clock
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { apiService } from '@/services/api';
@@ -24,24 +28,30 @@ import { Button, Loading, Input, Badge, Card } from '@/components/ui';
 import { Layout } from '@/components/layout';
 import StatCard from '@/components/ui/StatCard';
 import { PassportForm, FineForm } from '@/components/forms';
-import { formatDate, formatMoney, getInitials } from '@/utils';
+import {
+  formatDate,
+  formatMoney,
+  getDiscordAvatarUrl,
+  getDisplayName,
+  getRoleDisplayName,
+  isUserDataOutdated
+} from '@/utils';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, refreshUserData } = useAuthStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'fines' | 'passports' | 'emergency'>('emergency');
   const [searchTerm, setSearchTerm] = useState('');
   const [isPassportFormOpen, setIsPassportFormOpen] = useState(false);
   const [isFineFormOpen, setIsFineFormOpen] = useState(false);
 
-  // ✨ УЛУЧШЕННЫЕ API hooks с правильной обработкой ошибок
   const {
     data: passports,
     isLoading: passportsLoading,
     execute: fetchPassports,
     error: passportsError,
   } = useApi(apiService.getPassports, {
-    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+    showErrorToast: false,
   });
 
   const {
@@ -50,7 +60,7 @@ const Dashboard: React.FC = () => {
     execute: fetchFines,
     error: finesError,
   } = useApi(apiService.getFines, {
-    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+    showErrorToast: false,
   });
 
   const {
@@ -59,7 +69,7 @@ const Dashboard: React.FC = () => {
     execute: fetchEmergencyPassports,
     error: emergencyError,
   } = useApi(apiService.getEmergencyPassports, {
-    showErrorToast: false, // ✨ Не показываем тост для автоматических запросов
+    showErrorToast: false,
   });
 
   useEffect(() => {
@@ -71,9 +81,7 @@ const Dashboard: React.FC = () => {
           fetchEmergencyPassports()
         ]);
       } catch (error) {
-        // ✨ Улучшенная обработка ошибок
         console.error('Error loading dashboard data:', error);
-        // Если это ошибка авторизации, не показываем ничего - пользователь будет перенаправлен
         if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
           return;
         }
@@ -134,7 +142,6 @@ const Dashboard: React.FC = () => {
     { id: 'passports', label: 'Паспорта', icon: Users },
   ];
 
-  // Обработчики событий
   const handleCreateClick = () => {
     if (activeTab === 'fines') {
       setIsFineFormOpen(true);
@@ -145,32 +152,24 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleNavigateToPassports = () => {
-    navigate('/passports');
-  };
-
-  const handleNavigateToFines = () => {
-    navigate('/fines');
-  };
-
-  const handleNavigateToEmergency = () => {
-    navigate('/emergency');
-  };
-
   const handleFormSuccess = () => {
     fetchPassports();
     fetchFines();
     fetchEmergencyPassports();
   };
 
-  // ✨ УЛУЧШЕННАЯ логика показа лоадера - только если все загружается впервые
+  const handleUserDataRefresh = async () => {
+    if (user) {
+      await refreshUserData();
+    }
+  };
+
   const isInitialLoading = passportsLoading && finesLoading && emergencyLoading;
 
   if (isInitialLoading) {
     return <Loading fullScreen text="Загрузка данных..." />;
   }
 
-  // ✨ УЛУЧШЕННАЯ логика показа ошибки - только если это критические ошибки, НЕ связанные с авторизацией
   const hasCriticalError = (passportsError || finesError || emergencyError) &&
     !(passportsError && typeof passportsError === 'string' && passportsError.includes('Сессия истекла')) &&
     !(finesError && typeof finesError === 'string' && finesError.includes('Сессия истекла')) &&
@@ -202,6 +201,80 @@ const Dashboard: React.FC = () => {
       subtitle="Обзор системы"
     >
       <div className="space-y-6">
+        {/* User Info Banner */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <img
+                      src={getDiscordAvatarUrl(user, 64)}
+                      alt={`${getDisplayName(user)} avatar`}
+                      className="w-16 h-16 rounded-full"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                    <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">
+                        {getDisplayName(user).charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-dark-800 ${
+                      user.is_active ? 'bg-green-500' : 'bg-red-500'
+                    }`} />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-3">
+                      <h3 className="text-xl font-bold text-white">
+                        Добро пожаловать, {getDisplayName(user)}!
+                      </h3>
+                      <MessageCircle className="h-5 w-5 text-blue-400" />
+                    </div>
+                    <div className="flex items-center space-x-3 mt-1">
+                      <p className="text-blue-300">
+                        {getRoleDisplayName(user.role)}
+                      </p>
+                      {user.minecraft_username && (
+                        <>
+                          <span className="text-dark-400">•</span>
+                          <p className="text-green-400">
+                            Minecraft: {user.minecraft_username}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-dark-400 text-sm mt-1">
+                      Последняя проверка: {formatDate(user.last_role_check)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  {isUserDataOutdated(user) && (
+                    <Badge variant="warning">
+                      Данные устарели
+                    </Badge>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUserDataRefresh}
+                    leftIcon={<RefreshCw className="h-4 w-4" />}
+                  >
+                    Обновить данные
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
@@ -239,7 +312,7 @@ const Dashboard: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleNavigateToEmergency}
+                  onClick={() => navigate('/emergency')}
                   className="border-red-500/30 text-red-400 hover:bg-red-500/10"
                 >
                   Управлять
@@ -292,7 +365,6 @@ const Dashboard: React.FC = () => {
                 variant="outline"
                 size="sm"
                 leftIcon={<Filter className="h-4 w-4" />}
-                onClick={() => console.log('Filter clicked')}
               >
                 Фильтры
               </Button>
@@ -330,7 +402,7 @@ const Dashboard: React.FC = () => {
                     {!searchTerm && (
                       <Button
                         variant="outline"
-                        onClick={handleNavigateToEmergency}
+                        onClick={() => navigate('/emergency')}
                         leftIcon={<ShieldAlert className="h-4 w-4" />}
                       >
                         Перейти к управлению ЧС
@@ -344,7 +416,7 @@ const Dashboard: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleNavigateToEmergency}
+                        onClick={() => navigate('/emergency')}
                       >
                         Управлять всеми ЧС
                       </Button>
@@ -418,7 +490,6 @@ const Dashboard: React.FC = () => {
               </div>
             )}
 
-            {/* Остальные вкладки остаются такими же как в оригинале... */}
             {/* Fines Tab */}
             {activeTab === 'fines' && (
               <div className="space-y-4">
@@ -449,7 +520,7 @@ const Dashboard: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleNavigateToFines}
+                        onClick={() => navigate('/fines')}
                       >
                         Посмотреть все штрафы
                       </Button>
@@ -550,7 +621,7 @@ const Dashboard: React.FC = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleNavigateToPassports}
+                        onClick={() => navigate('/passports')}
                       >
                         Посмотреть все паспорта
                       </Button>

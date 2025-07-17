@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_active_admin, get_current_user
+from app.core.decorators import with_role_check
 from app.crud.user import user_crud
 from app.schemas.user import User, UserUpdate, UserPublic, UserStatistics, RoleCheckResult
 from app.models.user import User as UserModel
@@ -40,7 +41,8 @@ def read_user_me(
 
 
 @router.get("/", response_model=List[UserPublic])
-def read_users(
+@with_role_check("view_users")
+async def read_users(
         request: Request,
         db: Session = Depends(get_db),
         skip: int = 0,
@@ -79,7 +81,8 @@ def read_users(
 
 
 @router.get("/statistics", response_model=UserStatistics)
-def get_user_statistics(
+@with_role_check("view_user_statistics")
+async def get_user_statistics(
         request: Request,
         db: Session = Depends(get_db),
         current_user: UserModel = Depends(get_current_active_admin),
@@ -103,7 +106,8 @@ def get_user_statistics(
 
 
 @router.put("/{user_id}", response_model=User)
-def update_user(
+@with_role_check("update_user")
+async def update_user(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -158,7 +162,8 @@ def update_user(
 
 
 @router.get("/{user_id}", response_model=User)
-def read_user(
+@with_role_check("view_user")
+async def read_user(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -195,7 +200,8 @@ def read_user(
 
 
 @router.post("/{user_id}/deactivate", response_model=User)
-def deactivate_user(
+@with_role_check("deactivate_user")
+async def deactivate_user(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -240,7 +246,8 @@ def deactivate_user(
 
 
 @router.post("/{user_id}/activate", response_model=User)
-def activate_user(
+@with_role_check("activate_user")
+async def activate_user(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -323,7 +330,8 @@ async def check_user_roles(
 
 
 @router.get("/search/minecraft", response_model=List[UserPublic])
-def search_users_by_minecraft(
+@with_role_check("search_users_minecraft")
+async def search_users_by_minecraft(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -355,7 +363,8 @@ def search_users_by_minecraft(
 
 
 @router.get("/search/discord", response_model=List[UserPublic])
-def search_users_by_discord(
+@with_role_check("search_users_discord")
+async def search_users_by_discord(
         request: Request,
         *,
         db: Session = Depends(get_db),

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from app.core.database import get_db
 from app.core.deps import get_current_active_admin, get_current_police_or_admin
+from app.core.decorators import with_role_check
 from app.crud.log import log_crud
 from app.schemas.log import Log
 from app.models.user import User
@@ -13,7 +14,8 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[Log])
-def read_logs(
+@with_role_check("view_logs")
+async def read_logs(
         db: Session = Depends(get_db),
         skip: int = 0,
         limit: int = 100,
@@ -48,7 +50,8 @@ def read_logs(
 
 
 @router.get("/my", response_model=List[Log])
-def read_my_logs(
+@with_role_check("view_my_logs")
+async def read_my_logs(
         db: Session = Depends(get_db),
         skip: int = 0,
         limit: int = 100,

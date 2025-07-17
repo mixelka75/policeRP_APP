@@ -1,38 +1,85 @@
 // src/utils/index.ts
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
+import { User } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatDate(date: string | Date, formatString: string = 'dd.MM.yyyy HH:mm') {
+// ✅ ИСПРАВЛЕНО: Улучшенная обработка дат
+export function formatDate(date: string | Date | null | undefined, formatString: string = 'dd.MM.yyyy HH:mm') {
   try {
-    return format(new Date(date), formatString, { locale: ru });
+    if (!date) {
+      return 'Дата не указана';
+    }
+
+    let dateObj: Date;
+
+    if (typeof date === 'string') {
+      // Попытка парсинга ISO строки
+      dateObj = parseISO(date);
+
+      // Если parseISO не сработал, пробуем обычный Date
+      if (!isValid(dateObj)) {
+        dateObj = new Date(date);
+      }
+    } else {
+      dateObj = date;
+    }
+
+    // Проверяем, что дата корректная
+    if (!isValid(dateObj)) {
+      console.warn('Invalid date provided:', date);
+      return 'Неверная дата';
+    }
+
+    return format(dateObj, formatString, { locale: ru });
   } catch (error) {
-    console.error('Date formatting error:', error);
-    return 'Неверная дата';
+    console.error('Date formatting error:', error, 'Date:', date);
+    return 'Ошибка даты';
   }
 }
 
-export function formatRelativeTime(date: string | Date) {
+// ✅ ИСПРАВЛЕНО: Улучшенная обработка относительного времени
+export function formatRelativeTime(date: string | Date | null | undefined) {
   try {
-    return formatDistanceToNow(new Date(date), {
+    if (!date) {
+      return 'Дата не указана';
+    }
+
+    let dateObj: Date;
+
+    if (typeof date === 'string') {
+      dateObj = parseISO(date);
+      if (!isValid(dateObj)) {
+        dateObj = new Date(date);
+      }
+    } else {
+      dateObj = date;
+    }
+
+    if (!isValid(dateObj)) {
+      console.warn('Invalid date provided for relative time:', date);
+      return 'Неверная дата';
+    }
+
+    return formatDistanceToNow(dateObj, {
       addSuffix: true,
       locale: ru
     });
   } catch (error) {
-    console.error('Relative time formatting error:', error);
-    return 'Неверная дата';
+    console.error('Relative time formatting error:', error, 'Date:', date);
+    return 'Ошибка даты';
   }
 }
 
 export function formatMoney(amount: number) {
   try {
     if (typeof amount !== 'number' || isNaN(amount)) {
-      return '0 ₽';
+      return '0 АР';
     }
 
     return new Intl.NumberFormat('ru-RU', {
@@ -50,17 +97,187 @@ export function capitalizeFirst(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export function getInitials(firstName: string, lastName: string) {
+// ✅ ИСПРАВЛЕНО: Улучшенная генерация инициалов
+export function getInitials(firstName: string, lastName?: string) {
   try {
-    const first = firstName && typeof firstName === 'string' ? firstName.charAt(0) : '';
-    const last = lastName && typeof lastName === 'string' ? lastName.charAt(0) : '';
-    return `${first}${last}`.toUpperCase() || '??';
+    if (!firstName || typeof firstName !== 'string') {
+      return '??';
+    }
+
+    const first = firstName.trim().charAt(0);
+    const last = lastName && typeof lastName === 'string' ? lastName.trim().charAt(0) : '';
+
+    if (first && last) {
+      return `${first}${last}`.toUpperCase();
+    }
+
+    if (first && firstName.length > 1) {
+      return `${first}${firstName.charAt(1)}`.toUpperCase();
+    }
+
+    return first.toUpperCase() || '??';
   } catch (error) {
     console.error('Initials generation error:', error);
     return '??';
   }
 }
 
+// ✅ ИСПРАВЛЕНО: Улучшенная генерация Discord аватара
+export function getDiscordAvatarUrl(user: User | null | undefined, size: number = 128): string {
+  try {
+    if (!user || !user.discord_id) {
+      return `https://cdn.discordapp.com/embed/avatars/0.png`;
+    }
+
+    if (!user.discord_avatar) {
+      // Fallback к дефолтному аватару Discord
+      // Используем модуль от discord_id для определения дефолтного аватара
+      const defaultAvatarId = (parseInt(user.discord_id) % 5) || 0;
+      return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarId}.png`;
+    }
+
+    // Проверяем, анимированный ли аватар
+    const isAnimated = user.discord_avatar.startsWith('a_');
+    const extension = isAnimated ? 'gif' : 'png';
+
+    return `https://cdn.discordapp.com/avatars/${user.discord_id}/${user.discord_avatar}.${extension}?size=${size}`;
+  } catch (error) {
+    console.error('Discord avatar URL generation error:', error);
+    return `https://cdn.discordapp.com/embed/avatars/0.png`;
+  }
+}
+
+// ✅ ИСПРАВЛЕНО: Улучшенная генерация Minecraft скина
+export function getMinecraftSkinUrl(username: string | null | undefined, size: number = 128): string {
+  try {
+    if (!username || typeof username !== 'string' || username.trim() === '') {
+      return `https://mc-heads.net/avatar/steve/${size}`;
+    }
+
+    const cleanUsername = username.trim();
+    return `https://mc-heads.net/avatar/${encodeURIComponent(cleanUsername)}/${size}`;
+  } catch (error) {
+    console.error('Minecraft skin URL generation error:', error);
+    return `https://mc-heads.net/avatar/steve/${size}`;
+  }
+}
+
+// ✅ ИСПРАВЛЕНО: Улучшенная генерация полного имени пользователя
+export function getFullUserName(user: User | null | undefined): string {
+  try {
+    if (!user || !user.discord_username) {
+      return 'Unknown User';
+    }
+
+    // Проверяем, есть ли дискриминатор и он не равен '0'
+    if (user.discord_discriminator && user.discord_discriminator !== '0' && user.discord_discriminator !== 'undefined') {
+      // Старый формат Discord с дискриминатором
+      return `${user.discord_username}#${user.discord_discriminator}`;
+    } else {
+      // Новый формат Discord без дискриминатора
+      return `@${user.discord_username}`;
+    }
+  } catch (error) {
+    console.error('Full user name generation error:', error);
+    return 'Unknown User';
+  }
+}
+
+// ✅ ИСПРАВЛЕНО: Улучшенная генерация отображаемого имени
+export function getDisplayName(user: User | null | undefined): string {
+  try {
+    if (!user) {
+      return 'Unknown User';
+    }
+
+    // Если есть Minecraft username, используем его
+    if (user.minecraft_username && user.minecraft_username.trim() !== '') {
+      return user.minecraft_username;
+    }
+
+    // Иначе используем Discord username
+    if (user.discord_username && user.discord_username.trim() !== '') {
+      return user.discord_username;
+    }
+
+    return 'Unknown User';
+  } catch (error) {
+    console.error('Display name generation error:', error);
+    return 'Unknown User';
+  }
+}
+
+// ✅ ИСПРАВЛЕНО: Улучшенная проверка устаревших данных
+export function isUserDataOutdated(user: User | null | undefined, maxAgeMinutes: number = 30): boolean {
+  try {
+    if (!user || !user.last_role_check) {
+      return true;
+    }
+
+    const lastCheck = parseISO(user.last_role_check);
+    if (!isValid(lastCheck)) {
+      return true;
+    }
+
+    const now = new Date();
+    const diffMinutes = (now.getTime() - lastCheck.getTime()) / (1000 * 60);
+
+    return diffMinutes > maxAgeMinutes;
+  } catch (error) {
+    console.error('User data outdated check error:', error);
+    return true;
+  }
+}
+
+// ✅ ИСПРАВЛЕНО: Улучшенная генерация названия роли
+export function getRoleDisplayName(role: string | null | undefined): string {
+  if (!role || typeof role !== 'string') {
+    return 'Неизвестная роль';
+  }
+
+  switch (role.toLowerCase()) {
+    case 'admin':
+      return 'Администратор';
+    case 'police':
+      return 'Полицейский';
+    default:
+      return role;
+  }
+}
+
+// ✅ ИСПРАВЛЕНО: Улучшенная генерация цвета роли
+export function getRoleColor(role: string | null | undefined): string {
+  if (!role || typeof role !== 'string') {
+    return 'text-gray-400';
+  }
+
+  switch (role.toLowerCase()) {
+    case 'admin':
+      return 'text-red-400';
+    case 'police':
+      return 'text-blue-400';
+    default:
+      return 'text-gray-400';
+  }
+}
+
+// ✅ ИСПРАВЛЕНО: Улучшенная генерация цвета фона роли
+export function getRoleBackgroundColor(role: string | null | undefined): string {
+  if (!role || typeof role !== 'string') {
+    return 'bg-gray-500/20';
+  }
+
+  switch (role.toLowerCase()) {
+    case 'admin':
+      return 'bg-red-500/20';
+    case 'police':
+      return 'bg-blue-500/20';
+    default:
+      return 'bg-gray-500/20';
+  }
+}
+
+// ✅ СУЩЕСТВУЮЩИЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ
 export function validateForm(data: Record<string, any>, rules: Record<string, any>) {
   const errors: Record<string, string> = {};
 
@@ -118,12 +335,10 @@ export function throttle<T extends (...args: any[]) => any>(
 export function getErrorMessage(error: unknown): string {
   try {
     if (error && typeof error === 'object') {
-      // API Error с detail
       if ('detail' in error && typeof (error as any).detail === 'string') {
         return (error as any).detail;
       }
 
-      // Axios error response
       if ('response' in error && error.response && typeof error.response === 'object') {
         const response = error.response as any;
         if (response.data?.detail) {
@@ -134,7 +349,6 @@ export function getErrorMessage(error: unknown): string {
         }
       }
 
-      // Standard Error object
       if ('message' in error && typeof (error as any).message === 'string') {
         return (error as any).message;
       }

@@ -10,7 +10,7 @@ class Log(BaseModel):
     """
     __tablename__ = "logs"
     
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     action = Column(String(100), nullable=False)  # Тип действия (CREATE, UPDATE, DELETE)
     entity_type = Column(String(50), nullable=False)  # Тип сущности (passport, fine, user)
     entity_id = Column(Integer, nullable=True)  # ID сущности

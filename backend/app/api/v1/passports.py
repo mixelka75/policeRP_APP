@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_police_or_admin, get_current_user_with_minecraft
+from app.core.decorators import with_role_check
 from app.crud.passport import passport_crud
 from app.schemas.passport import (
     Passport,
@@ -20,7 +21,8 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[Passport])
-def read_passports(
+@with_role_check("view_passports")
+async def read_passports(
         request: Request,
         db: Session = Depends(get_db),
         skip: int = 0,
@@ -105,7 +107,8 @@ def read_emergency_passports(
 
 
 @router.post("/", response_model=Passport)
-def create_passport(
+@with_role_check("create_passport")
+async def create_passport(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -211,7 +214,8 @@ def find_passport_by_nickname(
 
 
 @router.put("/{passport_id}", response_model=Passport)
-def update_passport(
+@with_role_check("update_passport")
+async def update_passport(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -263,7 +267,8 @@ def update_passport(
 
 
 @router.post("/{passport_id}/emergency", response_model=PassportEmergencyResponse)
-def toggle_emergency_status(
+@with_role_check("update_passport_emergency")
+async def toggle_emergency_status(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -318,7 +323,8 @@ def toggle_emergency_status(
 
 
 @router.delete("/{passport_id}", response_model=Passport)
-def delete_passport(
+@with_role_check("delete_passport")
+async def delete_passport(
         request: Request,
         *,
         db: Session = Depends(get_db),

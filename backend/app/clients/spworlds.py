@@ -15,7 +15,7 @@ class SPWorldsClient:
         self.map_token = settings.SPWORLDS_MAP_TOKEN
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
-            timeout=30.0,
+            timeout=10.0,  # Reduced timeout for faster failure detection
             headers={
                 "User-Agent": "RP-Server-Backend/1.0.0"
             }
@@ -36,10 +36,15 @@ class SPWorldsClient:
             }
         """
         try:
+            # Создаем Authorization header в формате Bearer base64(ID:TOKEN)
+            import base64
+            auth_string = f"{self.map_id}:{self.map_token}"
+            auth_encoded = base64.b64encode(auth_string.encode()).decode()
+            
             response = await self.client.get(
-                f"/maps/{self.map_id}/users/{discord_id}",
+                f"/users/{discord_id}",
                 headers={
-                    "Authorization": f"Bearer {self.map_token}"
+                    "Authorization": f"Bearer {auth_encoded}"
                 }
             )
 
@@ -55,8 +60,14 @@ class SPWorldsClient:
                 print(f"SP-Worlds API error: {response.status_code} - {response.text}")
                 return None
 
+        except httpx.TimeoutException:
+            print(f"SP-Worlds API timeout for Discord ID {discord_id}")
+            return None
+        except httpx.ConnectError:
+            print(f"SP-Worlds API connection error for Discord ID {discord_id}")
+            return None
         except Exception as e:
-            print(f"SP-Worlds API request failed: {e}")
+            print(f"SP-Worlds API request failed for Discord ID {discord_id}: {e}")
             return None
 
     async def ping(self) -> bool:
@@ -67,8 +78,16 @@ class SPWorldsClient:
             True если API доступен
         """
         try:
-            response = await self.client.get("/ping")
-            return response.status_code == 200
+            # SP-Worlds API doesn't have a ping endpoint, so we'll test with a simple user lookup
+            # Using a non-existent Discord ID should return 404, which means API is working
+            response = await self.client.get("/users/1", timeout=5.0)
+            return response.status_code in [200, 404]
+        except httpx.TimeoutException:
+            print("SP-Worlds API ping timeout")
+            return False
+        except httpx.ConnectError:
+            print("SP-Worlds API connection error during ping")
+            return False
         except Exception as e:
             print(f"SP-Worlds ping failed: {e}")
             return False

@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -127,15 +127,29 @@ async def discord_callback(
                 user_role = discord_client.determine_user_role(member_info)
                 print(f"DEBUG: Determined user role: {user_role}")
                 
+                # Проверяем, что пользователь имеет нужные роли
+                if user_role is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="У вас нет необходимых ролей для доступа к системе"
+                    )
+                
+            except HTTPException:
+                # Пере-поднимаем HTTPException
+                raise
             except Exception as e:
                 print(f"DEBUG: Bot API error: {e}")
-                # Fallback - назначаем роль полицейского по умолчанию
-                user_roles = []
-                user_role = "police"
+                # Не назначаем роль по умолчанию, блокируем доступ
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Не удалось проверить роли пользователя"
+                )
         else:
-            print("DEBUG: No bot token configured, assigning police role")
-            user_roles = []
-            user_role = "police"
+            print("DEBUG: No bot token configured")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Сервер не настроен для проверки ролей"
+            )
 
         # Получаем данные из SP-Worlds API
         spworlds_data = await spworlds_client.find_user(str(discord_id))
@@ -145,7 +159,7 @@ async def discord_callback(
         # Проверяем, есть ли пользователь в базе
         user = user_crud.get_by_discord_id(db, discord_id=discord_id)
 
-        expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
 
         if user:
             # Обновляем существующего пользователя
@@ -194,6 +208,9 @@ async def discord_callback(
         redirect_url = f"{settings.FRONTEND_URL}/auth/callback?token={app_access_token}"
         return RedirectResponse(url=redirect_url)
 
+    except HTTPException:
+        # Пере-поднимаем HTTPException (403 ошибки аутентификации)
+        raise
     except Exception as e:
         # Логируем ошибку
         ActionLogger.log_anonymous_security_event(
@@ -247,6 +264,7 @@ async def get_current_user_info(
     """
     Получить информацию о текущем авторизованном пользователе
     """
+    print(f"DEBUG /me endpoint: Called for user {current_user.discord_username if current_user else 'None'}")
     # Логируем проверку токена
     ActionLogger.log_action(
         db=db,
@@ -263,7 +281,7 @@ async def get_current_user_info(
     )
 
     return {
-        "user": current_user,
+        "user": UserSchema.model_validate(current_user),
         "message": "Токен действителен"
     }
 
@@ -279,7 +297,7 @@ async def refresh_user_data(
     """
     try:
         # Проверяем, не истек ли Discord токен
-        if current_user.discord_expires_at and current_user.discord_expires_at < datetime.utcnow():
+        if current_user.discord_expires_at and current_user.discord_expires_at < datetime.now(timezone.utc):
             if current_user.discord_refresh_token:
                 # Обновляем токен
                 token_data = await discord_client.refresh_token(current_user.discord_refresh_token)
@@ -287,7 +305,7 @@ async def refresh_user_data(
                     access_token = token_data["access_token"]
                     refresh_token = token_data["refresh_token"]
                     expires_in = token_data["expires_in"]
-                    expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+                    expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
 
                     user_crud.update_discord_data(
                         db,
@@ -313,20 +331,64 @@ async def refresh_user_data(
         minecraft_username = spworlds_data.get("username") if spworlds_data else None
         minecraft_uuid = spworlds_data.get("uuid") if spworlds_data else None
 
-        # Получаем обновленную информацию о ролях
-        member_info = await discord_client.get_guild_member(
-            current_user.discord_access_token,
-            settings.DISCORD_GUILD_ID
-        )
-
-        if member_info:
-            user_roles = member_info.get("roles", [])
-            # Здесь нужно добавить логику определения роли на основе Discord ролей
-            # user_role = discord_client.determine_user_role(member_info, guild_roles)
-            user_role = current_user.role  # Пока оставляем текущую роль
+        # Получаем обновленную информацию о ролях через Bot API
+        if settings.DISCORD_BOT_TOKEN:
+            try:
+                member_info = await discord_client.get_guild_member_by_bot(
+                    settings.DISCORD_BOT_TOKEN,
+                    settings.DISCORD_GUILD_ID,
+                    current_user.discord_id
+                )
+                
+                if member_info:
+                    user_roles = member_info.get("roles", [])
+                    # Определяем роль на основе Discord ролей
+                    user_role = discord_client.determine_user_role(member_info)
+                    
+                    # Если роль None, пользователь потерял доступ
+                    if user_role is None:
+                        raise HTTPException(
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail="У вас больше нет необходимых ролей для доступа к системе"
+                        )
+                else:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Вы больше не состоите в требуемом Discord сервере"
+                    )
+            except HTTPException:
+                raise
+            except Exception as e:
+                print(f"DEBUG: Bot API error during refresh: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Не удалось проверить ваши роли"
+                )
         else:
-            user_roles = current_user.discord_roles
-            user_role = current_user.role
+            # Fallback через обычный OAuth токен (менее надежно)
+            member_info = await discord_client.get_guild_member(
+                current_user.discord_access_token,
+                settings.DISCORD_GUILD_ID
+            )
+
+            if member_info:
+                user_roles = member_info.get("roles", [])
+                user_role = discord_client.determine_user_role(member_info)
+                
+                if user_role is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="У вас больше нет необходимых ролей для доступа к системе"
+                    )
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Вы больше не состоите в требуемом Discord сервере"
+                )
+
+        # Проверяем, изменилась ли роль
+        role_changed = current_user.role != user_role
+        old_role = current_user.role
 
         # Обновляем данные пользователя
         updated_user = user_crud.update_discord_data(
@@ -338,6 +400,22 @@ async def refresh_user_data(
             discord_roles=user_roles
         )
 
+        # Логируем изменение роли отдельно
+        if role_changed:
+            ActionLogger.log_action(
+                db=db,
+                user=current_user,
+                action="ROLE_CHANGED",
+                entity_type="user",
+                entity_id=current_user.id,
+                details={
+                    "old_role": old_role,
+                    "new_role": user_role,
+                    "changed_by": "manual_refresh"
+                },
+                request=request
+            )
+
         # Логируем обновление данных
         ActionLogger.log_action(
             db=db,
@@ -348,16 +426,20 @@ async def refresh_user_data(
             details={
                 "minecraft_username": minecraft_username,
                 "minecraft_uuid": minecraft_uuid,
-                "role": user_role
+                "role": user_role,
+                "role_changed": role_changed
             },
             request=request
         )
 
         return {
-            "user": updated_user,
+            "user": UserSchema.model_validate(updated_user),
             "message": "Данные обновлены успешно"
         }
 
+    except HTTPException:
+        # Пере-поднимаем HTTPException как есть
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

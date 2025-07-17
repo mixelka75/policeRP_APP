@@ -1,4 +1,4 @@
-from typing import Generator
+from typing import Generator, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -19,7 +19,9 @@ def get_current_user(
     """
     Получение текущего пользователя по JWT токену
     """
+    print(f"DEBUG get_current_user: Received token: {credentials.credentials[:20]}...")
     payload = verify_token(credentials.credentials)
+    print(f"DEBUG get_current_user: Token payload: {payload}")
     discord_id = payload.get("sub")
 
     if not discord_id:
@@ -39,7 +41,9 @@ def get_current_user(
         )
 
     user = user_crud.get_by_discord_id(db, discord_id=discord_id)
+    print(f"DEBUG get_current_user: Found user: {user.discord_username if user else 'None'}")
     if not user:
+        print(f"DEBUG get_current_user: User not found for discord_id: {discord_id}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Пользователь не найден",
@@ -50,6 +54,15 @@ def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Пользователь заблокирован"
+        )
+
+    # Проверяем, что у пользователя есть валидная роль
+    print(f"DEBUG deps.py: User {user.discord_username} has role: '{user.role}', is_active: {user.is_active}")
+    if user.role not in ["admin", "police"]:
+        print(f"DEBUG deps.py: Invalid role '{user.role}', expected 'admin' or 'police'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="У вас нет необходимых ролей для доступа к системе"
         )
 
     return user
@@ -109,3 +122,67 @@ def verify_discord_user(
             detail="Требуется авторизация через Discord"
         )
     return current_user
+
+
+async def get_current_user_by_token(token: Optional[str], db: Session) -> User:
+    """
+    Получение текущего пользователя по JWT токену (для SSE)
+    """
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Токен не предоставлен",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        payload = verify_token(token)
+        discord_id = payload.get("sub")
+
+        if not discord_id:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Не удалось подтвердить учетные данные",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        try:
+            discord_id = int(discord_id)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Неверный формат Discord ID",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user = user_crud.get_by_discord_id(db, discord_id=discord_id)
+        
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Пользователь не найден",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Пользователь заблокирован"
+            )
+
+        if user.role not in ["admin", "police"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="У вас нет необходимых ролей для доступа к системе"
+            )
+
+        return user
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверный токен",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

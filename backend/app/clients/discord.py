@@ -255,7 +255,7 @@ class DiscordClient:
             print(f"Discord guild member (bot) failed: {e}")
             return None
 
-    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None) -> str:
+    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None) -> Optional[str]:
         """
         Определение роли пользователя на основе ролей Discord
 
@@ -264,7 +264,7 @@ class DiscordClient:
             guild_roles: Список ролей сервера (опционально)
 
         Returns:
-            Роль пользователя ('admin' или 'police')
+            Роль пользователя ('admin' или 'police') или None, если нет нужных ролей
         """
         user_role_ids = member_data.get("roles", [])
 
@@ -291,8 +291,8 @@ class DiscordClient:
             if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
                 return "police"
 
-        # По умолчанию возвращаем роль полицейского
-        return "police"
+        # Если нет нужных ролей, возвращаем None
+        return None
 
     async def close(self):
         """

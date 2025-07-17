@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_police_or_admin
+from app.core.decorators import with_role_check
 from app.crud.fine import fine_crud
 from app.crud.passport import passport_crud
 from app.schemas.fine import Fine, FineCreate, FineUpdate
@@ -14,7 +15,8 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[Fine])
-def read_fines(
+@with_role_check("view_fines")
+async def read_fines(
         request: Request,
         db: Session = Depends(get_db),
         skip: int = 0,
@@ -92,7 +94,8 @@ def read_my_fines(
 
 
 @router.post("/", response_model=Fine)
-def create_fine(
+@with_role_check("create_fine")
+async def create_fine(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -171,7 +174,8 @@ def read_fine(
 
 
 @router.put("/{fine_id}", response_model=Fine)
-def update_fine(
+@with_role_check("update_fine")
+async def update_fine(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -229,7 +233,8 @@ def update_fine(
 
 
 @router.delete("/{fine_id}", response_model=Fine)
-def delete_fine(
+@with_role_check("delete_fine")
+async def delete_fine(
         request: Request,
         *,
         db: Session = Depends(get_db),

@@ -5,11 +5,13 @@ import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
 import { Loading } from '@/components/ui';
 import Login from '@/pages/Login';
+import DiscordCallback from '@/pages/DiscordCallback';
 import Dashboard from '@/pages/Dashboard';
 import Passports from '@/pages/Passports';
 import Fines from '@/pages/Fines';
-import Emergency from '@/pages/Emergency'; // ✨ НОВЫЙ ИМПОРТ
+import Emergency from '@/pages/Emergency';
 import Users from '@/pages/Users';
+import RoleManagement from '@/pages/RoleManagement';
 import Logs from '@/pages/Logs';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({
@@ -60,6 +62,16 @@ const App: React.FC = () => {
             }
           />
 
+          {/* ✅ NEW: Discord callback route */}
+          <Route
+            path="/auth/callback"
+            element={
+              <PublicRoute>
+                <DiscordCallback />
+              </PublicRoute>
+            }
+          />
+
           {/* Protected routes */}
           <Route
             path="/dashboard"
@@ -85,7 +97,6 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          {/* ✨ НОВЫЙ РОУТ для страницы ЧС */}
           <Route
             path="/emergency"
             element={
@@ -101,6 +112,14 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute adminOnly>
                 <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roles"
+            element={
+              <ProtectedRoute adminOnly>
+                <RoleManagement />
               </ProtectedRoute>
             }
           />

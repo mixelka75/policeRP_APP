@@ -68,7 +68,7 @@ const Logs: React.FC = () => {
     const matchesSearch = !searchTerm ||
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user?.username.toLowerCase().includes(searchTerm.toLowerCase());
+      (user?.discord_username && user.discord_username.toLowerCase().includes(searchTerm.toLowerCase()));
 
     // ✨ ИСПРАВЛЕННЫЙ фильтр по действию
     const matchesAction = !selectedAction || log.action === selectedAction;
@@ -235,7 +235,7 @@ const Logs: React.FC = () => {
       label: 'Пользователь',
       render: (userId: number) => {
         const user = usersMap.get(userId);
-        if (!user) return <span className="text-dark-500">Неизвестен</span>;
+        if (!user || !user.discord_username) return <span className="text-dark-500">Неизвестен</span>;
 
         return (
           <div className="flex items-center space-x-2">
@@ -244,9 +244,9 @@ const Logs: React.FC = () => {
                 ? 'bg-red-500/20 text-red-400'
                 : 'bg-blue-500/20 text-blue-400'
             }`}>
-              {user.username.charAt(0).toUpperCase()}
+              {user.discord_username.charAt(0).toUpperCase()}
             </div>
-            <span className="text-sm text-dark-100">{user.username}</span>
+            <span className="text-sm text-dark-100">{user.discord_username}</span>
           </div>
         );
       },
@@ -424,7 +424,7 @@ const Logs: React.FC = () => {
                       <Icon className={`h-4 w-4 ${getActionColor(log.action)}`} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-dark-100">
-                          <span className="font-medium">{user?.username || 'Неизвестен'}</span>
+                          <span className="font-medium">{(user && user.discord_username) || 'Неизвестен'}</span>
                           {' '}
                           <span className={getActionColor(log.action)}>
                             {getActionName(log.action).toLowerCase()}

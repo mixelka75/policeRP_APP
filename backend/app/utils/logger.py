@@ -366,11 +366,11 @@ class ActionLogger:
             )
 
         # Создаем лог без пользователя - для анонимных событий
-        # Используем специальный user_id = -1 для анонимных событий
+        # Используем user_id = None для анонимных событий
         try:
             from app.models.log import Log
             log_entry = Log(
-                user_id=-1,  # Специальный ID для анонимных событий
+                user_id=None,  # NULL для анонимных событий
                 action="SECURITY_EVENT",
                 entity_type="security",
                 details={

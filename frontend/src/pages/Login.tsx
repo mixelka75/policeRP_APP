@@ -1,7 +1,7 @@
 // src/pages/Login.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, MessageCircle, AlertTriangle, Clock, CheckCircle, X } from 'lucide-react';
+import { Shield, MessageCircle, AlertTriangle, Clock, CheckCircle, X, Gamepad2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { Button, Card, Badge, Loading } from '@/components/ui';
 import { apiService } from '@/services/api';
@@ -83,7 +83,7 @@ const Login: React.FC = () => {
 
   if (callbackLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800">
+      <div className="min-h-screen flex items-center justify-center bg-minecraft-dark">
         <Loading size="lg" text="Завершение авторизации..." />
       </div>
     );
@@ -91,20 +91,24 @@ const Login: React.FC = () => {
 
   if (isRedirecting) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800">
+      <div className="min-h-screen flex items-center justify-center bg-minecraft-dark">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="text-center"
         >
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
-            <MessageCircle className="w-8 h-8 text-white animate-pulse" />
-          </div>
-          <h2 className="text-xl font-semibold text-white mb-2">Переход к Discord</h2>
-          <p className="text-dark-400 mb-4">Перенаправляем вас на Discord для авторизации...</p>
-          <div className="flex items-center justify-center space-x-2">
-            <Clock className="w-4 h-4 text-primary-400" />
-            <span className="text-sm text-primary-400">Подождите...</span>
+          <motion.div
+            animate={{ y: [-10, 10, -10] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-20 h-20 bg-minecraft-gradient rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-minecraft animate-glow"
+          >
+            <MessageCircle className="w-10 h-10 text-white animate-pulse" />
+          </motion.div>
+          <h2 className="text-2xl font-bold text-white mb-2">Переход к Discord</h2>
+          <p className="text-gray-300 mb-6">Перенаправляем вас на Discord для авторизации...</p>
+          <div className="flex items-center justify-center space-x-3">
+            <Clock className="w-5 h-5 text-purple-400 animate-pulse" />
+            <span className="text-purple-400 animate-pulse">Подождите...</span>
           </div>
         </motion.div>
       </div>
@@ -112,25 +116,59 @@ const Login: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-minecraft-dark p-4 relative overflow-hidden">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-purple-500/30 rounded-full"
+            animate={{
+              y: [0, -window.innerHeight],
+              x: [Math.random() * window.innerWidth, Math.random() * window.innerWidth],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              delay: Math.random() * 10,
+            }}
+          />
+        ))}
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md relative z-10"
       >
-        <Card className="bg-dark-800/80 backdrop-blur-lg border-gray-700/50">
+        <Card variant="minecraft" className="overflow-hidden">
           <div className="text-center mb-8">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mb-4"
+              className="mx-auto w-20 h-20 bg-minecraft-gradient rounded-2xl flex items-center justify-center mb-6 shadow-minecraft animate-glow"
             >
-              <Shield className="w-8 h-8 text-white" />
+              <Gamepad2 className="w-10 h-10 text-white" />
             </motion.div>
-            <h1 className="text-2xl font-bold text-white mb-2">PR Police</h1>
-            <p className="text-gray-400">Система управления паспортами и штрафами</p>
+            <motion.h1
+              className="text-3xl font-bold text-white mb-2 minecraft-gradient-text"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              Панд-Ратония
+            </motion.h1>
+            <motion.p
+              className="text-gray-300"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              Система управления паспортами и штрафами
+            </motion.p>
           </div>
 
           {/* Discord Status */}
@@ -138,14 +176,17 @@ const Login: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.5 }}
               className="mb-6"
             >
-              <div className="bg-dark-700/50 rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-medium text-white mb-2">Статус интеграции</h3>
+              <Card variant="glass" className="p-4 space-y-3">
+                <h3 className="text-sm font-medium text-white mb-3 flex items-center">
+                  <Shield className="w-4 h-4 mr-2 text-purple-400" />
+                  Статус интеграции
+                </h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-dark-400">Discord</span>
+                    <span className="text-xs text-gray-300">Discord</span>
                     <div className="flex items-center space-x-2">
                       {discordStatus.discord_configured ? (
                         <CheckCircle className="w-4 h-4 text-green-400" />
@@ -161,7 +202,7 @@ const Login: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-dark-400">Сервер</span>
+                    <span className="text-xs text-gray-300">Сервер</span>
                     <div className="flex items-center space-x-2">
                       {discordStatus.guild_configured ? (
                         <CheckCircle className="w-4 h-4 text-green-400" />
@@ -177,7 +218,7 @@ const Login: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-dark-400">Роли</span>
+                    <span className="text-xs text-gray-300">Роли</span>
                     <div className="flex items-center space-x-2">
                       {discordStatus.roles_configured ? (
                         <CheckCircle className="w-4 h-4 text-green-400" />
@@ -193,19 +234,25 @@ const Login: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </Card>
             </motion.div>
           )}
 
           {/* Login Button */}
-          <div className="space-y-4">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="space-y-4"
+          >
             <Button
               onClick={handleDiscordLogin}
-              variant="primary"
+              variant="minecraft"
               loading={isLoading || isGettingUrl}
               disabled={!discordStatus?.discord_configured}
               fullWidth
               size="lg"
+              glow
               leftIcon={!isLoading && !isGettingUrl ? <MessageCircle className="w-5 h-5" /> : undefined}
             >
               {isLoading || isGettingUrl ? 'Подключение...' : 'Войти через Discord'}
@@ -215,7 +262,7 @@ const Login: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3"
+                className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3"
               >
                 <div className="flex items-center space-x-2">
                   <AlertTriangle className="h-4 w-4 text-yellow-400" />
@@ -225,14 +272,14 @@ const Login: React.FC = () => {
                 </div>
               </motion.div>
             )}
-          </div>
+          </motion.div>
 
           {/* Error Display */}
           {(error || authError) && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mt-4"
+              className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mt-4"
             >
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="h-4 w-4 text-red-400" />
@@ -257,21 +304,45 @@ const Login: React.FC = () => {
           )}
 
           {/* Info */}
-          <div className="mt-6 text-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="mt-6 text-center"
+          >
             <p className="text-gray-400 text-sm">
               Для входа в систему необходимо иметь роль админа или полицейского
             </p>
-          </div>
+          </motion.div>
 
           {/* Additional Info */}
-          <div className="mt-6 bg-dark-700/30 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-white mb-2">Требования для доступа:</h4>
-            <ul className="text-xs text-dark-400 space-y-1">
-              <li>• Членство в Discord сервере</li>
-              <li>• Роль админа или полицейского на сервере</li>
-              <li>• Активная учетная запись Discord</li>
-            </ul>
-          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="mt-6"
+          >
+            <Card variant="glass" className="p-4">
+              <h4 className="text-sm font-medium text-white mb-3 flex items-center">
+                <Shield className="w-4 h-4 mr-2 text-purple-400" />
+                Требования для доступа:
+              </h4>
+              <ul className="text-xs text-gray-300 space-y-1">
+                <li className="flex items-center">
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2" />
+                  Членство в Discord сервере
+                </li>
+                <li className="flex items-center">
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2" />
+                  Роль админа или полицейского на сервере
+                </li>
+                <li className="flex items-center">
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mr-2" />
+                  Активная учетная запись Discord
+                </li>
+              </ul>
+            </Card>
+          </motion.div>
         </Card>
       </motion.div>
     </div>

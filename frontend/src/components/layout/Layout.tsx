@@ -1,11 +1,11 @@
 // src/components/layout/Layout.tsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Menu, RefreshCw, MessageCircle, AlertTriangle } from 'lucide-react';
+import { Menu, RefreshCw, MessageCircle, AlertTriangle, User } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import Sidebar from './Sidebar';
 import { Button } from '@/components/ui';
-import { getDiscordAvatarUrl, getDisplayName, getRoleDisplayName, isUserDataOutdated } from '@/utils';
+import { getDisplayName, getRoleDisplayName, isUserDataOutdated } from '@/utils';
 import { cn } from '@/utils';
 
 interface LayoutProps {
@@ -36,7 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
   const isDataOutdated = user ? isUserDataOutdated(user) : false;
 
   return (
-    <div className="min-h-screen bg-dark-950 flex">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex">
       {/* Sidebar */}
       <div className="lg:hidden">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -48,7 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Header */}
-        <header className="bg-dark-900/50 backdrop-blur-sm border-b border-dark-600 flex-shrink-0">
+        <header className="bg-black/20 backdrop-blur-sm border-b border-purple-500/30 flex-shrink-0">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Left side */}
@@ -68,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                       {title}
                     </h1>
                     {subtitle && (
-                      <p className="text-sm text-dark-400 mt-1">
+                      <p className="text-sm text-gray-300 mt-1">
                         {subtitle}
                       </p>
                     )}
@@ -99,39 +99,24 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                   </Button>
                 )}
 
-                {/* User info */}
+                {/* User info без аватарки */}
                 <div className="flex items-center space-x-3">
                   {user ? (
                     <>
-                      {/* User Avatar */}
+                      {/* Иконка пользователя вместо аватарки */}
                       <div className="relative">
-                        {/* Discord Avatar */}
-                        <img
-                          src={getDiscordAvatarUrl(user, 32)}
-                          alt={`${getDisplayName(user)} avatar`}
-                          className="w-8 h-8 rounded-full"
-                          onError={(e) => {
-                            // Скрываем изображение при ошибке загрузки
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                          }}
-                        />
-                        {/* Fallback аватар */}
-                        <div
-                          className="absolute inset-0 w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center"
-                          style={{
-                            // Показываем fallback только если основное изображение скрыто
-                            display: 'flex'
-                          }}
-                        >
-                          <span className="text-white font-medium text-sm">
-                            {getDisplayName(user).charAt(0).toUpperCase()}
-                          </span>
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center",
+                          user.role === 'admin'
+                            ? 'bg-gradient-to-br from-red-500 to-red-600'
+                            : 'bg-gradient-to-br from-blue-500 to-blue-600'
+                        )}>
+                          <User className="w-4 h-4 text-white" />
                         </div>
 
                         {/* Status indicator */}
                         <div className={cn(
-                          "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-dark-900",
+                          "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-gray-900",
                           user.is_active ? "bg-green-500" : "bg-red-500"
                         )} />
                       </div>
@@ -148,7 +133,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <p className="text-xs text-dark-400">
+                          <p className="text-xs text-gray-300">
                             {getRoleDisplayName(user.role)}
                           </p>
                           {isDataOutdated && (
@@ -161,15 +146,14 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                     </>
                   ) : (
                     <>
-                      {/* Fallback для отсутствующего пользователя */}
                       <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-medium text-sm">?</span>
+                        <User className="w-4 h-4 text-white" />
                       </div>
                       <div className="hidden sm:block">
                         <p className="text-sm font-medium text-white">
                           Не авторизован
                         </p>
-                        <p className="text-xs text-dark-400">
+                        <p className="text-xs text-gray-300">
                           Гость
                         </p>
                       </div>
@@ -210,13 +194,13 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
 
         {/* Actions Bar */}
         {actions && (
-          <div className="bg-dark-900/30 border-b border-dark-600 px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
+          <div className="bg-black/20 border-b border-purple-500/30 px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
             {actions}
           </div>
         )}
 
         {/* Page Content */}
-        <main className="flex-1">
+        <main className="flex-1 backdrop-blur-sm">
           <div className="px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </div>

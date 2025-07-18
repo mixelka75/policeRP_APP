@@ -148,7 +148,7 @@ const Select: React.FC<SelectProps> = ({
                   )}
                 </motion.button>
               ))}
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

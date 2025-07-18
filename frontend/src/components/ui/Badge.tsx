@@ -26,12 +26,19 @@ const Badge: React.FC<BadgeProps> = ({
   );
 
   const variantClasses = cn({
+    // ✨ ОБНОВЛЕННЫЙ primary - новая желто-оранжевая схема
     'bg-primary-500/20 text-primary-400 border border-primary-500/30': variant === 'primary',
-    'bg-dark-600 text-dark-300 border border-dark-500': variant === 'secondary',
+
+    // ✨ ОБНОВЛЕННЫЙ secondary - розово-оранжевая схема
+    'bg-secondary-500/20 text-secondary-400 border border-secondary-500/30': variant === 'secondary',
+
+    // Остальные цвета остаются функциональными
     'bg-green-500/20 text-green-400 border border-green-500/30': variant === 'success',
     'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30': variant === 'warning',
     'bg-red-500/20 text-red-400 border border-red-500/30': variant === 'danger',
-    'bg-blue-500/20 text-blue-400 border border-blue-500/30': variant === 'info',
+
+    // ✨ ОБНОВЛЕННЫЙ info - розово-фиолетовая схема
+    'bg-accent-500/20 text-accent-400 border border-accent-500/30': variant === 'info',
   });
 
   return (

@@ -109,23 +109,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* ✨ ОБНОВЛЕННЫЙ Sidebar с новой цветовой схемой */}
       <motion.div
         initial={{ x: -300 }}
         animate={{ x: isOpen ? 0 : -300 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed top-0 left-0 z-50 h-full w-64 bg-gradient-to-b from-gray-900 via-purple-900 to-blue-900 border-r border-purple-500/30 shadow-2xl lg:translate-x-0 lg:static lg:inset-0 lg:h-screen"
+        className="fixed top-0 left-0 z-50 h-full w-64 bg-minecraft-dark border-r border-primary-500/30 shadow-2xl lg:translate-x-0 lg:static lg:inset-0 lg:h-screen"
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="p-6 border-b border-purple-500/30 flex-shrink-0">
+          {/* ✨ ОБНОВЛЕННЫЙ Header */}
+          <div className="p-6 border-b border-primary-500/30 flex-shrink-0">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 via-secondary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-primary-glow">
                 <Gamepad2 className="h-7 w-7 text-white" />
               </div>
               <div className="flex-1">
                 <h1 className="text-xl font-bold text-white">Панд-Ратония</h1>
-                <p className="text-xs text-purple-300">Система управления</p>
+                <p className="text-xs text-primary-300">Система управления</p> {/* ✨ НОВЫЙ цвет */}
               </div>
               <div className="flex-shrink-0">
                 <LiveStatusIndicator />
@@ -133,20 +133,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          {/* User Info без аватарки */}
-          <div className="p-6 border-b border-purple-500/30 flex-shrink-0">
+          {/* ✨ ОБНОВЛЕННАЯ User Info */}
+          <div className="p-6 border-b border-primary-500/30 flex-shrink-0">
             {user ? (
               <div className="space-y-4">
-                {/* User Card */}
-                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-purple-500/20">
+                {/* ✨ ОБНОВЛЕННАЯ User Card */}
+                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-primary-500/20">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
-                      {/* Иконка пользователя вместо аватарки */}
+                      {/* ✨ ОБНОВЛЕННАЯ иконка пользователя */}
                       <div className={cn(
                         "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg",
                         user.role === 'admin'
                           ? 'bg-gradient-to-br from-red-500 to-red-600'
-                          : 'bg-gradient-to-br from-green-500 to-green-600'
+                          : 'bg-gradient-to-br from-primary-500 to-secondary-500' // ✨ НОВЫЙ градиент
                       )}>
                         <User className="w-6 h-6 text-white" />
                       </div>
@@ -164,20 +164,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                           {getDisplayName(user)}
                         </p>
                         {isDataOutdated && (
-                          <AlertCircle className="h-3 w-3 text-yellow-400" />
+                          <AlertCircle className="h-3 w-3 text-warning-400" />
                         )}
                       </div>
-                      <p className="text-xs text-purple-300 capitalize">
+                      <p className="text-xs text-primary-300 capitalize"> {/* ✨ НОВЫЙ цвет */}
                         {getRoleDisplayName(user.role)}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* User Details */}
-                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-purple-500/20 space-y-2">
+                {/* ✨ ОБНОВЛЕННЫЕ User Details */}
+                <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-primary-500/20 space-y-2">
                   <div className="flex items-center space-x-2">
-                    <MessageCircle className="h-4 w-4 text-blue-400" />
+                    <MessageCircle className="h-4 w-4 text-secondary-400" /> {/* ✨ НОВЫЙ цвет */}
                     <span className="text-xs text-gray-300 truncate">
                       {getFullUserName(user)}
                     </span>
@@ -185,7 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
                   {user.minecraft_username && (
                     <div className="flex items-center space-x-2">
-                      <Gamepad2 className="h-4 w-4 text-green-400" />
+                      <Gamepad2 className="h-4 w-4 text-accent-400" /> {/* ✨ НОВЫЙ цвет */}
                       <span className="text-xs text-gray-300 truncate">
                         {user.minecraft_username}
                       </span>
@@ -194,12 +194,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
                   {isDataOutdated && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-yellow-400">
+                      <span className="text-xs text-warning-400">
                         Данные устарели
                       </span>
                       <button
                         onClick={handleRefreshUserData}
-                        className="text-yellow-400 hover:text-yellow-300 transition-colors"
+                        className="text-warning-400 hover:text-warning-300 transition-colors"
                       >
                         <RefreshCw className="h-3 w-3" />
                       </button>
@@ -207,25 +207,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   )}
                 </div>
 
-                {/* Quick Actions */}
+                {/* ✨ ОБНОВЛЕННЫЕ Quick Actions */}
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={handleRefreshUserData}
-                    className="flex-1 flex items-center justify-center space-x-2 py-2 px-3 bg-black/20 hover:bg-black/30 rounded-lg transition-colors border border-purple-500/20"
+                    className="flex-1 flex items-center justify-center space-x-2 py-2 px-3 bg-black/20 hover:bg-black/30 rounded-lg transition-colors border border-primary-500/20"
                     title="Обновить данные"
                   >
-                    <RefreshCw className="h-4 w-4 text-purple-400" />
-                    <span className="text-xs text-purple-300">Обновить</span>
+                    <RefreshCw className="h-4 w-4 text-primary-400" /> {/* ✨ НОВЫЙ цвет */}
+                    <span className="text-xs text-primary-300">Обновить</span> {/* ✨ НОВЫЙ цвет */}
                   </button>
                   {user.discord_id && (
                     <a
                       href={`https://discord.com/users/${user.discord_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center p-2 bg-black/20 hover:bg-black/30 rounded-lg transition-colors border border-purple-500/20"
+                      className="flex items-center justify-center p-2 bg-black/20 hover:bg-black/30 rounded-lg transition-colors border border-primary-500/20"
                       title="Открыть профиль в Discord"
                     >
-                      <ExternalLink className="h-4 w-4 text-purple-400" />
+                      <ExternalLink className="h-4 w-4 text-primary-400" /> {/* ✨ НОВЫЙ цвет */}
                     </a>
                   )}
                 </div>
@@ -241,7 +241,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          {/* Navigation */}
+          {/* ✨ ОБНОВЛЕННАЯ Navigation */}
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {filteredItems.map((item) => (
               <Link
@@ -250,9 +250,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 onClick={onClose}
                 className={cn(
                   'flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200',
-                  'hover:bg-black/20 group border border-transparent hover:border-purple-500/20',
+                  'hover:bg-black/20 group border border-transparent hover:border-primary-500/20',
                   {
-                    'bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-500/30 text-white shadow-lg':
+                    // ✨ ОБНОВЛЕННОЕ активное состояние
+                    'bg-gradient-to-r from-primary-500/20 to-secondary-500/20 border-primary-500/30 text-white shadow-lg':
                       item.current,
                     'text-gray-300 hover:text-white': !item.current,
                   }
@@ -261,7 +262,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               >
                 <item.icon
                   className={cn('h-5 w-5', {
-                    'text-purple-300': item.current,
+                    'text-primary-300': item.current, // ✨ НОВЫЙ цвет активной иконки
                     'text-gray-400 group-hover:text-white': !item.current,
                     'text-red-400': item.href === '/emergency' && !item.current,
                   })}
@@ -276,8 +277,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             ))}
           </nav>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-purple-500/30 flex-shrink-0">
+          {/* ✨ ОБНОВЛЕННЫЙ Footer */}
+          <div className="p-4 border-t border-primary-500/30 flex-shrink-0">
             <button
               onClick={handleLogout}
               className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 text-red-400 hover:bg-red-500/10 hover:text-red-300 border border-transparent hover:border-red-500/20"

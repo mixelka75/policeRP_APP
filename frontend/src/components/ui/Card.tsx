@@ -27,24 +27,24 @@ const Card: React.FC<CardProps> = ({
   });
 
   const variantClasses = cn({
-    // Default card
-    'bg-black/20 backdrop-blur-sm border border-purple-500/30 shadow-lg': variant === 'default',
+    // Default card - Новая схема
+    'bg-black/20 backdrop-blur-sm border border-primary-500/30 shadow-lg': variant === 'default',
 
-    // Glass card
+    // Glass card - Обновленная схема
     'bg-black/10 backdrop-blur-md border border-white/10 shadow-glass': variant === 'glass',
 
-    // Minecraft themed card
-    'minecraft-card': variant === 'minecraft',
+    // Minecraft themed card - Новые цвета
+    'minecraft-card bg-gradient-to-br from-primary-500/5 to-accent-500/5': variant === 'minecraft',
 
-    // Glowing card
-    'bg-black/20 backdrop-blur-sm border border-purple-500/50 shadow-glow animate-glow': variant === 'glow',
+    // Glowing card - Новое свечение
+    'bg-black/20 backdrop-blur-sm border border-primary-500/50 shadow-primary-glow animate-glow': variant === 'glow',
   });
 
   const hoverClasses = cn({
-    'hover:shadow-xl hover:border-purple-500/50 hover:bg-black/30': hover && variant === 'default',
-    'hover:shadow-minecraft-hover hover:border-purple-500/50': hover && variant === 'minecraft',
+    'hover:shadow-xl hover:border-primary-500/50 hover:bg-black/30': hover && variant === 'default',
+    'hover:shadow-minecraft-hover hover:border-primary-500/50': hover && variant === 'minecraft',
     'hover:shadow-glass hover:border-white/20': hover && variant === 'glass',
-    'hover:shadow-neon': hover && variant === 'glow',
+    'hover:shadow-secondary-glow': hover && variant === 'glow',
   });
 
   const Component = onClick ? motion.button : motion.div;
@@ -77,11 +77,11 @@ const Card: React.FC<CardProps> = ({
       onClick={onClick}
     >
       {variant === 'minecraft' && (
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 rounded-xl pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-accent-500/5 rounded-xl pointer-events-none" />
       )}
 
       {variant === 'glow' && (
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-xl pointer-events-none animate-pulse" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 to-secondary-500/10 rounded-xl pointer-events-none animate-pulse" />
       )}
 
       <div className="relative z-10">

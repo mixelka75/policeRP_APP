@@ -36,7 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
   const isDataOutdated = user ? isUserDataOutdated(user) : false;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex">
+    <div className="min-h-screen bg-minecraft-dark flex">
       {/* Sidebar */}
       <div className="lg:hidden">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
@@ -47,8 +47,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Header */}
-        <header className="bg-black/20 backdrop-blur-sm border-b border-purple-500/30 flex-shrink-0">
+        {/* ✨ ОБНОВЛЕННЫЙ Header с новой цветовой схемой */}
+        <header className="bg-black/20 backdrop-blur-sm border-b border-primary-500/30 flex-shrink-0">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               {/* Left side */}
@@ -78,7 +78,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
 
               {/* Right side */}
               <div className="flex items-center space-x-4">
-                {/* User refresh button */}
+                {/* ✨ ОБНОВЛЕННАЯ кнопка обновления пользователя */}
                 {user && (
                   <Button
                     variant="ghost"
@@ -87,7 +87,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                     disabled={isRefreshing}
                     className={cn(
                       "p-2",
-                      isDataOutdated && "text-yellow-400 hover:text-yellow-300"
+                      // ✨ НОВЫЕ цвета для устаревших данных
+                      isDataOutdated && "text-warning-400 hover:text-warning-300"
                     )}
                     title={isDataOutdated ? "Данные пользователя устарели" : "Обновить данные"}
                   >
@@ -99,17 +100,17 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                   </Button>
                 )}
 
-                {/* User info без аватарки */}
+                {/* ✨ ОБНОВЛЕННАЯ информация о пользователе */}
                 <div className="flex items-center space-x-3">
                   {user ? (
                     <>
-                      {/* Иконка пользователя вместо аватарки */}
+                      {/* ✨ ОБНОВЛЕННАЯ иконка пользователя */}
                       <div className="relative">
                         <div className={cn(
                           "w-8 h-8 rounded-full flex items-center justify-center",
                           user.role === 'admin'
                             ? 'bg-gradient-to-br from-red-500 to-red-600'
-                            : 'bg-gradient-to-br from-blue-500 to-blue-600'
+                            : 'bg-gradient-to-br from-primary-500 to-secondary-500' // ✨ НОВЫЙ градиент для полицейских
                         )}>
                           <User className="w-4 h-4 text-white" />
                         </div>
@@ -121,15 +122,15 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                         )} />
                       </div>
 
-                      {/* User details */}
+                      {/* ✨ ОБНОВЛЕННЫЕ детали пользователя */}
                       <div className="hidden sm:block">
                         <div className="flex items-center space-x-2">
                           <p className="text-sm font-medium text-white">
                             {getDisplayName(user)}
                           </p>
-                          <MessageCircle className="h-3 w-3 text-blue-400" />
+                          <MessageCircle className="h-3 w-3 text-secondary-400" /> {/* ✨ НОВЫЙ цвет */}
                           {isDataOutdated && (
-                            <AlertTriangle className="h-3 w-3 text-yellow-400" />
+                            <AlertTriangle className="h-3 w-3 text-warning-400" />
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
@@ -137,7 +138,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                             {getRoleDisplayName(user.role)}
                           </p>
                           {isDataOutdated && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-500/20 text-warning-400">
                               Устарело
                             </span>
                           )}
@@ -165,17 +166,17 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
           </div>
         </header>
 
-        {/* User Data Warning */}
+        {/* ✨ ОБНОВЛЕННОЕ предупреждение об устаревших данных */}
         {user && isDataOutdated && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-yellow-500/10 border-b border-yellow-500/20 px-4 sm:px-6 lg:px-8 py-2"
+            className="bg-warning-500/10 border-b border-warning-500/20 px-4 sm:px-6 lg:px-8 py-2"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-4 w-4 text-yellow-400" />
-                <span className="text-sm text-yellow-400">
+                <AlertTriangle className="h-4 w-4 text-warning-400" />
+                <span className="text-sm text-warning-400">
                   Данные пользователя устарели. Рекомендуется обновить.
                 </span>
               </div>
@@ -184,7 +185,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                 size="sm"
                 onClick={handleRefreshUserData}
                 disabled={isRefreshing}
-                className="text-yellow-400 hover:text-yellow-300"
+                className="text-warning-400 hover:text-warning-300"
               >
                 {isRefreshing ? 'Обновление...' : 'Обновить'}
               </Button>
@@ -192,9 +193,9 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
           </motion.div>
         )}
 
-        {/* Actions Bar */}
+        {/* ✨ ОБНОВЛЕННАЯ панель действий */}
         {actions && (
-          <div className="bg-black/20 border-b border-purple-500/30 px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
+          <div className="bg-black/20 border-b border-primary-500/30 px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
             {actions}
           </div>
         )}

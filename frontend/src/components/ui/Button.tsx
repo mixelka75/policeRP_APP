@@ -30,7 +30,7 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const baseClasses = cn(
     'relative inline-flex items-center justify-center gap-2 font-medium transition-all duration-200',
-    'focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:ring-offset-2 focus:ring-offset-transparent',
+    'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:ring-offset-2 focus:ring-offset-transparent',
     'disabled:opacity-50 disabled:cursor-not-allowed',
     'rounded-xl border overflow-hidden',
     'transform-gpu', // GPU optimization
@@ -43,36 +43,37 @@ const Button: React.FC<ButtonProps> = ({
   );
 
   const variantClasses = cn({
-    // Primary - Minecraft gradient
-    'bg-gradient-to-r from-purple-600 to-blue-600 border-purple-500/50 text-white shadow-minecraft hover:shadow-minecraft-hover active:scale-95':
+    // Primary - Новый градиент
+    'bg-gradient-to-r from-primary-500 to-secondary-500 border-primary-500/50 text-white shadow-primary-glow hover:shadow-minecraft-hover active:scale-95':
       variant === 'primary',
 
-    // Secondary - Dark with subtle glow
-    'bg-black/30 backdrop-blur-sm border-purple-500/30 text-white hover:bg-black/50 hover:border-purple-500/50':
+    // Secondary - Использует accent цвета
+    'bg-black/30 backdrop-blur-sm border-accent-500/30 text-white hover:bg-black/50 hover:border-accent-500/50':
       variant === 'secondary',
 
-    // Outline - Transparent with border
-    'bg-transparent border-purple-500/50 text-purple-300 hover:bg-purple-500/10 hover:border-purple-500/70 hover:text-purple-200':
+    // Outline - Новая схема
+    'bg-transparent border-primary-500/50 text-primary-300 hover:bg-primary-500/10 hover:border-primary-500/70 hover:text-primary-200':
       variant === 'outline',
 
-    // Ghost - Minimal style
+    // Ghost - Обновленные цвета
     'bg-transparent border-transparent text-gray-300 hover:text-white hover:bg-black/20':
       variant === 'ghost',
 
-    // Danger - Red gradient
+    // Danger - Красный остается
     'bg-gradient-to-r from-red-600 to-red-500 border-red-500/50 text-white shadow-red-500/30 hover:shadow-red-500/40 active:scale-95':
       variant === 'danger',
 
-    // Success - Green gradient
+    // Success - Зеленый остается
     'bg-gradient-to-r from-green-600 to-emerald-600 border-green-500/50 text-white shadow-green-500/30 hover:shadow-green-500/40 active:scale-95':
       variant === 'success',
 
-    // Minecraft - Special themed button
-    'minecraft-button animate-glow': variant === 'minecraft',
+    // Minecraft - Новый градиент
+    'minecraft-button animate-glow bg-gradient-to-r from-primary-400 via-secondary-500 to-accent-500':
+      variant === 'minecraft',
   });
 
   const glowClasses = cn({
-    'shadow-glow animate-pulse': glow,
+    'shadow-primary-glow animate-pulse': glow,
   });
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -103,12 +104,12 @@ const Button: React.FC<ButtonProps> = ({
     >
       {/* Background gradient overlay */}
       {(variant === 'primary' || variant === 'minecraft') && (
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/20 to-accent-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       )}
 
       {/* Glow effect */}
       {glow && (
-        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/50 to-blue-500/50 blur-lg opacity-50 -z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-500/50 to-secondary-500/50 blur-lg opacity-50 -z-10" />
       )}
 
       {/* Loading spinner */}

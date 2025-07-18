@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+import { tailwindColors, gradients } from './src/styles/colors.js';
+
 export default {
   content: [
     "./index.html",
@@ -7,55 +9,8 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#f5f3ff',
-          100: '#ede9fe',
-          200: '#ddd6fe',
-          300: '#c4b5fd',
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          700: '#6d28d9',
-          800: '#5b21b6',
-          900: '#4c1d95',
-        },
-        secondary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-        },
-        accent: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
-        },
-        dark: {
-          50: '#f9fafb',
-          100: '#f3f4f6',
-          200: '#e5e7eb',
-          300: '#d1d5db',
-          400: '#9ca3af',
-          500: '#6b7280',
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-          900: '#111827',
-          950: '#0a0a0f',
-        },
+        ...tailwindColors,
+        // Оставляем minecraft цвета без изменений для совместимости
         minecraft: {
           grass: '#7CB342',
           dirt: '#8D6E63',
@@ -107,8 +62,8 @@ export default {
           '50%': { transform: 'translateY(-20px)' },
         },
         glow: {
-          '0%': { boxShadow: '0 0 20px rgba(139, 92, 246, 0.3)' },
-          '100%': { boxShadow: '0 0 30px rgba(139, 92, 246, 0.6)' },
+          '0%': { boxShadow: '0 0 20px rgba(212, 165, 116, 0.3)' },
+          '100%': { boxShadow: '0 0 30px rgba(212, 165, 116, 0.6)' },
         },
         'particle-float': {
           '0%': { transform: 'translateY(0) rotate(0deg)', opacity: '0' },
@@ -125,16 +80,23 @@ export default {
         xs: '2px',
       },
       backgroundImage: {
-        'minecraft-gradient': 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #06b6d4 100%)',
-        'minecraft-dark': 'linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #7209b7 100%)',
+        'minecraft-gradient': gradients.primary,
+        'minecraft-dark': gradients.background,
         'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+        'primary-gradient': gradients.primary,
+        'card-gradient': gradients.card,
+        'button-gradient': gradients.button,
+        'text-gradient': gradients.text,
       },
       boxShadow: {
-        'minecraft': '0 8px 32px rgba(139, 92, 246, 0.3)',
-        'minecraft-hover': '0 12px 48px rgba(139, 92, 246, 0.4)',
+        'minecraft': '0 8px 32px rgba(212, 165, 116, 0.3)',
+        'minecraft-hover': '0 12px 48px rgba(212, 165, 116, 0.4)',
         'glass': '0 8px 32px rgba(0, 0, 0, 0.3)',
-        'glow': '0 0 30px rgba(139, 92, 246, 0.6)',
+        'glow': '0 0 30px rgba(212, 165, 116, 0.6)',
         'neon': '0 0 5px theme(colors.primary.500), 0 0 20px theme(colors.primary.500), 0 0 40px theme(colors.primary.500)',
+        'primary-glow': '0 0 30px rgba(212, 165, 116, 0.4)',
+        'secondary-glow': '0 0 30px rgba(212, 132, 138, 0.4)',
+        'accent-glow': '0 0 30px rgba(182, 123, 184, 0.4)',
       },
       blur: {
         'xs': '2px',

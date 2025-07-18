@@ -5,18 +5,39 @@
 @tailwind components;
 @tailwind utilities;
 
+/* CSS переменные для новой цветовой схемы */
+:root {
+  --color-primary: #d4a574;
+  --color-primary-light: #f0d142;
+  --color-primary-dark: #c2956a;
+  --color-secondary: #d4848a;
+  --color-secondary-light: #f87171;
+  --color-secondary-dark: #c46d74;
+  --color-accent: #b67bb8;
+  --color-accent-light: #c084fc;
+  --color-accent-dark: #a366a8;
+  --color-final: #9381b3;
+  --color-final-light: #b599ff;
+  --color-final-dark: #8671a3;
+  --gradient-primary: linear-gradient(135deg, #f0d142 0%, #d4848a 30%, #b67bb8 70%, #9381b3 100%);
+  --gradient-background: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 25%, #3a2650 50%, #4a2c5a 75%, #5a3468 100%);
+  --gradient-card: linear-gradient(135deg, rgba(212, 165, 116, 0.1) 0%, rgba(212, 132, 138, 0.1) 30%, rgba(182, 123, 184, 0.1) 70%, rgba(147, 129, 179, 0.1) 100%);
+  --gradient-button: linear-gradient(135deg, #d4a574 0%, #d4848a 50%, #b67bb8 100%);
+  --gradient-text: linear-gradient(135deg, #f0d142 0%, #f87171 30%, #c084fc 70%, #b599ff 100%);
+}
+
 @layer base {
   * {
     box-sizing: border-box;
   }
-  
+
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 25%, #0f3460 50%, #533483 75%, #7209b7 100%);
+    background: var(--gradient-background);
     background-attachment: fixed;
     color: #f3f4f6;
     line-height: 1.6;
@@ -32,7 +53,7 @@
 @layer components {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #8b5cf6 #1f2937;
+    scrollbar-color: var(--color-primary) #1f2937;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -45,46 +66,46 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    background: var(--gradient-primary);
     border-radius: 4px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    background: linear-gradient(135deg, var(--color-primary-dark), var(--color-secondary-dark));
   }
 
   .minecraft-card {
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.1));
+    background: var(--gradient-card);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 1px solid rgba(212, 165, 116, 0.3);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
   .minecraft-card:hover {
-    border-color: rgba(139, 92, 246, 0.5);
-    box-shadow: 0 12px 48px rgba(139, 92, 246, 0.2);
+    border-color: rgba(212, 165, 116, 0.5);
+    box-shadow: 0 12px 48px rgba(212, 165, 116, 0.2);
   }
 
   .minecraft-button {
-    background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+    background: var(--gradient-button);
     border: none;
     border-radius: 8px;
     padding: 0.75rem 1.5rem;
     color: white;
     font-weight: 500;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 16px rgba(212, 165, 116, 0.3);
   }
 
   .minecraft-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 8px 24px rgba(212, 165, 116, 0.4);
   }
 
   .minecraft-input {
     background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 1px solid rgba(212, 165, 116, 0.3);
     border-radius: 8px;
     padding: 0.75rem 1rem;
     color: white;
@@ -92,8 +113,8 @@
   }
 
   .minecraft-input:focus {
-    border-color: rgba(139, 92, 246, 0.6);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    border-color: rgba(212, 165, 116, 0.6);
+    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
     outline: none;
   }
 
@@ -118,17 +139,17 @@
   .glass {
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 1px solid rgba(212, 165, 116, 0.3);
   }
 
   .glass-light {
     background: rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(212, 165, 116, 0.2);
   }
 
   .gradient-border {
-    background: linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4);
+    background: var(--gradient-primary);
     padding: 1px;
     border-radius: 12px;
   }
@@ -139,11 +160,11 @@
   }
 
   .minecraft-gradient {
-    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #06b6d4 100%);
+    background: var(--gradient-primary);
   }
 
   .minecraft-gradient-text {
-    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #06b6d4 100%);
+    background: var(--gradient-text);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -185,22 +206,22 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  background: var(--gradient-primary);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #7c3aed, #2563eb);
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-secondary-dark));
 }
 
 /* Selection */
 ::selection {
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  background: var(--gradient-primary);
   color: #ffffff;
 }
 
 ::-moz-selection {
-  background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+  background: var(--gradient-primary);
   color: #ffffff;
 }
 
@@ -252,10 +273,10 @@
 
 @keyframes glow {
   from {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 0 20px rgba(212, 165, 116, 0.3);
   }
   to {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+    box-shadow: 0 0 30px rgba(212, 165, 116, 0.6);
   }
 }
 
@@ -310,7 +331,7 @@
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(45deg, transparent 30%, rgba(139, 92, 246, 0.5) 30%, rgba(139, 92, 246, 0.5) 70%, transparent 70%);
+  background: linear-gradient(45deg, transparent 30%, rgba(212, 165, 116, 0.5) 30%, rgba(212, 165, 116, 0.5) 70%, transparent 70%);
   z-index: -1;
   border-radius: 12px;
 }

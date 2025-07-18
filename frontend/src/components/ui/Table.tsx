@@ -31,24 +31,24 @@ const Table: React.FC<TableProps> = ({
   if (isLoading) {
     return (
       <div className="animate-pulse">
-        <div className="bg-dark-800 border border-dark-600 rounded-lg overflow-hidden">
-          <div className="bg-dark-700 px-6 py-4">
+        <div className="bg-dark-800/50 backdrop-blur-sm border border-dark-600/50 rounded-lg overflow-hidden">
+          <div className="bg-dark-700/50 px-6 py-4">
             <div className="flex space-x-4">
               {columns.map((_, index) => (
                 <div
                   key={index}
-                  className="h-4 bg-dark-600 rounded flex-1"
+                  className="h-4 bg-dark-600/50 rounded flex-1"
                 />
               ))}
             </div>
           </div>
           {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className="px-6 py-4 border-t border-dark-600">
+            <div key={index} className="px-6 py-4 border-t border-dark-600/50">
               <div className="flex space-x-4">
                 {columns.map((_, colIndex) => (
                   <div
                     key={colIndex}
-                    className="h-4 bg-dark-700 rounded flex-1"
+                    className="h-4 bg-dark-700/50 rounded flex-1"
                   />
                 ))}
               </div>
@@ -61,16 +61,16 @@ const Table: React.FC<TableProps> = ({
 
   if (data.length === 0) {
     return (
-      <div className="bg-dark-800 border border-dark-600 rounded-lg p-12 text-center">
+      <div className="bg-dark-800/50 backdrop-blur-sm border border-dark-600/50 rounded-lg p-12 text-center">
         <p className="text-dark-400 text-lg">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className={cn('bg-dark-800 border border-dark-600 rounded-lg overflow-hidden', className)}>
+    <div className={cn('bg-dark-800/50 backdrop-blur-sm border border-dark-600/50 rounded-lg overflow-hidden', className)}>
       {/* Header */}
-      <div className="bg-dark-700 px-6 py-4">
+      <div className="bg-dark-700/50 px-6 py-4">
         <div className="grid gap-4" style={{ gridTemplateColumns: columns.map(col => col.width || '1fr').join(' ') }}>
           {columns.map((column) => (
             <div
@@ -84,7 +84,7 @@ const Table: React.FC<TableProps> = ({
       </div>
 
       {/* Body */}
-      <div className="divide-y divide-dark-600">
+      <div className="divide-y divide-dark-600/50">
         {data.map((row, rowIndex) => (
           <motion.div
             key={rowIndex}
@@ -94,7 +94,7 @@ const Table: React.FC<TableProps> = ({
             className={cn(
               'px-6 py-4 transition-colors duration-150',
               {
-                'hover:bg-dark-700 cursor-pointer': onRowClick,
+                'hover:bg-dark-700/30 cursor-pointer': onRowClick,
               }
             )}
             onClick={() => onRowClick?.(row)}

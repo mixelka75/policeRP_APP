@@ -23,8 +23,8 @@ export const RoleUpdatesIndicator: React.FC<RoleUpdatesIndicatorProps> = ({
 
   const getConnectionStatusColor = () => {
     if (error) return 'text-red-400';
-    if (isConnected) return 'text-green-400';
-    return 'text-yellow-400';
+    if (isConnected) return 'text-primary-400';
+    return 'text-warning-400';
   };
 
   const getConnectionStatusText = () => {
@@ -35,17 +35,17 @@ export const RoleUpdatesIndicator: React.FC<RoleUpdatesIndicatorProps> = ({
 
   const formatRoleChange = (roleUpdate: RoleUpdateEvent) => {
     const { old_role, new_role } = roleUpdate;
-    
+
     if (old_role === new_role) {
       return `Роль подтверждена: ${new_role}`;
     }
-    
+
     const roleNames = {
       admin: 'Администратор',
       police: 'Полицейский',
       none: 'Нет доступа'
     };
-    
+
     return `${roleNames[old_role as keyof typeof roleNames] || old_role} → ${roleNames[new_role as keyof typeof roleNames] || new_role}`;
   };
 
@@ -55,7 +55,7 @@ export const RoleUpdatesIndicator: React.FC<RoleUpdatesIndicatorProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           {isConnected ? (
-            <Wifi className="h-4 w-4 text-green-400" />
+            <Wifi className="h-4 w-4 text-primary-400" />
           ) : (
             <WifiOff className="h-4 w-4 text-red-400" />
           )}
@@ -63,11 +63,11 @@ export const RoleUpdatesIndicator: React.FC<RoleUpdatesIndicatorProps> = ({
             {getConnectionStatusText()}
           </span>
           <div className="flex items-center space-x-1">
-            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400' : 'bg-red-400'} animate-pulse`} />
+            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-primary-400' : 'bg-red-400'} animate-pulse`} />
             <span className="text-xs text-dark-400">Live</span>
           </div>
         </div>
-        
+
         {showHistory && roleUpdateHistory.length > 0 && (
           <button
             onClick={clearHistory}
@@ -85,15 +85,15 @@ export const RoleUpdatesIndicator: React.FC<RoleUpdatesIndicatorProps> = ({
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3"
+            className="bg-secondary-500/10 border border-secondary-500/20 rounded-lg p-3"
           >
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <Shield className="h-4 w-4 text-blue-400" />
+              <div className="w-8 h-8 bg-secondary-500/20 rounded-full flex items-center justify-center">
+                <Shield className="h-4 w-4 text-secondary-400" />
               </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-blue-400">
+                  <span className="text-sm font-medium text-secondary-400">
                     {lastRoleUpdate.user_data.discord_username}
                   </span>
                   {lastRoleUpdate.user_data.minecraft_username && (
@@ -105,7 +105,7 @@ export const RoleUpdatesIndicator: React.FC<RoleUpdatesIndicatorProps> = ({
                     </>
                   )}
                 </div>
-                <p className="text-sm text-blue-300">
+                <p className="text-sm text-secondary-300">
                   {formatRoleChange(lastRoleUpdate)}
                 </p>
                 <p className="text-xs text-dark-400">
@@ -134,8 +134,8 @@ export const RoleUpdatesIndicator: React.FC<RoleUpdatesIndicatorProps> = ({
                 className="bg-dark-700/50 border border-dark-600 rounded-lg p-2"
               >
                 <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center">
-                    <User className="h-3 w-3 text-purple-400" />
+                  <div className="w-6 h-6 bg-accent-500/20 rounded-full flex items-center justify-center">
+                    <User className="h-3 w-3 text-accent-400" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">

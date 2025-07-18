@@ -203,9 +203,9 @@ const FineForm: React.FC<FineFormProps> = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4"
+            className="bg-accent-500/10 border border-accent-500/20 rounded-lg p-4"
           >
-            <p className="text-primary-400 text-sm">
+            <p className="text-accent-400 text-sm">
               Сумма штрафа: {formatMoney(parseInt(formData.amount) || 0)}
             </p>
           </motion.div>

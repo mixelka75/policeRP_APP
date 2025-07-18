@@ -1,4 +1,4 @@
-// src/pages/Fines.tsx
+// src/pages/Fines.tsx - Обновленная цветовая схема
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -143,11 +143,11 @@ const Fines: React.FC = () => {
       label: 'Гражданин',
       render: (_: any, fine: Fine) => {
         const passport = passportMap.get(fine.passport_id);
-        if (!passport) return <span className="text-dark-500">Неизвестен</span>;
+        if (!passport) return <span className="text-gray-500">Неизвестен</span>;
 
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center shadow-primary-glow">
               <span className="text-white font-medium text-sm">
                 {getInitials(passport.first_name, passport.last_name)}
               </span>
@@ -156,7 +156,7 @@ const Fines: React.FC = () => {
               <p className="font-medium text-white">
                 {passport.first_name} {passport.last_name}
               </p>
-              <p className="text-sm text-dark-400">{passport.nickname}</p>
+              <p className="text-sm text-gray-400">{passport.nickname}</p>
             </div>
           </div>
         );
@@ -186,7 +186,7 @@ const Fines: React.FC = () => {
       label: 'Дата выписки',
       width: '150px',
       render: (date: string) => (
-        <span className="text-dark-400">{formatDate(date)}</span>
+        <span className="text-gray-400">{formatDate(date)}</span>
       ),
     },
     {
@@ -199,7 +199,7 @@ const Fines: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => handleEditFine(fine)}
-            className="!p-2"
+            className="!p-2 text-primary-400 hover:text-primary-300"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -224,19 +224,19 @@ const Fines: React.FC = () => {
       title: 'Всего штрафов',
       value: fines?.length || 0,
       icon: FileText,
-      color: 'blue' as const,
+      color: 'primary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Общая сумма',
       value: formatMoney(totalAmount),
       icon: DollarSign,
-      color: 'red' as const,
+      color: 'danger' as const,
     },
     {
       title: 'Средний штраф',
       value: formatMoney(avgAmount),
       icon: TrendingUp,
-      color: 'yellow' as const,
+      color: 'accent' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'За сегодня',
@@ -246,7 +246,7 @@ const Fines: React.FC = () => {
         return fineDate.toDateString() === today.toDateString();
       }).length || 0,
       icon: AlertTriangle,
-      color: 'green' as const,
+      color: 'secondary' as const, // ✨ НОВЫЙ цвет
     },
   ];
 
@@ -258,7 +258,7 @@ const Fines: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80"
+          className="w-80 minecraft-input"
         />
         <Button
           variant="outline"
@@ -271,10 +271,11 @@ const Fines: React.FC = () => {
       </div>
       <div className="flex items-center space-x-2">
         <Button
-          variant="danger"
+          variant="minecraft"
           size="sm"
           onClick={handleCreateFine}
           leftIcon={<Plus className="h-4 w-4" />}
+          glow
         >
           Выписать штраф
         </Button>
@@ -348,7 +349,7 @@ const Fines: React.FC = () => {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-dark-300">
+          <p className="text-gray-300">
             Вы уверены, что хотите удалить штраф{' '}
             <span className="font-medium text-white">
               "{fineToDelete?.article}"

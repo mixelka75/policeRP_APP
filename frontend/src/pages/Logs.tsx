@@ -1,4 +1,4 @@
-// src/pages/Logs.tsx
+// src/pages/Logs.tsx - Обновленная цветовая схема
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -70,7 +70,7 @@ const Logs: React.FC = () => {
       log.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user?.discord_username && user.discord_username.toLowerCase().includes(searchTerm.toLowerCase()));
 
-    // ✨ ИСПРАВЛЕННЫЙ фильтр по действию
+    // Фильтр по действию
     const matchesAction = !selectedAction || log.action === selectedAction;
 
     // Фильтры
@@ -116,9 +116,9 @@ const Logs: React.FC = () => {
         return LogIn;
       case 'VIEW':
         return Eye;
-      case 'EMERGENCY_STATUS_CHANGE':  // ✨ НОВЫЙ тип лога
+      case 'EMERGENCY_STATUS_CHANGE':
         return ShieldAlert;
-      case 'VIEW_LIST':  // ✨ НОВЫЙ тип лога
+      case 'VIEW_LIST':
         return List;
       default:
         return Activity;
@@ -130,19 +130,19 @@ const Logs: React.FC = () => {
       case 'CREATE':
         return 'text-green-400';
       case 'UPDATE':
-        return 'text-blue-400';
+        return 'text-primary-400'; // ✨ НОВЫЙ цвет
       case 'DELETE':
         return 'text-red-400';
       case 'LOGIN':
-        return 'text-purple-400';
+        return 'text-accent-400'; // ✨ НОВЫЙ цвет
       case 'VIEW':
         return 'text-gray-400';
-      case 'EMERGENCY_STATUS_CHANGE':  // ✨ НОВЫЙ тип лога
+      case 'EMERGENCY_STATUS_CHANGE':
         return 'text-red-500';
-      case 'VIEW_LIST':  // ✨ НОВЫЙ тип лога
-        return 'text-blue-300';
+      case 'VIEW_LIST':
+        return 'text-secondary-400'; // ✨ НОВЫЙ цвет
       default:
-        return 'text-dark-300';
+        return 'text-gray-300';
     }
   };
 
@@ -154,7 +154,7 @@ const Logs: React.FC = () => {
         return AlertTriangle;
       case 'user':
         return User;
-      case 'emergency':  // ✨ НОВЫЙ тип сущности
+      case 'emergency':
         return ShieldAlert;
       default:
         return FileText;
@@ -169,7 +169,7 @@ const Logs: React.FC = () => {
         return 'Штраф';
       case 'user':
         return 'Пользователь';
-      case 'emergency':  // ✨ НОВЫЙ тип сущности
+      case 'emergency':
         return 'ЧС статус';
       default:
         return entityType;
@@ -188,9 +188,9 @@ const Logs: React.FC = () => {
         return 'Вход';
       case 'VIEW':
         return 'Просмотр';
-      case 'EMERGENCY_STATUS_CHANGE':  // ✨ НОВЫЙ тип лога
+      case 'EMERGENCY_STATUS_CHANGE':
         return 'Изменение ЧС';
-      case 'VIEW_LIST':  // ✨ НОВЫЙ тип лога
+      case 'VIEW_LIST':
         return 'Просмотр списка';
       default:
         return action;
@@ -201,7 +201,7 @@ const Logs: React.FC = () => {
     {
       key: 'action',
       label: 'Действие',
-      width: '180px',  // ✨ Увеличили ширину для длинных названий
+      width: '180px',
       render: (action: string) => {
         const Icon = getActionIcon(action);
         return (
@@ -222,8 +222,8 @@ const Logs: React.FC = () => {
         const Icon = getEntityIcon(entityType);
         return (
           <div className="flex items-center space-x-2">
-            <Icon className="h-4 w-4 text-dark-400" />
-            <span className="text-sm text-dark-300">
+            <Icon className="h-4 w-4 text-gray-400" />
+            <span className="text-sm text-gray-300">
               {getEntityName(entityType)}
             </span>
           </div>
@@ -235,18 +235,18 @@ const Logs: React.FC = () => {
       label: 'Пользователь',
       render: (userId: number) => {
         const user = usersMap.get(userId);
-        if (!user || !user.discord_username) return <span className="text-dark-500">Неизвестен</span>;
+        if (!user || !user.discord_username) return <span className="text-gray-500">Неизвестен</span>;
 
         return (
           <div className="flex items-center space-x-2">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
               user.role === 'admin' 
                 ? 'bg-red-500/20 text-red-400'
-                : 'bg-blue-500/20 text-blue-400'
+                : 'bg-primary-500/20 text-primary-400' // ✨ НОВЫЙ цвет
             }`}>
               {user.discord_username.charAt(0).toUpperCase()}
             </div>
-            <span className="text-sm text-dark-100">{user.discord_username}</span>
+            <span className="text-sm text-white">{user.discord_username}</span>
           </div>
         );
       },
@@ -255,11 +255,11 @@ const Logs: React.FC = () => {
       key: 'details',
       label: 'Детали',
       render: (details: any) => {
-        if (!details) return <span className="text-dark-500">—</span>;
+        if (!details) return <span className="text-gray-500">—</span>;
 
         return (
           <div className="max-w-xs">
-            <p className="text-sm text-dark-300 truncate">
+            <p className="text-sm text-gray-300 truncate">
               {details.username || details.nickname || details.article || details.reason || 'Детали доступны'}
             </p>
           </div>
@@ -271,7 +271,7 @@ const Logs: React.FC = () => {
       label: 'IP адрес',
       width: '140px',
       render: (ipAddress: string) => (
-        <span className="text-sm text-dark-400 font-mono">
+        <span className="text-sm text-gray-400 font-mono">
           {ipAddress || '—'}
         </span>
       ),
@@ -282,14 +282,14 @@ const Logs: React.FC = () => {
       width: '160px',
       render: (date: string) => (
         <div className="text-sm">
-          <p className="text-dark-300">{formatDate(date, 'dd.MM.yyyy')}</p>
-          <p className="text-dark-500 text-xs">{formatDate(date, 'HH:mm:ss')}</p>
+          <p className="text-gray-300">{formatDate(date, 'dd.MM.yyyy')}</p>
+          <p className="text-gray-500 text-xs">{formatDate(date, 'HH:mm:ss')}</p>
         </div>
       ),
     },
   ];
 
-  // ✨ ОБНОВЛЕННЫЙ список фильтров действий - теперь включает все типы
+  // Обновленный список фильтров действий
   const actionFilter = [
     { value: '', label: 'Все действия' },
     { value: 'CREATE', label: 'Создание' },
@@ -297,8 +297,8 @@ const Logs: React.FC = () => {
     { value: 'DELETE', label: 'Удаление' },
     { value: 'LOGIN', label: 'Вход' },
     { value: 'VIEW', label: 'Просмотр' },
-    { value: 'EMERGENCY_STATUS_CHANGE', label: 'Изменение ЧС' },  // ✨ НОВЫЙ
-    { value: 'VIEW_LIST', label: 'Просмотр списка' },  // ✨ НОВЫЙ
+    { value: 'EMERGENCY_STATUS_CHANGE', label: 'Изменение ЧС' },
+    { value: 'VIEW_LIST', label: 'Просмотр списка' },
   ];
 
   const uniqueActions = [...new Set(logs?.map(log => log.action) || [])];
@@ -314,25 +314,25 @@ const Logs: React.FC = () => {
       title: 'Всего записей',
       value: totalLogs,
       icon: Activity,
-      color: 'blue' as const,
+      color: 'primary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'За сегодня',
       value: todayLogs,
       icon: Calendar,
-      color: 'green' as const,
+      color: 'success' as const,
     },
     {
       title: 'Пользователей',
       value: usersMap.size,
       icon: User,
-      color: 'purple' as const,
+      color: 'accent' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Типов действий',
       value: uniqueActions.length,
       icon: Server,
-      color: 'yellow' as const,
+      color: 'secondary' as const, // ✨ НОВЫЙ цвет
     },
   ];
 
@@ -344,12 +344,12 @@ const Logs: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80"
+          className="w-80 minecraft-input"
         />
         <select
           value={selectedAction}
           onChange={(e) => setSelectedAction(e.target.value)}
-          className="bg-dark-800 border border-dark-600 text-dark-100 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
+          className="bg-minecraft-dark border border-primary-500/30 text-white rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
         >
           {actionFilter.map(option => (
             <option key={option.value} value={option.value}>
@@ -407,9 +407,9 @@ const Logs: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card className="mb-6">
+            <Card variant="minecraft">
               <h3 className="text-lg font-medium text-white mb-4 flex items-center">
-                <Clock className="h-5 w-5 mr-2" />
+                <Clock className="h-5 w-5 mr-2 text-primary-400" />
                 Последние действия
               </h3>
               <div className="space-y-3">
@@ -419,22 +419,22 @@ const Logs: React.FC = () => {
                   return (
                     <div
                       key={log.id}
-                      className="flex items-center space-x-3 p-3 bg-dark-700/50 rounded-lg"
+                      className="flex items-center space-x-3 p-3 bg-minecraft-dark/50 rounded-lg minecraft-card"
                     >
                       <Icon className={`h-4 w-4 ${getActionColor(log.action)}`} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-dark-100">
+                        <p className="text-sm text-white">
                           <span className="font-medium">{(user && user.discord_username) || 'Неизвестен'}</span>
                           {' '}
                           <span className={getActionColor(log.action)}>
                             {getActionName(log.action).toLowerCase()}
                           </span>
                           {' '}
-                          <span className="text-dark-300">
+                          <span className="text-gray-300">
                             {getEntityName(log.entity_type).toLowerCase()}
                           </span>
                         </p>
-                        <p className="text-xs text-dark-400">
+                        <p className="text-xs text-gray-400">
                           {formatRelativeTime(log.created_at)}
                         </p>
                       </div>

@@ -32,7 +32,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
         className={`absolute inset-0 rounded-full flex items-center justify-center ${
           user.role === 'admin' 
             ? 'bg-gradient-to-br from-red-500 to-red-600'
-            : 'bg-gradient-to-br from-blue-500 to-blue-600'
+            : 'bg-gradient-to-br from-primary-500 to-secondary-500'
         }`}
         style={{ width: size, height: size }}
       >
@@ -163,11 +163,11 @@ const UserInfo: React.FC<UserInfoProps> = ({
           }`}>
             {getDisplayName(user)}
           </p>
-          <MessageCircle className="h-3 w-3 text-blue-400" />
+          <MessageCircle className="h-3 w-3 text-secondary-400" />
           {user.role === 'admin' ? (
             <ShieldCheck className="h-4 w-4 text-red-400" />
           ) : (
-            <Shield className="h-4 w-4 text-blue-400" />
+            <Shield className="h-4 w-4 text-primary-400" />
           )}
         </div>
 
@@ -185,7 +185,7 @@ const UserInfo: React.FC<UserInfoProps> = ({
 
             <div className="flex items-center space-x-2">
               <span className={`text-xs ${
-                user.role === 'admin' ? 'text-red-400' : 'text-blue-400'
+                user.role === 'admin' ? 'text-red-400' : 'text-primary-400'
               }`}>
                 {getRoleDisplayName(user.role)}
               </span>

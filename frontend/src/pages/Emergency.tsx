@@ -1,4 +1,4 @@
-// src/pages/Emergency.tsx
+// src/pages/Emergency.tsx - Обновленная цветовая схема
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -70,7 +70,7 @@ const Emergency: React.FC = () => {
       label: '',
       width: '60px',
       render: (_: any, passport: Passport) => (
-        <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center">
+        <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-red-500/30 animate-glow">
           <span className="text-white font-medium text-sm">
             {getInitials(passport.first_name, passport.last_name)}
           </span>
@@ -85,7 +85,7 @@ const Emergency: React.FC = () => {
           <p className="font-medium text-white">
             {passport.first_name} {passport.last_name}
           </p>
-          <p className="text-sm text-dark-400">{passport.nickname}</p>
+          <p className="text-sm text-gray-400">{passport.nickname}</p>
         </div>
       ),
     },
@@ -95,8 +95,8 @@ const Emergency: React.FC = () => {
       width: '120px',
       render: (city: string) => (
         <div className="flex items-center space-x-2">
-          <MapPin className="h-4 w-4 text-dark-400" />
-          <span className="text-dark-300">{city}</span>
+          <MapPin className="h-4 w-4 text-primary-400" />
+          <span className="text-primary-300">{city}</span>
         </div>
       ),
     },
@@ -116,7 +116,7 @@ const Emergency: React.FC = () => {
       label: 'В городе с',
       width: '120px',
       render: (date: string) => (
-        <span className="text-dark-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
+        <span className="text-gray-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),
     },
     {
@@ -124,7 +124,7 @@ const Emergency: React.FC = () => {
       label: 'Последнее изменение',
       width: '150px',
       render: (date: string) => (
-        <span className="text-dark-400 text-sm">{formatRelativeTime(date)}</span>
+        <span className="text-gray-400 text-sm">{formatRelativeTime(date)}</span>
       ),
     },
     {
@@ -146,7 +146,7 @@ const Emergency: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => console.log('View passport', passport.id)}
-            className="!p-2"
+            className="!p-2 text-primary-400 hover:text-primary-300"
             title="Подробнее"
           >
             <Eye className="h-4 w-4" />
@@ -156,7 +156,7 @@ const Emergency: React.FC = () => {
     },
   ];
 
-  // Статистика
+  // Статистика с новыми цветами
   const totalEmergencyCount = emergencyPassports?.length || 0;
   const totalPassportCount = allPassports?.length || 0;
   const emergencyPercentage = totalPassportCount > 0
@@ -178,25 +178,25 @@ const Emergency: React.FC = () => {
       title: 'В списке ЧС',
       value: totalEmergencyCount,
       icon: ShieldAlert,
-      color: 'red' as const,
+      color: 'danger' as const,
     },
     {
       title: 'От общего числа',
       value: `${emergencyPercentage}%`,
       icon: TrendingUp,
-      color: 'yellow' as const,
+      color: 'accent' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Всего паспортов',
       value: totalPassportCount,
       icon: Users,
-      color: 'blue' as const,
+      color: 'primary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Активных городов',
       value: Object.keys(emergencyByCity).length,
       icon: MapPin,
-      color: 'purple' as const,
+      color: 'secondary' as const, // ✨ НОВЫЙ цвет
     },
   ];
 
@@ -208,7 +208,7 @@ const Emergency: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80"
+          className="w-80 minecraft-input"
         />
         <Button
           variant="outline"
@@ -260,7 +260,7 @@ const Emergency: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card className="bg-red-500/10 border-red-500/20">
+            <Card variant="minecraft" className="bg-red-500/10 border-red-500/20">
               <div className="flex items-center space-x-3 mb-4">
                 <AlertTriangle className="h-6 w-6 text-red-400" />
                 <h3 className="text-lg font-semibold text-red-400">
@@ -289,9 +289,9 @@ const Emergency: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <Card>
+            <Card variant="minecraft">
               <div className="flex items-center space-x-3 mb-4">
-                <MapPin className="h-6 w-6 text-blue-400" />
+                <MapPin className="h-6 w-6 text-primary-400" />
                 <h3 className="text-lg font-semibold text-white">
                   ЧС по городам
                 </h3>
@@ -300,15 +300,15 @@ const Emergency: React.FC = () => {
                 <div className="space-y-3">
                   {topCitiesByEmergency.map(([city, count], index) => (
                     <div key={city} className="flex items-center justify-between">
-                      <span className="text-dark-300">{city}</span>
+                      <span className="text-gray-300">{city}</span>
                       <div className="flex items-center space-x-2">
                         <div
-                          className="h-2 bg-red-500 rounded-full"
+                          className="h-2 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"
                           style={{
                             width: `${Math.max(20, (count / totalEmergencyCount) * 100)}px`
                           }}
                         />
-                        <span className="text-red-400 font-medium w-8 text-right">
+                        <span className="text-primary-400 font-medium w-8 text-right">
                           {count}
                         </span>
                       </div>
@@ -316,7 +316,7 @@ const Emergency: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-dark-400 text-center py-4">
+                <p className="text-gray-400 text-center py-4">
                   Нет данных по городам
                 </p>
               )}

@@ -50,7 +50,7 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <div className="min-h-screen bg-dark-950">
+      <div className="min-h-screen bg-minecraft-dark">
         <Routes>
           {/* Public routes */}
           <Route
@@ -62,7 +62,7 @@ const App: React.FC = () => {
             }
           />
 
-          {/* ✅ NEW: Discord callback route */}
+          {/* Discord callback route */}
           <Route
             path="/auth/callback"
             element={
@@ -136,7 +136,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-        
+
         <Toaster
           position="top-right"
           toastOptions={{
@@ -148,7 +148,7 @@ const App: React.FC = () => {
             },
             success: {
               iconTheme: {
-                primary: '#10b981',
+                primary: '#d4a574',
                 secondary: '#f3f4f6',
               },
             },

@@ -16,9 +16,9 @@ export const LiveStatusIndicator: React.FC = () => {
 
   if (!isConnected) {
     return (
-      <div className="flex items-center space-x-2 text-yellow-400">
+      <div className="flex items-center space-x-2 text-warning-400">
         <div className="w-4 h-4 relative">
-          <div className="w-4 h-4 animate-spin rounded-full border-2 border-yellow-400 border-t-transparent" />
+          <div className="w-4 h-4 animate-spin rounded-full border-2 border-warning-400 border-t-transparent" />
         </div>
         <span className="text-xs">Подключение...</span>
       </div>
@@ -26,10 +26,10 @@ export const LiveStatusIndicator: React.FC = () => {
   }
 
   return (
-    <div className="flex items-center space-x-2 text-green-400">
+    <div className="flex items-center space-x-2 text-primary-400">
       <Wifi className="h-4 w-4" />
       <span className="text-xs">Live</span>
-      <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+      <div className="w-2 h-2 rounded-full bg-primary-400 animate-pulse" />
     </div>
   );
 };

@@ -46,7 +46,7 @@ const DiscordCallback: React.FC = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-minecraft-dark p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -61,8 +61,8 @@ const DiscordCallback: React.FC = () => {
               <p className="text-dark-300 mb-4">{error}</p>
 
               {error?.includes('необходимых ролей') && (
-                <div className="bg-yellow-400/10 border border-yellow-400/20 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-yellow-300">
+                <div className="bg-warning-400/10 border border-warning-400/20 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-warning-300">
                     <strong>Что делать:</strong> Обратитесь к администратору Discord сервера
                     для получения роли админа или полицейского
                   </p>
@@ -92,13 +92,13 @@ const DiscordCallback: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800">
+    <div className="min-h-screen flex items-center justify-center bg-minecraft-dark">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         className="text-center"
       >
-        <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-20 h-20 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-full flex items-center justify-center mx-auto mb-6 shadow-primary-glow animate-glow">
           <MessageCircle className="w-10 h-10 text-white" />
         </div>
         <h2 className="text-2xl font-semibold text-white mb-4">Авторизация через Discord</h2>

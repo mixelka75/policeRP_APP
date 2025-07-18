@@ -78,14 +78,14 @@ const RoleManagement: React.FC = () => {
 
   const getServiceStatusIcon = (running: boolean) => {
     return running ? (
-      <CheckCircle className="h-5 w-5 text-green-400" />
+      <CheckCircle className="h-5 w-5 text-primary-400" />
     ) : (
       <XCircle className="h-5 w-5 text-red-400" />
     );
   };
 
   const getServiceStatusColor = (running: boolean) => {
-    return running ? 'text-green-400' : 'text-red-400';
+    return running ? 'text-primary-400' : 'text-red-400';
   };
 
   const stats = [
@@ -93,25 +93,25 @@ const RoleManagement: React.FC = () => {
       title: 'Проверка ролей',
       value: roleStatus?.service_running ? 'Активна' : 'Остановлена',
       icon: roleStatus?.service_running ? Activity : Pause,
-      color: roleStatus?.service_running ? 'green' as const : 'red' as const,
+      color: roleStatus?.service_running ? 'primary' as const : 'danger' as const,
     },
     {
       title: 'Интервал проверки',
       value: `${roleStatus?.check_interval_minutes || 0} мин`,
       icon: Clock,
-      color: 'blue' as const,
+      color: 'secondary' as const,
     },
     {
       title: 'Проблемы синхронизации',
       value: syncIssues?.users_with_issues || 0,
       icon: AlertTriangle,
-      color: (syncIssues?.users_with_issues || 0) > 0 ? 'red' as const : 'green' as const,
+      color: (syncIssues?.users_with_issues || 0) > 0 ? 'danger' as const : 'success' as const,
     },
     {
       title: 'Ролей в кэше',
       value: roleStatus?.guild_roles_cached || 0,
       icon: Shield,
-      color: 'purple' as const,
+      color: 'accent' as const,
     },
   ];
 
@@ -190,7 +190,7 @@ const RoleManagement: React.FC = () => {
         >
           <Card>
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-              <Activity className="h-5 w-5 mr-2 text-blue-400" />
+              <Activity className="h-5 w-5 mr-2 text-secondary-400" />
               Обновления в реальном времени
             </h3>
             <RoleUpdatesIndicator showHistory={true} />
@@ -243,11 +243,11 @@ const RoleManagement: React.FC = () => {
                   <span className="text-dark-400">Discord интеграция:</span>
                   <div className="flex items-center space-x-2">
                     {discordStatus?.discord_configured ? (
-                      <CheckCircle className="h-4 w-4 text-green-400" />
+                      <CheckCircle className="h-4 w-4 text-primary-400" />
                     ) : (
                       <XCircle className="h-4 w-4 text-red-400" />
                     )}
-                    <span className={discordStatus?.discord_configured ? 'text-green-400' : 'text-red-400'}>
+                    <span className={discordStatus?.discord_configured ? 'text-primary-400' : 'text-red-400'}>
                       {discordStatus?.discord_configured ? 'Настроена' : 'Не настроена'}
                     </span>
                   </div>
@@ -256,11 +256,11 @@ const RoleManagement: React.FC = () => {
                   <span className="text-dark-400">Гильдия:</span>
                   <div className="flex items-center space-x-2">
                     {discordStatus?.guild_configured ? (
-                      <CheckCircle className="h-4 w-4 text-green-400" />
+                      <CheckCircle className="h-4 w-4 text-primary-400" />
                     ) : (
                       <XCircle className="h-4 w-4 text-red-400" />
                     )}
-                    <span className={discordStatus?.guild_configured ? 'text-green-400' : 'text-red-400'}>
+                    <span className={discordStatus?.guild_configured ? 'text-primary-400' : 'text-red-400'}>
                       {discordStatus?.guild_configured ? 'Подключена' : 'Не подключена'}
                     </span>
                   </div>
@@ -269,11 +269,11 @@ const RoleManagement: React.FC = () => {
                   <span className="text-dark-400">Роли:</span>
                   <div className="flex items-center space-x-2">
                     {discordStatus?.roles_configured ? (
-                      <CheckCircle className="h-4 w-4 text-green-400" />
+                      <CheckCircle className="h-4 w-4 text-primary-400" />
                     ) : (
                       <XCircle className="h-4 w-4 text-red-400" />
                     )}
-                    <span className={discordStatus?.roles_configured ? 'text-green-400' : 'text-red-400'}>
+                    <span className={discordStatus?.roles_configured ? 'text-primary-400' : 'text-red-400'}>
                       {discordStatus?.roles_configured ? 'Настроены' : 'Не настроены'}
                     </span>
                   </div>
@@ -292,7 +292,7 @@ const RoleManagement: React.FC = () => {
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white flex items-center">
-                <AlertTriangle className="h-5 w-5 mr-2 text-yellow-400" />
+                <AlertTriangle className="h-5 w-5 mr-2 text-warning-400" />
                 Проблемы синхронизации
               </h3>
               <div className="flex items-center space-x-2">
@@ -307,8 +307,8 @@ const RoleManagement: React.FC = () => {
 
             {syncIssues?.users_with_issues === 0 ? (
               <div className="text-center py-8">
-                <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-4" />
-                <p className="text-green-400 text-lg font-medium mb-2">
+                <CheckCircle className="h-12 w-12 text-primary-400 mx-auto mb-4" />
+                <p className="text-primary-400 text-lg font-medium mb-2">
                   Проблем синхронизации нет
                 </p>
                 <p className="text-dark-400">
@@ -373,11 +373,11 @@ const RoleManagement: React.FC = () => {
             </h3>
 
             <div className="space-y-4">
-              <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+              <div className="bg-primary-500/10 border border-primary-500/20 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-blue-400 mb-1">Массовая проверка ролей</h4>
-                    <p className="text-sm text-blue-300">
+                    <h4 className="font-medium text-primary-400 mb-1">Массовая проверка ролей</h4>
+                    <p className="text-sm text-primary-300">
                       Проверить роли всех пользователей в Discord и обновить данные в системе
                     </p>
                   </div>
@@ -392,18 +392,18 @@ const RoleManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
+              <div className="bg-warning-500/10 border border-warning-500/20 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-yellow-400 mb-1">Перезапуск сервиса</h4>
-                    <p className="text-sm text-yellow-300">
+                    <h4 className="font-medium text-warning-400 mb-1">Перезапуск сервиса</h4>
+                    <p className="text-sm text-warning-300">
                       Перезапустить сервис проверки ролей при возникновении проблем
                     </p>
                   </div>
                   <Button
                     variant="outline"
                     leftIcon={<RefreshCw className="h-4 w-4" />}
-                    className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10"
+                    className="border-warning-500/30 text-warning-400 hover:bg-warning-500/10"
                   >
                     Перезапустить
                   </Button>

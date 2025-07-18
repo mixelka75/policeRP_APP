@@ -1,4 +1,4 @@
-// src/pages/Passports.tsx
+// src/pages/Passports.tsx - Обновленная цветовая схема
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -135,7 +135,7 @@ const Passports: React.FC = () => {
     setAppliedFilters({});
   };
 
-  // ✨ Уникальные города из данных
+  // Уникальные города из данных
   const uniqueCities = [...new Set(passports?.map(p => p.city) || [])].sort();
 
   const cityOptions = [
@@ -157,9 +157,9 @@ const Passports: React.FC = () => {
       render: (_: any, passport: Passport) => (
         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
           passport.is_emergency 
-            ? 'bg-gradient-to-br from-red-500 to-red-600'
-            : 'bg-gradient-to-br from-blue-500 to-blue-600'
-        }`}>
+            ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/30'
+            : 'bg-gradient-to-br from-primary-500 to-secondary-500 shadow-primary-glow'
+        } animate-glow`}>
           <span className="text-white font-medium text-sm">
             {getInitials(passport.first_name, passport.last_name)}
           </span>
@@ -181,19 +181,18 @@ const Passports: React.FC = () => {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-dark-400">{passport.nickname}</p>
+          <p className="text-sm text-gray-400">{passport.nickname}</p>
         </div>
       ),
     },
-    // ✨ НОВАЯ КОЛОНКА: Город
     {
       key: 'city',
       label: 'Город',
       width: '120px',
       render: (city: string) => (
         <div className="flex items-center space-x-2">
-          <MapPin className="h-4 w-4 text-dark-400" />
-          <span className="text-dark-300">{city}</span>
+          <MapPin className="h-4 w-4 text-primary-400" />
+          <span className="text-primary-300">{city}</span>
         </div>
       ),
     },
@@ -202,7 +201,7 @@ const Passports: React.FC = () => {
       label: 'Возраст',
       width: '100px',
       render: (age: number) => (
-        <span className="text-blue-400 font-medium">{age} лет</span>
+        <span className="text-secondary-400 font-medium">{age} лет</span>
       ),
     },
     {
@@ -210,12 +209,11 @@ const Passports: React.FC = () => {
       label: 'Пол',
       width: '100px',
       render: (gender: string) => (
-        <span className="text-dark-300">
+        <span className="text-gray-300">
           {gender === 'male' ? 'Мужской' : 'Женский'}
         </span>
       ),
     },
-    // ✨ НОВАЯ КОЛОНКА: Нарушения
     {
       key: 'violations_count',
       label: 'Нарушения',
@@ -234,7 +232,7 @@ const Passports: React.FC = () => {
       label: 'Въезд в город',
       width: '130px',
       render: (date: string) => (
-        <span className="text-dark-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
+        <span className="text-gray-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),
     },
     {
@@ -247,7 +245,7 @@ const Passports: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => handleEditPassport(passport)}
-            className="!p-2"
+            className="!p-2 text-primary-400 hover:text-primary-300"
             title="Редактировать"
           >
             <Edit className="h-4 w-4" />
@@ -279,31 +277,31 @@ const Passports: React.FC = () => {
     },
   ];
 
-  // ✨ ОБНОВЛЕННАЯ статистика
+  // Обновленная статистика с новыми цветами
   const stats = [
     {
       title: 'Всего паспортов',
       value: passports?.length || 0,
       icon: Users,
-      color: 'blue' as const,
+      color: 'primary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'В списке ЧС',
       value: passports?.filter(p => p.is_emergency).length || 0,
       icon: ShieldAlert,
-      color: 'red' as const,
+      color: 'danger' as const,
     },
     {
       title: 'Мужчин',
       value: passports?.filter(p => p.gender === 'male').length || 0,
       icon: UserPlus,
-      color: 'green' as const,
+      color: 'secondary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Женщин',
       value: passports?.filter(p => p.gender === 'female').length || 0,
       icon: UserPlus,
-      color: 'purple' as const,
+      color: 'accent' as const, // ✨ НОВЫЙ цвет
     },
   ];
 
@@ -315,16 +313,14 @@ const Passports: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80"
+          className="w-80 minecraft-input"
         />
-        {/* ✨ НОВЫЙ фильтр по городу */}
         <Select
           options={cityOptions}
           value={selectedCity}
           onChange={setSelectedCity}
           className="w-40"
         />
-        {/* ✨ НОВЫЙ фильтр по ЧС статусу */}
         <Select
           options={emergencyOptions}
           value={emergencyFilter}
@@ -342,10 +338,11 @@ const Passports: React.FC = () => {
       </div>
       <div className="flex items-center space-x-2">
         <Button
-          variant="primary"
+          variant="minecraft"
           size="sm"
           onClick={handleCreatePassport}
           leftIcon={<Plus className="h-4 w-4" />}
+          glow
         >
           Создать паспорт
         </Button>
@@ -401,7 +398,7 @@ const Passports: React.FC = () => {
         onSuccess={handleFormSuccess}
       />
 
-      {/* ✨ НОВОЕ: Emergency Management Modal */}
+      {/* Emergency Management Modal */}
       <EmergencyModal
         isOpen={isEmergencyModalOpen}
         onClose={() => setIsEmergencyModalOpen(false)}
@@ -427,7 +424,7 @@ const Passports: React.FC = () => {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-dark-300">
+          <p className="text-gray-300">
             Вы уверены, что хотите удалить паспорт пользователя{' '}
             <span className="font-medium text-white">
               {passportToDelete?.first_name} {passportToDelete?.last_name}

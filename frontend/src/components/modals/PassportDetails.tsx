@@ -64,7 +64,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
 
   const handleFineSuccess = () => {
     fetchFines(0, 100, passport.id);
-    onRefresh?.(); // Обновляем данные в родительском компоненте
+    onRefresh?.();
   };
 
   const handleEmergencyAction = () => {
@@ -72,7 +72,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
   };
 
   const handleEmergencySuccess = () => {
-    onRefresh?.(); // Обновляем данные в родительском компоненте
+    onRefresh?.();
   };
 
   return (
@@ -90,7 +90,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
               <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
                 passport.is_emergency 
                   ? 'bg-gradient-to-br from-red-500 to-red-600' 
-                  : 'bg-gradient-to-br from-blue-500 to-blue-600'
+                  : 'bg-gradient-to-br from-secondary-500 to-accent-500'
               }`}>
                 <span className="text-white font-bold text-lg">
                   {getInitials(passport.first_name, passport.last_name)}
@@ -138,18 +138,18 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
             </div>
           </div>
 
-          {/* ✨ ОБНОВЛЕННАЯ основная информация с новыми полями */}
+          {/* Основная информация */}
           <Card className="grid grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <User className="h-5 w-5 text-blue-400" />
+                <User className="h-5 w-5 text-secondary-400" />
                 <div>
                   <p className="text-sm text-dark-400">Возраст</p>
                   <p className="text-lg font-medium text-white">{passport.age} лет</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5 text-purple-400" />
+                <Users className="h-5 w-5 text-accent-400" />
                 <div>
                   <p className="text-sm text-dark-400">Пол</p>
                   <p className="text-lg font-medium text-white">
@@ -157,9 +157,8 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                   </p>
                 </div>
               </div>
-              {/* ✨ НОВОЕ ПОЛЕ: Город */}
               <div className="flex items-center space-x-3">
-                <MapPin className="h-5 w-5 text-green-400" />
+                <MapPin className="h-5 w-5 text-primary-400" />
                 <div>
                   <p className="text-sm text-dark-400">Город проживания</p>
                   <p className="text-lg font-medium text-white">{passport.city}</p>
@@ -168,7 +167,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
             </div>
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5 text-green-400" />
+                <Calendar className="h-5 w-5 text-final-400" />
                 <div>
                   <p className="text-sm text-dark-400">Дата создания</p>
                   <p className="text-lg font-medium text-white">
@@ -176,9 +175,8 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                   </p>
                 </div>
               </div>
-              {/* ✨ НОВОЕ ПОЛЕ: Дата въезда */}
               <div className="flex items-center space-x-3">
-                <Clock className="h-5 w-5 text-yellow-400" />
+                <Clock className="h-5 w-5 text-warning-400" />
                 <div>
                   <p className="text-sm text-dark-400">Въезд в город</p>
                   <p className="text-lg font-medium text-white">
@@ -186,7 +184,6 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                   </p>
                 </div>
               </div>
-              {/* ✨ НОВОЕ ПОЛЕ: Количество нарушений */}
               <div className="flex items-center space-x-3">
                 <AlertTriangle className={`h-5 w-5 ${passport.violations_count > 0 ? 'text-red-400' : 'text-green-400'}`} />
                 <div>
@@ -199,7 +196,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
             </div>
           </Card>
 
-          {/* ✨ НОВЫЙ блок предупреждения о ЧС */}
+          {/* Предупреждение о ЧС */}
           {passport.is_emergency && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
@@ -291,10 +288,10 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
             )}
           </Card>
 
-          {/* ✨ НОВАЯ секция: Дополнительная информация */}
+          {/* Дополнительная информация */}
           <Card>
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-              <FileText className="h-5 w-5 mr-2 text-blue-400" />
+              <FileText className="h-5 w-5 mr-2 text-primary-400" />
               Дополнительная информация
             </h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -324,13 +321,13 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                     </>
                   ) : passport.violations_count > 5 ? (
                     <>
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <span className="text-yellow-400">Требует внимания</span>
+                      <div className="w-2 h-2 bg-warning-500 rounded-full"></div>
+                      <span className="text-warning-400">Требует внимания</span>
                     </>
                   ) : (
                     <>
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-green-400">Обычный</span>
+                      <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
+                      <span className="text-primary-400">Обычный</span>
                     </>
                   )}
                 </div>

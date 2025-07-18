@@ -190,27 +190,27 @@ const FilterModal: React.FC<FilterModalProps> = ({
           <h4 className="text-sm font-medium text-white mb-2">Активные фильтры:</h4>
           <div className="flex flex-wrap gap-2">
             {filters.dateRange?.start && (
-              <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+              <span className="text-xs bg-secondary-500/20 text-secondary-400 px-2 py-1 rounded">
                 От: {filters.dateRange.start}
               </span>
             )}
             {filters.dateRange?.end && (
-              <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+              <span className="text-xs bg-secondary-500/20 text-secondary-400 px-2 py-1 rounded">
                 До: {filters.dateRange.end}
               </span>
             )}
             {filters.amount?.min && (
-              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+              <span className="text-xs bg-primary-500/20 text-primary-400 px-2 py-1 rounded">
                 От: {filters.amount.min} АР
               </span>
             )}
             {filters.amount?.max && (
-              <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+              <span className="text-xs bg-primary-500/20 text-primary-400 px-2 py-1 rounded">
                 До: {filters.amount.max} АР
               </span>
             )}
             {filters.gender && (
-              <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded">
+              <span className="text-xs bg-accent-500/20 text-accent-400 px-2 py-1 rounded">
                 {filters.gender === 'male' ? 'Мужской' : 'Женский'}
               </span>
             )}
@@ -220,7 +220,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
               </span>
             )}
             {filters.isActive && (
-              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded">
+              <span className="text-xs bg-warning-500/20 text-warning-400 px-2 py-1 rounded">
                 {filters.isActive === 'true' ? 'Активные' : 'Заблокированные'}
               </span>
             )}

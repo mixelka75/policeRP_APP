@@ -1,4 +1,4 @@
-// src/pages/Users.tsx
+// src/pages/Users.tsx - Обновленная цветовая схема
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -157,7 +157,7 @@ const Users: React.FC = () => {
   };
 
   const getRoleColor = (role: string) => {
-    return role === 'admin' ? 'text-red-400' : 'text-blue-400';
+    return role === 'admin' ? 'text-red-400' : 'text-primary-400'; // ✨ НОВЫЙ цвет
   };
 
   const getRoleIcon = (role: string) => {
@@ -182,15 +182,15 @@ const Users: React.FC = () => {
           />
           <div className={`absolute inset-0 w-10 h-10 rounded-full flex items-center justify-center ${
             user.role === 'admin' 
-              ? 'bg-gradient-to-br from-red-500 to-red-600'
-              : 'bg-gradient-to-br from-blue-500 to-blue-600'
-          }`}>
+              ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/30'
+              : 'bg-gradient-to-br from-primary-500 to-secondary-500 shadow-primary-glow'
+          } animate-glow`}>
             <span className="text-white font-medium text-sm">
               {getDisplayName(user).charAt(0).toUpperCase()}
             </span>
           </div>
           {/* Status indicator */}
-          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-dark-800 ${
+          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-minecraft-dark ${
             user.is_active ? 'bg-green-500' : 'bg-red-500'
           }`} />
         </div>
@@ -204,13 +204,13 @@ const Users: React.FC = () => {
           <div className="flex items-center space-x-2">
             <p className="font-medium text-white">{getDisplayName(user)}</p>
             <div className="flex items-center space-x-1">
-              <MessageCircle className="h-3 w-3 text-blue-400" />
+              <MessageCircle className="h-3 w-3 text-secondary-400" />
               <span className={`text-xs ${getRoleColor(user.role)}`}>
                 {getRoleDisplayName(user.role)}
               </span>
             </div>
           </div>
-          <div className="flex items-center space-x-2 text-xs text-dark-400">
+          <div className="flex items-center space-x-2 text-xs text-gray-400">
             <span>{getFullUserName(user)}</span>
             {user.minecraft_username && (
               <>
@@ -248,8 +248,8 @@ const Users: React.FC = () => {
       width: '160px',
       render: (date: string) => (
         <div className="text-sm">
-          <p className="text-dark-300">{formatDate(date, 'dd.MM.yyyy')}</p>
-          <p className="text-dark-500 text-xs">{formatRelativeTime(date)}</p>
+          <p className="text-gray-300">{formatDate(date, 'dd.MM.yyyy')}</p>
+          <p className="text-gray-500 text-xs">{formatRelativeTime(date)}</p>
         </div>
       ),
     },
@@ -258,7 +258,7 @@ const Users: React.FC = () => {
       label: 'Дата создания',
       width: '150px',
       render: (date: string) => (
-        <span className="text-dark-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
+        <span className="text-gray-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),
     },
     {
@@ -271,7 +271,7 @@ const Users: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => handleCheckRoles(user)}
-            className="!p-2 text-blue-400 hover:text-blue-300"
+            className="!p-2 text-primary-400 hover:text-primary-300"
             title="Проверить роли"
           >
             <RefreshCw className="h-4 w-4" />
@@ -294,7 +294,7 @@ const Users: React.FC = () => {
             href={`https://discord.com/users/${user.discord_id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center p-2 text-dark-400 hover:text-dark-100 transition-colors"
+            className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-gray-100 transition-colors"
             title="Открыть профиль в Discord"
           >
             <ExternalLink className="h-4 w-4" />
@@ -309,25 +309,25 @@ const Users: React.FC = () => {
       title: 'Всего пользователей',
       value: userStatistics?.total_users || 0,
       icon: UsersIcon,
-      color: 'blue' as const,
+      color: 'primary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Активных',
       value: userStatistics?.active_users || 0,
       icon: UserCheck,
-      color: 'green' as const,
+      color: 'success' as const,
     },
     {
       title: 'Администраторов',
       value: userStatistics?.admin_users || 0,
       icon: ShieldCheck,
-      color: 'red' as const,
+      color: 'danger' as const,
     },
     {
       title: 'Полицейских',
       value: userStatistics?.police_users || 0,
       icon: Shield,
-      color: 'blue' as const,
+      color: 'secondary' as const, // ✨ НОВЫЙ цвет
     },
   ];
 
@@ -339,12 +339,12 @@ const Users: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80"
+          className="w-80 minecraft-input"
         />
         <select
           value={searchType}
           onChange={(e) => setSearchType(e.target.value as any)}
-          className="bg-dark-800 border border-dark-600 text-dark-100 rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
+          className="bg-minecraft-dark border border-primary-500/30 text-white rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
         >
           <option value="all">Все</option>
           <option value="discord">Discord</option>
@@ -368,11 +368,12 @@ const Users: React.FC = () => {
           Обновить
         </Button>
         <Button
-          variant="primary"
+          variant="minecraft"
           size="sm"
           onClick={() => checkAllRoles()}
           loading={isCheckingAllRoles}
           leftIcon={<Activity className="h-4 w-4" />}
+          glow
         >
           Проверить все роли
         </Button>
@@ -393,14 +394,14 @@ const Users: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="bg-blue-500/10 border-blue-500/20">
+          <Card variant="minecraft" className="bg-secondary-500/10 border-secondary-500/20">
             <div className="flex items-center space-x-3">
-              <MessageCircle className="h-6 w-6 text-blue-400" />
+              <MessageCircle className="h-6 w-6 text-secondary-400" />
               <div>
-                <h3 className="text-lg font-semibold text-blue-400">
+                <h3 className="text-lg font-semibold text-secondary-400">
                   Discord авторизация
                 </h3>
-                <p className="text-blue-300">
+                <p className="text-secondary-300">
                   Пользователи создаются автоматически при первом входе через Discord.
                   Роли определяются на основе ролей в Discord сервере.
                 </p>
@@ -460,20 +461,20 @@ const Users: React.FC = () => {
               <p className="font-medium text-white">
                 {userToManage ? getDisplayName(userToManage) : ''}
               </p>
-              <p className="text-sm text-dark-400">
+              <p className="text-sm text-gray-400">
                 {userToManage ? getFullUserName(userToManage) : ''}
               </p>
             </div>
           </div>
 
-          <p className="text-dark-300">
+          <p className="text-gray-300">
             Проверить роли пользователя в Discord и обновить данные в системе?
           </p>
 
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+          <div className="bg-accent-500/10 border border-accent-500/20 rounded-lg p-3">
             <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm text-yellow-400">
+              <AlertTriangle className="h-4 w-4 text-accent-400" />
+              <span className="text-sm text-accent-400">
                 Это может изменить роль пользователя в системе
               </span>
             </div>
@@ -488,9 +489,10 @@ const Users: React.FC = () => {
               Отмена
             </Button>
             <Button
-              variant="primary"
+              variant="minecraft"
               onClick={confirmCheckRoles}
               loading={isCheckingRoles}
+              glow
             >
               Проверить роли
             </Button>
@@ -516,13 +518,13 @@ const Users: React.FC = () => {
               <p className="font-medium text-white">
                 {userToManage ? getDisplayName(userToManage) : ''}
               </p>
-              <p className="text-sm text-dark-400">
+              <p className="text-sm text-gray-400">
                 {userToManage ? getFullUserName(userToManage) : ''}
               </p>
             </div>
           </div>
 
-          <p className="text-dark-300">
+          <p className="text-gray-300">
             {userToManage?.is_active
               ? 'Деактивировать пользователя? Он потеряет доступ к системе.'
               : 'Активировать пользователя? Он получит доступ к системе согласно своей роли.'

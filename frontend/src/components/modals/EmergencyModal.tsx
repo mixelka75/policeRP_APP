@@ -29,7 +29,6 @@ const EmergencyModal: React.FC<EmergencyModalProps> = ({
     {
       showSuccessToast: true,
       onSuccess: (response) => {
-        // Показываем сообщение из API
         console.log(response.message);
         onSuccess?.();
         onClose();
@@ -83,7 +82,7 @@ const EmergencyModal: React.FC<EmergencyModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Информация о гражданине */}
         <div className="flex items-center space-x-4 p-4 bg-dark-700/50 rounded-lg">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-secondary-500 to-accent-500 rounded-full flex items-center justify-center">
             <span className="text-white font-bold text-lg">
               {getInitials(passport.first_name, passport.last_name)}
             </span>
@@ -122,16 +121,16 @@ const EmergencyModal: React.FC<EmergencyModalProps> = ({
         {/* Основное действие */}
         <div className={`p-4 rounded-lg border ${
           passport.is_emergency 
-            ? 'bg-green-500/10 border-green-500/20' 
+            ? 'bg-primary-500/10 border-primary-500/20' 
             : 'bg-red-500/10 border-red-500/20'
         }`}>
           <div className="flex items-center space-x-3 mb-3">
             {passport.is_emergency ? (
               <>
-                <Shield className="h-6 w-6 text-green-400" />
+                <Shield className="h-6 w-6 text-primary-400" />
                 <div>
-                  <h4 className="font-medium text-green-400">Убрать из списка ЧС</h4>
-                  <p className="text-sm text-green-300">
+                  <h4 className="font-medium text-primary-400">Убрать из списка ЧС</h4>
+                  <p className="text-sm text-primary-300">
                     Гражданин будет исключен из списка чрезвычайных ситуаций
                   </p>
                 </div>
@@ -150,7 +149,7 @@ const EmergencyModal: React.FC<EmergencyModalProps> = ({
           </div>
         </div>
 
-        {/* Причина (обязательна только при добавлении в ЧС) */}
+        {/* Причина */}
         <div className="space-y-3">
           <Input
             label={passport.is_emergency ? 'Причина исключения (необязательно)' : 'Причина добавления в ЧС'}
@@ -196,13 +195,13 @@ const EmergencyModal: React.FC<EmergencyModalProps> = ({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4"
+          className="bg-warning-500/10 border border-warning-500/20 rounded-lg p-4"
         >
           <div className="flex items-center space-x-2 mb-2">
-            <AlertTriangle className="h-5 w-5 text-yellow-400" />
-            <h4 className="font-medium text-yellow-400">Внимание</h4>
+            <AlertTriangle className="h-5 w-5 text-warning-400" />
+            <h4 className="font-medium text-warning-400">Внимание</h4>
           </div>
-          <p className="text-sm text-yellow-300">
+          <p className="text-sm text-warning-300">
             {passport.is_emergency
               ? 'Исключение из списка ЧС позволит гражданину свободно передвигаться по городу.'
               : 'Добавление в список ЧС ограничит возможности гражданина и будет зафиксировано в логах системы.'

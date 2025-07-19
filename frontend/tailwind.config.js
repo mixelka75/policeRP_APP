@@ -14,7 +14,7 @@ export default {
 
         // Специальные цвета для Minecraft темы
         minecraft: {
-          dark: '#0a0a0f',
+          dark: '#1a1a1a',
           light: '#f3f4f6',
         },
       },
@@ -48,17 +48,17 @@ export default {
           '50%': { transform: 'translateY(-20px)' },
         },
         glow: {
-          '0%': { boxShadow: '0 0 20px rgba(212, 165, 116, 0.3)' },
-          '100%': { boxShadow: '0 0 30px rgba(212, 165, 116, 0.6)' },
+          '0%': { boxShadow: '0 0 20px rgba(217, 70, 239, 0.3)' },
+          '100%': { boxShadow: '0 0 30px rgba(217, 70, 239, 0.6)' },
         },
       },
       boxShadow: {
-        'primary-glow': '0 0 20px rgba(212, 165, 116, 0.4)',
-        'secondary-glow': '0 0 20px rgba(212, 132, 138, 0.4)',
-        'accent-glow': '0 0 20px rgba(182, 123, 184, 0.4)',
-        'final-glow': '0 0 20px rgba(147, 129, 179, 0.4)',
+        'primary-glow': '0 0 20px rgba(217, 70, 239, 0.4)',
+        'secondary-glow': '0 0 20px rgba(139, 92, 246, 0.4)',
+        'accent-glow': '0 0 20px rgba(236, 72, 153, 0.4)',
+        'final-glow': '0 0 20px rgba(139, 92, 246, 0.4)',
         'minecraft': '0 4px 16px rgba(0, 0, 0, 0.3)',
-        'minecraft-hover': '0 8px 24px rgba(212, 165, 116, 0.4)',
+        'minecraft-hover': '0 8px 24px rgba(217, 70, 239, 0.4)',
         'glass': '0 8px 32px rgba(0, 0, 0, 0.3)',
       },
       backdropBlur: {
@@ -67,8 +67,8 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'primary-gradient': 'linear-gradient(135deg, #f0d142 0%, #d4848a 30%, #b67bb8 70%, #9381b3 100%)',
-        'minecraft-gradient': 'linear-gradient(135deg, #d4a574 0%, #d4848a 50%, #b67bb8 100%)',
+        'primary-gradient': 'linear-gradient(135deg, #e879f9 0%, #8b5cf6 30%, #ec4899 70%, #8b5cf6 100%)',
+        'minecraft-gradient': 'linear-gradient(135deg, #d946ef 0%, #8b5cf6 50%, #ec4899 100%)',
       },
       screens: {
         'xs': '475px',

@@ -29,35 +29,27 @@ const StatCard: React.FC<StatCardProps> = ({
   const colorClasses = cn({
     // Новые основные цвета
     'bg-primary-500/10 text-primary-400 border-primary-500/20': color === 'primary',
-    'bg-secondary-500/10 text-secondary-400 border-secondary-500/20': color === 'secondary',
-    'bg-accent-500/10 text-accent-400 border-accent-500/20': color === 'accent',
+    'bg-secondary-500/10 text-secondary-400 border-secondary-500/20': color === 'secondary' || color === 'blue',
+    'bg-accent-500/10 text-accent-400 border-accent-500/20': color === 'accent' || color === 'purple',
     'bg-final-500/10 text-final-400 border-final-500/20': color === 'final',
 
     // Функциональные цвета (остаются без изменений)
     'bg-green-500/10 text-green-400 border-green-500/20': color === 'green',
     'bg-red-500/10 text-red-400 border-red-500/20': color === 'red',
     'bg-yellow-500/10 text-yellow-400 border-yellow-500/20': color === 'yellow',
-
-    // Устаревшие цвета для обратной совместимости (мапим на новые)
-    'bg-accent-500/10 text-accent-400 border-accent-500/20': color === 'purple', // purple → accent
-    'bg-secondary-500/10 text-secondary-400 border-secondary-500/20': color === 'blue', // blue → secondary
   });
 
   const iconBgClasses = cn({
     // Новые фоны для иконок
     'bg-primary-500/20': color === 'primary',
-    'bg-secondary-500/20': color === 'secondary',
-    'bg-accent-500/20': color === 'accent',
+    'bg-secondary-500/20': color === 'secondary' || color === 'blue',
+    'bg-accent-500/20': color === 'accent' || color === 'purple',
     'bg-final-500/20': color === 'final',
 
     // Функциональные фоны
     'bg-green-500/20': color === 'green',
     'bg-red-500/20': color === 'red',
     'bg-yellow-500/20': color === 'yellow',
-
-    // Маппинг устаревших цветов
-    'bg-accent-500/20': color === 'purple',
-    'bg-secondary-500/20': color === 'blue',
   });
 
   // ✨ ОБНОВЛЕННЫЕ hover эффекты с новыми цветами

@@ -66,8 +66,8 @@ const Statistics: React.FC<StatisticsProps> = ({
     }, {} as Record<string, number>);
 
     return [
-      { name: 'Мужчины', value: genderCount.male || 0, color: '#d4a574' },
-      { name: 'Женщины', value: genderCount.female || 0, color: '#d4848a' },
+      { name: 'Мужчины', value: genderCount.male || 0, color: '#c084fc' },
+      { name: 'Женщины', value: genderCount.female || 0, color: '#e879f9' },
     ];
   }, [passports]);
 
@@ -279,7 +279,7 @@ const Statistics: React.FC<StatisticsProps> = ({
               <XAxis type="number" stroke="#9ca3af" />
               <YAxis dataKey="city" type="category" stroke="#9ca3af" width={120} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" fill="#d4848a" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill="#e879f9" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -397,7 +397,7 @@ const Statistics: React.FC<StatisticsProps> = ({
               <XAxis type="number" stroke="#9ca3af" />
               <YAxis dataKey="article" type="category" stroke="#9ca3af" width={100} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill="#d946ef" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>

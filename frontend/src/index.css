@@ -7,23 +7,23 @@
 
 /* CSS переменные для новой цветовой схемы */
 :root {
-  --color-primary: #d4a574;
-  --color-primary-light: #f0d142;
-  --color-primary-dark: #c2956a;
-  --color-secondary: #d4848a;
-  --color-secondary-light: #f87171;
-  --color-secondary-dark: #c46d74;
-  --color-accent: #b67bb8;
-  --color-accent-light: #c084fc;
-  --color-accent-dark: #a366a8;
-  --color-final: #9381b3;
-  --color-final-light: #b599ff;
-  --color-final-dark: #8671a3;
-  --gradient-primary: linear-gradient(135deg, #f0d142 0%, #d4848a 30%, #b67bb8 70%, #9381b3 100%);
-  --gradient-background: linear-gradient(135deg, #1a1a2e 0%, #2d1b3d 25%, #3a2650 50%, #4a2c5a 75%, #5a3468 100%);
-  --gradient-card: linear-gradient(135deg, rgba(212, 165, 116, 0.1) 0%, rgba(212, 132, 138, 0.1) 30%, rgba(182, 123, 184, 0.1) 70%, rgba(147, 129, 179, 0.1) 100%);
-  --gradient-button: linear-gradient(135deg, #d4a574 0%, #d4848a 50%, #b67bb8 100%);
-  --gradient-text: linear-gradient(135deg, #f0d142 0%, #f87171 30%, #c084fc 70%, #b599ff 100%);
+  --color-primary: #d946ef;
+  --color-primary-light: #e879f9;
+  --color-primary-dark: #c026d3;
+  --color-secondary: #8b5cf6;
+  --color-secondary-light: #a78bfa;
+  --color-secondary-dark: #7c3aed;
+  --color-accent: #ec4899;
+  --color-accent-light: #f472b6;
+  --color-accent-dark: #db2777;
+  --color-final: #8b5cf6;
+  --color-final-light: #a78bfa;
+  --color-final-dark: #7c3aed;
+  --gradient-primary: linear-gradient(135deg, #e879f9 0%, #8b5cf6 30%, #ec4899 70%, #8b5cf6 100%);
+  --gradient-background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 25%, #3a3a3a 50%, #4a4a4a 75%, #5a5a5a 100%);
+  --gradient-card: linear-gradient(135deg, rgba(217, 70, 239, 0.1) 0%, rgba(139, 92, 246, 0.1) 30%, rgba(236, 72, 153, 0.1) 70%, rgba(139, 92, 246, 0.1) 100%);
+  --gradient-button: linear-gradient(135deg, #d946ef 0%, #8b5cf6 50%, #ec4899 100%);
+  --gradient-text: linear-gradient(135deg, #e879f9 0%, #a78bfa 30%, #f472b6 70%, #a78bfa 100%);
 }
 
 @layer base {
@@ -37,8 +37,7 @@
 
   body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: var(--gradient-background);
-    background-attachment: fixed;
+    background: #191a1f;
     color: #f3f4f6;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
@@ -77,14 +76,14 @@
   .minecraft-card {
     background: var(--gradient-card);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(212, 165, 116, 0.3);
+    border: 1px solid rgba(217, 70, 239, 0.3);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
   .minecraft-card:hover {
-    border-color: rgba(212, 165, 116, 0.5);
-    box-shadow: 0 12px 48px rgba(212, 165, 116, 0.2);
+    border-color: rgba(217, 70, 239, 0.5);
+    box-shadow: 0 12px 48px rgba(217, 70, 239, 0.2);
   }
 
   .minecraft-button {
@@ -95,17 +94,17 @@
     color: white;
     font-weight: 500;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(212, 165, 116, 0.3);
+    box-shadow: 0 4px 16px rgba(217, 70, 239, 0.3);
   }
 
   .minecraft-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(212, 165, 116, 0.4);
+    box-shadow: 0 8px 24px rgba(217, 70, 239, 0.4);
   }
 
   .minecraft-input {
     background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(212, 165, 116, 0.3);
+    border: 1px solid rgba(217, 70, 239, 0.3);
     border-radius: 8px;
     padding: 0.75rem 1rem;
     color: white;
@@ -113,8 +112,8 @@
   }
 
   .minecraft-input:focus {
-    border-color: rgba(212, 165, 116, 0.6);
-    box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+    border-color: rgba(217, 70, 239, 0.6);
+    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.1);
     outline: none;
   }
 
@@ -139,13 +138,13 @@
   .glass {
     background: rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(212, 165, 116, 0.3);
+    border: 1px solid rgba(217, 70, 239, 0.3);
   }
 
   .glass-light {
     background: rgba(0, 0, 0, 0.1);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(212, 165, 116, 0.2);
+    border: 1px solid rgba(217, 70, 239, 0.2);
   }
 
   .gradient-border {
@@ -273,10 +272,10 @@
 
 @keyframes glow {
   from {
-    box-shadow: 0 0 20px rgba(212, 165, 116, 0.3);
+    box-shadow: 0 0 20px rgba(217, 70, 239, 0.3);
   }
   to {
-    box-shadow: 0 0 30px rgba(212, 165, 116, 0.6);
+    box-shadow: 0 0 30px rgba(217, 70, 239, 0.6);
   }
 }
 
@@ -331,7 +330,7 @@
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(45deg, transparent 30%, rgba(212, 165, 116, 0.5) 30%, rgba(212, 165, 116, 0.5) 70%, transparent 70%);
+  background: linear-gradient(45deg, transparent 30%, rgba(217, 70, 239, 0.5) 30%, rgba(217, 70, 239, 0.5) 70%, transparent 70%);
   z-index: -1;
   border-radius: 12px;
 }

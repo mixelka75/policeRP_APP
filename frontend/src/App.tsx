@@ -148,7 +148,7 @@ const App: React.FC = () => {
             },
             success: {
               iconTheme: {
-                primary: '#d4a574',
+                primary: '#e879f9',
                 secondary: '#f3f4f6',
               },
             },

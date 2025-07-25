@@ -23,6 +23,7 @@ import { PassportForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import EmergencyModal from '@/components/modals/EmergencyModal';
 import { formatDate, getInitials } from '@/utils';
+import { PlayerSkin } from '@/components/common';
 
 const Passports: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -155,14 +156,17 @@ const Passports: React.FC = () => {
       label: '',
       width: '60px',
       render: (_: any, passport: Passport) => (
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+        <div className={`relative ${
           passport.is_emergency 
-            ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/30'
-            : 'bg-gradient-to-br from-primary-500 to-secondary-500 shadow-primary-glow'
-        } animate-glow`}>
-          <span className="text-white font-medium text-sm">
-            {getInitials(passport.first_name, passport.last_name)}
-          </span>
+            ? 'ring-2 ring-red-500 shadow-red-500/30'
+            : 'ring-2 ring-primary-500 shadow-primary-glow'
+        } rounded-lg animate-glow`}>
+          <PlayerSkin
+            passportId={passport.id}
+            size="lg"
+            className="rounded-lg"
+            fallbackText={getInitials(passport.first_name, passport.last_name)}
+          />
         </div>
       ),
     },

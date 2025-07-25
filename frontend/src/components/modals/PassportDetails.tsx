@@ -22,6 +22,7 @@ import { Modal, Badge, Button, Card, Loading } from '@/components/ui';
 import { FineForm } from '@/components/forms';
 import { EmergencyModal } from '@/components/modals';
 import { formatDate, formatMoney, getInitials } from '@/utils';
+import { PlayerSkin } from '@/components/common';
 
 interface PassportDetailsProps {
   isOpen: boolean;
@@ -87,14 +88,17 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+              <div className={`rounded-lg ${
                 passport.is_emergency 
-                  ? 'bg-gradient-to-br from-red-500 to-red-600' 
-                  : 'bg-gradient-to-br from-secondary-500 to-accent-500'
+                  ? 'ring-2 ring-red-500' 
+                  : 'ring-2 ring-secondary-500'
               }`}>
-                <span className="text-white font-bold text-lg">
-                  {getInitials(passport.first_name, passport.last_name)}
-                </span>
+                <PlayerSkin
+                  passportId={passport.id}
+                  size="xl"
+                  className="rounded-lg"
+                  fallbackText={getInitials(passport.first_name, passport.last_name)}
+                />
               </div>
               <div>
                 <div className="flex items-center space-x-3">

@@ -25,8 +25,8 @@ import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Modal, Card, Badge } from '@/components/ui';
+import UserAvatar from '@/components/common/UserAvatar';
 import {
-  getDiscordAvatarUrl,
   getDisplayName,
   getRoleDisplayName,
   getFullUserName,
@@ -170,30 +170,11 @@ const Users: React.FC = () => {
       label: '',
       width: '60px',
       render: (_: any, user: User) => (
-        <div className="relative">
-          <img
-            src={getDiscordAvatarUrl(user, 40)}
-            alt={`${getDisplayName(user)} avatar`}
-            className="w-10 h-10 rounded-full"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-            }}
-          />
-          <div className={`absolute inset-0 w-10 h-10 rounded-full flex items-center justify-center ${
-            user.role === 'admin' 
-              ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/30'
-              : 'bg-gradient-to-br from-primary-500 to-secondary-500 shadow-primary-glow'
-          } animate-glow`}>
-            <span className="text-white font-medium text-sm">
-              {getDisplayName(user).charAt(0).toUpperCase()}
-            </span>
-          </div>
-          {/* Status indicator */}
-          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-minecraft-dark ${
-            user.is_active ? 'bg-green-500' : 'bg-red-500'
-          }`} />
-        </div>
+        <UserAvatar
+          user={user}
+          size={40}
+          showStatus={true}
+        />
       ),
     },
     {
@@ -452,11 +433,12 @@ const Users: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="flex items-center space-x-3">
-            <img
-              src={userToManage ? getDiscordAvatarUrl(userToManage, 40) : ''}
-              alt="User avatar"
-              className="w-10 h-10 rounded-full"
-            />
+            {userToManage && (
+              <UserAvatar
+                user={userToManage}
+                size={40}
+              />
+            )}
             <div>
               <p className="font-medium text-white">
                 {userToManage ? getDisplayName(userToManage) : ''}
@@ -509,11 +491,12 @@ const Users: React.FC = () => {
       >
         <div className="space-y-4">
           <div className="flex items-center space-x-3">
-            <img
-              src={userToManage ? getDiscordAvatarUrl(userToManage, 40) : ''}
-              alt="User avatar"
-              className="w-10 h-10 rounded-full"
-            />
+            {userToManage && (
+              <UserAvatar
+                user={userToManage}
+                size={40}
+              />
+            )}
             <div>
               <p className="font-medium text-white">
                 {userToManage ? getDisplayName(userToManage) : ''}

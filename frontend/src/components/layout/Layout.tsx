@@ -7,6 +7,7 @@ import Sidebar from './Sidebar';
 import { Button } from '@/components/ui';
 import { getDisplayName, getRoleDisplayName, isUserDataOutdated } from '@/utils';
 import { cn } from '@/utils';
+import UserAvatar from '@/components/common/UserAvatar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -104,23 +105,12 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                 <div className="flex items-center space-x-3">
                   {user ? (
                     <>
-                      {/* ✨ ОБНОВЛЕННАЯ иконка пользователя */}
-                      <div className="relative">
-                        <div className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center",
-                          user.role === 'admin'
-                            ? 'bg-gradient-to-br from-red-500 to-red-600'
-                            : 'bg-gradient-to-br from-primary-500 to-secondary-500' // ✨ НОВЫЙ градиент для полицейских
-                        )}>
-                          <User className="w-4 h-4 text-white" />
-                        </div>
-
-                        {/* Status indicator */}
-                        <div className={cn(
-                          "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-gray-900",
-                          user.is_active ? "bg-green-500" : "bg-red-500"
-                        )} />
-                      </div>
+                      {/* ✨ Minecraft/Discord аватар пользователя */}
+                      <UserAvatar
+                        user={user}
+                        size={32}
+                        showStatus={true}
+                      />
 
                       {/* ✨ ОБНОВЛЕННЫЕ детали пользователя */}
                       <div className="hidden sm:block">

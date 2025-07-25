@@ -12,10 +12,13 @@ from app.schemas.passport import (
     PassportUpdate,
     PassportInfo,
     PassportEmergencyUpdate,
-    PassportEmergencyResponse
+    PassportEmergencyResponse,
+    PassportSkinResponse,
+    PlayerSkinResponse
 )
 from app.models.user import User
 from app.utils.logger import ActionLogger
+from app.clients.spworlds import spworlds_client
 
 router = APIRouter()
 
@@ -319,6 +322,125 @@ async def toggle_emergency_status(
         nickname=passport.nickname,
         is_emergency=passport.is_emergency,
         message=message
+    )
+
+
+@router.get("/{passport_id}/skin", response_model=PassportSkinResponse)
+async def get_passport_skin(
+        request: Request,
+        *,
+        db: Session = Depends(get_db),
+        passport_id: int,
+        current_user: User = Depends(get_current_police_or_admin),
+):
+    """
+    Получить URL скина (головы) игрока по ID паспорта
+    """
+    passport = passport_crud.get(db, id=passport_id)
+    if not passport:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Паспорт не найден",
+        )
+
+    # Получаем данные пользователя из SP-Worlds по Discord ID (используем nickname как Discord ID для поиска)
+    user_data = await spworlds_client.find_user(passport.nickname)
+    
+    if not user_data or not user_data.get("uuid"):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="UUID игрока не найден в SP-Worlds",
+        )
+
+    # Получаем URL скина
+    skin_url = await spworlds_client.get_player_skin_url(user_data["uuid"])
+    
+    if not skin_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Скин игрока недоступен",
+        )
+
+    # Логируем запрос скина
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="GET_SKIN",
+        entity_type="passport",
+        entity_id=passport.id,
+        details={
+            "nickname": passport.nickname,
+            "uuid": user_data["uuid"],
+            "skin_url": skin_url,
+            "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+
+    return PassportSkinResponse(
+        passport_id=passport.id,
+        nickname=passport.nickname,
+        uuid=user_data["uuid"],
+        skin_url=skin_url
+    )
+
+
+@router.get("/skin/by-discord/{discord_id}", response_model=PlayerSkinResponse)
+async def get_skin_by_discord_id(
+        request: Request,
+        *,
+        db: Session = Depends(get_db),
+        discord_id: str,
+        current_user: User = Depends(get_current_police_or_admin),
+):
+    """
+    Получить URL скина (головы) игрока по Discord ID
+    """
+    # Получаем данные пользователя из SP-Worlds
+    user_data = await spworlds_client.find_user(discord_id)
+    
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Пользователь не найден в SP-Worlds",
+        )
+    
+    if not user_data.get("uuid"):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="UUID игрока не найден",
+        )
+
+    # Получаем URL скина
+    skin_url = await spworlds_client.get_player_skin_url(user_data["uuid"])
+    
+    if not skin_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Скин игрока недоступен",
+        )
+
+    # Логируем запрос скина
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="GET_SKIN_BY_DISCORD",
+        entity_type="user",
+        details={
+            "discord_id": discord_id,
+            "username": user_data.get("username"),
+            "uuid": user_data["uuid"],
+            "skin_url": skin_url,
+            "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+
+    return PlayerSkinResponse(
+        discord_id=discord_id,
+        username=user_data.get("username"),
+        uuid=user_data["uuid"],
+        skin_url=skin_url
     )
 
 

@@ -20,6 +20,7 @@ import { Button, Input, Table, StatCard, Modal } from '@/components/ui';
 import { FineForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, formatMoney, getInitials } from '@/utils';
+import MinecraftAvatar from '@/components/common/MinecraftAvatar';
 
 const Fines: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -147,11 +148,11 @@ const Fines: React.FC = () => {
 
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center shadow-primary-glow">
-              <span className="text-white font-medium text-sm">
-                {getInitials(passport.first_name, passport.last_name)}
-              </span>
-            </div>
+            <MinecraftAvatar
+              nickname={passport.nickname}
+              size={40}
+              shape="square"
+            />
             <div>
               <p className="font-medium text-white">
                 {passport.first_name} {passport.last_name}

@@ -23,6 +23,7 @@ import { useAuthStore } from '@/store/auth';
 import { getDisplayName, getRoleDisplayName, getFullUserName, isUserDataOutdated } from '@/utils';
 import { cn } from '@/utils';
 import { LiveStatusIndicator } from './LiveStatusIndicator';
+import UserAvatar from '@/components/common/UserAvatar';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -141,21 +142,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-primary-500/20">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
-                      {/* ✨ ОБНОВЛЕННАЯ иконка пользователя */}
-                      <div className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg",
-                        user.role === 'admin'
-                          ? 'bg-gradient-to-br from-red-500 to-red-600'
-                          : 'bg-gradient-to-br from-primary-500 to-secondary-500' // ✨ НОВЫЙ градиент
-                      )}>
-                        <User className="w-6 h-6 text-white" />
-                      </div>
-
-                      {/* Status indicator */}
-                      <div className={cn(
-                        "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-gray-900",
-                        user.is_active ? "bg-green-500" : "bg-red-500"
-                      )} />
+                      {/* ✨ Minecraft/Discord аватар пользователя */}
+                      <UserAvatar
+                        user={user}
+                        size={48}
+                        showStatus={true}
+                        className="shadow-lg"
+                      />
                     </div>
 
                     <div className="flex-1 min-w-0">

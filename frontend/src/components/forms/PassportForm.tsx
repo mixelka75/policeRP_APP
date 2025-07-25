@@ -117,8 +117,7 @@ const PassportForm: React.FC<PassportFormProps> = ({
       },
       age: {
         required: true,
-        min: 16,
-        max: 100,
+        min: 0,
         label: 'Возраст',
       },
       gender: {
@@ -225,8 +224,7 @@ const PassportForm: React.FC<PassportFormProps> = ({
             error={errors.age}
             leftIcon={<Calendar className="h-4 w-4" />}
             placeholder="Введите возраст"
-            min="16"
-            max="100"
+            min="0"
             disabled={isLoading}
             fullWidth
           />

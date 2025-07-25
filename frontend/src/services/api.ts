@@ -21,6 +21,8 @@ import {
   PassportUpdate,
   PassportEmergencyUpdate,
   PassportEmergencyResponse,
+  PassportSkinResponse,
+  PlayerSkinResponse,
   Fine,
   FineCreate,
   FineUpdate,
@@ -60,6 +62,8 @@ class ApiService {
     this.getRoleSyncIssues = this.getRoleSyncIssues.bind(this);
     this.getSecurityLogs = this.getSecurityLogs.bind(this);
     this.exportLogs = this.exportLogs.bind(this);
+    this.getPassportSkin = this.getPassportSkin.bind(this);
+    this.getSkinByDiscordId = this.getSkinByDiscordId.bind(this);
 
     // Старые методы (привязываем к контексту)
     this.login = this.login.bind(this);
@@ -549,6 +553,24 @@ class ApiService {
   async healthCheck(): Promise<{ status: string; database: string; version: string }> {
     try {
       const response = await axios.get(`${API_URL}/health`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getPassportSkin(passportId: number): Promise<PassportSkinResponse> {
+    try {
+      const response = await this.axiosInstance.get<PassportSkinResponse>(`/passports/${passportId}/skin`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getSkinByDiscordId(discordId: string): Promise<PlayerSkinResponse> {
+    try {
+      const response = await this.axiosInstance.get<PlayerSkinResponse>(`/passports/skin/by-discord/${discordId}`);
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError);

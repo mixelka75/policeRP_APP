@@ -100,3 +100,23 @@ class PassportEmergencyResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PassportSkinResponse(BaseModel):
+    """
+    Ответ с данными скина игрока
+    """
+    passport_id: int
+    nickname: str
+    uuid: str
+    skin_url: str
+
+
+class PlayerSkinResponse(BaseModel):
+    """
+    Ответ с данными скина игрока по Discord ID
+    """
+    discord_id: str
+    username: Optional[str]
+    uuid: str
+    skin_url: str

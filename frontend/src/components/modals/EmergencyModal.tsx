@@ -7,6 +7,7 @@ import { Modal, Button, Input, Badge } from '@/components/ui';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { getInitials, formatDate } from '@/utils';
+import MinecraftAvatar from '@/components/common/MinecraftAvatar';
 
 interface EmergencyModalProps {
   isOpen: boolean;
@@ -82,11 +83,11 @@ const EmergencyModal: React.FC<EmergencyModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Информация о гражданине */}
         <div className="flex items-center space-x-4 p-4 bg-dark-700/50 rounded-lg">
-          <div className="w-16 h-16 bg-gradient-to-br from-secondary-500 to-accent-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">
-              {getInitials(passport.first_name, passport.last_name)}
-            </span>
-          </div>
+          <MinecraftAvatar
+            nickname={passport.nickname}
+            size={64}
+            shape="square"
+          />
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-white">
               {passport.first_name} {passport.last_name}

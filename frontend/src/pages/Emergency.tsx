@@ -20,6 +20,7 @@ import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Card } from '@/components/ui';
 import { EmergencyModal } from '@/components/modals';
 import { formatDate, getInitials, formatRelativeTime } from '@/utils';
+import MinecraftAvatar from '@/components/common/MinecraftAvatar';
 
 const Emergency: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,10 +71,12 @@ const Emergency: React.FC = () => {
       label: '',
       width: '60px',
       render: (_: any, passport: Passport) => (
-        <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-red-500/30 animate-glow">
-          <span className="text-white font-medium text-sm">
-            {getInitials(passport.first_name, passport.last_name)}
-          </span>
+        <div className="ring-2 ring-red-500 shadow-red-500/30 animate-glow rounded-lg">
+          <MinecraftAvatar
+            nickname={passport.nickname}
+            size={40}
+            shape="square"
+          />
         </div>
       ),
     },

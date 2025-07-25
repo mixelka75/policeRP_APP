@@ -19,7 +19,6 @@ import {
   RefreshCw,
   UserCheck,
   Clock,
-  User,
   Gamepad2
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
@@ -28,6 +27,7 @@ import { useApi } from '@/hooks/useApi';
 import { Passport, Fine } from '@/types';
 import { Button, Loading, Input, Badge, Card } from '@/components/ui';
 import { Layout } from '@/components/layout';
+import UserAvatar from '@/components/common/UserAvatar';
 import StatCard from '@/components/ui/StatCard';
 import { PassportForm, FineForm } from '@/components/forms';
 import {
@@ -215,16 +215,12 @@ const Dashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="relative">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-primary-glow animate-glow ${
-                      user.role === 'admin' 
-                        ? 'bg-gradient-to-br from-red-500 to-red-600'
-                        : 'bg-gradient-to-br from-primary-500 to-secondary-500' // ✨ НОВЫЙ градиент
-                    }`}>
-                      <User className="w-8 h-8 text-white" />
-                    </div>
-                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-gray-900 ${
-                      user.is_active ? 'bg-green-500' : 'bg-red-500'
-                    }`} />
+                    <UserAvatar
+                      user={user}
+                      size={64}
+                      showStatus={true}
+                      className="shadow-primary-glow animate-glow"
+                    />
                   </div>
                   <div>
                     <div className="flex items-center space-x-3">

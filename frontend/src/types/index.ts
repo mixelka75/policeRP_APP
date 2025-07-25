@@ -222,3 +222,18 @@ export interface AppState {
   isLoading: boolean;
   error: string | null;
 }
+
+// Типы для скинов игроков
+export interface PassportSkinResponse {
+  passport_id: number;
+  nickname: string;
+  uuid: string;
+  skin_url: string;
+}
+
+export interface PlayerSkinResponse {
+  discord_id: string;
+  username: string | null;
+  uuid: string;
+  skin_url: string;
+}

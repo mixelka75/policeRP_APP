@@ -36,17 +36,7 @@ class SPWorldsClient:
             }
         """
         try:
-            # Создаем Authorization header в формате Bearer base64(ID:TOKEN)
-            import base64
-            auth_string = f"{self.map_id}:{self.map_token}"
-            auth_encoded = base64.b64encode(auth_string.encode()).decode()
-            
-            response = await self.client.get(
-                f"/users/{discord_id}",
-                headers={
-                    "Authorization": f"Bearer {auth_encoded}"
-                }
-            )
+            response = await self.client.get(f"/api/public/users/{discord_id}")
 
             if response.status_code == 200:
                 data = response.json()
@@ -70,6 +60,36 @@ class SPWorldsClient:
             print(f"SP-Worlds API request failed for Discord ID {discord_id}: {e}")
             return None
 
+    async def get_player_skin_url(self, uuid: str) -> Optional[str]:
+        """
+        Получение URL скина (головы) игрока по UUID
+
+        Args:
+            uuid: Minecraft UUID игрока
+
+        Returns:
+            URL скина или None если не удалось получить
+        """
+        if not uuid:
+            return None
+        
+        try:
+            skin_client = httpx.AsyncClient(timeout=10.0)
+            skin_url = f"http://assets.zaralx.ru/docs/minecraft/player/face/{uuid}"
+            
+            response = await skin_client.head(skin_url)
+            await skin_client.aclose()
+            
+            if response.status_code == 200:
+                return skin_url
+            else:
+                print(f"Skin URL not available for UUID {uuid}: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            print(f"Failed to check skin URL for UUID {uuid}: {e}")
+            return None
+
     async def ping(self) -> bool:
         """
         Проверка доступности API
@@ -81,7 +101,7 @@ class SPWorldsClient:
             # SP-Worlds API doesn't have a ping endpoint, so we'll test with a simple user lookup
             # Using a non-existent Discord ID should return 404, which means API is working
             response = await self.client.get("/users/1", timeout=5.0)
-            return response.status_code in [200, 404]
+            return response.status_code in [200, 404, 401]  # 401 означает что API работает, но нужна авторизация
         except httpx.TimeoutException:
             print("SP-Worlds API ping timeout")
             return False

@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import { Button, Card, Badge, Loading } from '@/components/ui';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
+import { safeStringify } from '@/utils';
 
 const Login: React.FC = () => {
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -275,9 +276,9 @@ const Login: React.FC = () => {
                 <AlertTriangle className="h-4 w-4 text-danger-400" />
                 <div className="flex-1">
                   <span className="text-sm text-danger-400 block">
-                    {error || authError}
+                    {safeStringify(error || authError)}
                   </span>
-                  {(error || authError)?.includes('необходимых ролей') && (
+                  {safeStringify(error || authError).includes('необходимых ролей') && (
                     <p className="text-xs text-danger-300 mt-1">
                       Убедитесь, что у вас есть роль админа или полицейского на Discord сервере
                     </p>

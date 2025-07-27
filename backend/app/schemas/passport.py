@@ -9,9 +9,9 @@ class PassportBase(BaseModel):
     """
     first_name: str = Field(..., min_length=2, max_length=100, description="Имя")
     last_name: str = Field(..., min_length=2, max_length=100, description="Фамилия")
-    nickname: str = Field(..., min_length=3, max_length=50, description="Никнейм")
+    discord_id: str = Field(..., min_length=17, max_length=20, description="Discord ID")
     age: int = Field(..., ge=16, le=100, description="Возраст")
-    gender: Literal["male", "female"] = Field(..., description="Пол")  # Изменено на Literal
+    gender: Literal["male", "female"] = Field(..., description="Пол")
     city: str = Field(..., min_length=2, max_length=100, description="Город проживания")
 
     @field_validator('gender')
@@ -35,7 +35,7 @@ class PassportUpdate(BaseModel):
     """
     first_name: Optional[str] = Field(None, min_length=2, max_length=100)
     last_name: Optional[str] = Field(None, min_length=2, max_length=100)
-    nickname: Optional[str] = Field(None, min_length=3, max_length=50)
+    discord_id: Optional[str] = Field(None, min_length=17, max_length=20)
     age: Optional[int] = Field(None, ge=16, le=100)
     gender: Optional[Literal["male", "female"]] = None
     city: Optional[str] = Field(None, min_length=2, max_length=100)
@@ -63,6 +63,8 @@ class Passport(PassportBase):
     Схема паспорта для ответа
     """
     id: int
+    nickname: Optional[str]
+    uuid: Optional[str]
     violations_count: int
     entry_date: datetime
     is_emergency: bool
@@ -80,7 +82,8 @@ class PassportInfo(BaseModel):
     id: int
     first_name: str
     last_name: str
-    nickname: str
+    discord_id: str
+    nickname: Optional[str]
     city: str
     violations_count: int
     is_emergency: bool

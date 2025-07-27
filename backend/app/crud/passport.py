@@ -5,6 +5,7 @@ from sqlalchemy import func
 from app.crud.base import CRUDBase
 from app.models.passport import Passport
 from app.schemas.passport import PassportCreate, PassportUpdate
+from app.clients.spworlds import spworlds_client
 
 
 class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
@@ -12,9 +13,9 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
     CRUD операции для паспортов
     """
 
-    def create(self, db: Session, *, obj_in: PassportCreate) -> Passport:
+    async def create(self, db: Session, *, obj_in: PassportCreate) -> Passport:
         """
-        Создать паспорт с автоматическим подсчетом нарушений
+        Создать паспорт с автоматическим получением данных из SP-Worlds
         """
         obj_in_data = obj_in.model_dump()
 
@@ -24,6 +25,15 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         elif isinstance(obj_in_data.get('gender'), str):
             # Если уже строка, оставляем как есть
             pass
+
+        # Получаем данные игрока из SP-Worlds по Discord ID
+        user_data = await spworlds_client.find_user(obj_in_data['discord_id'])
+        if user_data:
+            obj_in_data['nickname'] = user_data.get('username')
+            obj_in_data['uuid'] = user_data.get('uuid')
+        else:
+            obj_in_data['nickname'] = None
+            obj_in_data['uuid'] = None
 
         obj_in_data["violations_count"] = 0  # При создании нарушений еще нет
         obj_in_data["is_emergency"] = False  # По умолчанию не в ЧС
@@ -86,6 +96,12 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         Получить паспорт по никнейму
         """
         return db.query(Passport).filter(Passport.nickname == nickname).first()
+
+    def get_by_discord_id(self, db: Session, *, discord_id: str) -> Optional[Passport]:
+        """
+        Получить паспорт по Discord ID
+        """
+        return db.query(Passport).filter(Passport.discord_id == discord_id).first()
 
     def search_by_name(
             self, db: Session, *, first_name: str = None, last_name: str = None
@@ -160,7 +176,18 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         """
         Проверить существование никнейма
         """
+        if not nickname:  # Если nickname None, проверка не нужна
+            return False
         query = db.query(Passport).filter(Passport.nickname == nickname)
+        if exclude_id:
+            query = query.filter(Passport.id != exclude_id)
+        return query.first() is not None
+
+    def check_discord_id_exists(self, db: Session, *, discord_id: str, exclude_id: int = None) -> bool:
+        """
+        Проверить существование Discord ID
+        """
+        query = db.query(Passport).filter(Passport.discord_id == discord_id)
         if exclude_id:
             query = query.filter(Passport.id != exclude_id)
         return query.first() is not None

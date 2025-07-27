@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 
@@ -28,6 +28,27 @@ class Log(LogBase):
     id: int
     user_id: int
     created_at: datetime
+    updated_at: datetime
     
     class Config:
         from_attributes = True
+
+
+class LogPagination(BaseModel):
+    """
+    Схема для пагинации логов
+    """
+    page: int = Field(..., description="Номер страницы")
+    page_size: int = Field(..., description="Размер страницы")
+    total_count: int = Field(..., description="Общее количество записей")
+    total_pages: int = Field(..., description="Общее количество страниц")
+    has_next: bool = Field(..., description="Есть ли следующая страница")
+    has_prev: bool = Field(..., description="Есть ли предыдущая страница")
+
+
+class LogResponse(BaseModel):
+    """
+    Схема ответа с логами и пагинацией
+    """
+    logs: List[Log] = Field(..., description="Список логов")
+    pagination: LogPagination = Field(..., description="Информация о пагинации")

@@ -64,6 +64,7 @@ class ApiService {
     this.exportLogs = this.exportLogs.bind(this);
     this.getPassportSkin = this.getPassportSkin.bind(this);
     this.getSkinByDiscordId = this.getSkinByDiscordId.bind(this);
+    this.getAvatarByNickname = this.getAvatarByNickname.bind(this);
 
     // Старые методы (привязываем к контексту)
     this.login = this.login.bind(this);
@@ -528,10 +529,10 @@ class ApiService {
     }
   }
 
-  async getLogs(skip: number = 0, limit: number = 100): Promise<Log[]> {
+  async getLogs(page: number = 0, pageSize: number = 20): Promise<{logs: Log[], pagination: any}> {
     try {
-      const response = await this.axiosInstance.get<Log[]>('/logs/', {
-        params: { skip, limit },
+      const response = await this.axiosInstance.get<{logs: Log[], pagination: any}>('/logs/', {
+        params: { page, page_size: pageSize },
       });
       return response.data;
     } catch (error) {
@@ -571,6 +572,15 @@ class ApiService {
   async getSkinByDiscordId(discordId: string): Promise<PlayerSkinResponse> {
     try {
       const response = await this.axiosInstance.get<PlayerSkinResponse>(`/passports/skin/by-discord/${discordId}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getAvatarByNickname(nickname: string): Promise<PlayerSkinResponse> {
+    try {
+      const response = await this.axiosInstance.get<PlayerSkinResponse>(`/passports/avatar/by-nickname/${nickname}`);
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError);

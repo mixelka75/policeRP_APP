@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check } from 'lucide-react';
-import { cn } from '@/utils';
+import { cn, safeStringify } from '@/utils';
 
 interface SelectOption {
   value: string;
@@ -159,7 +159,7 @@ const Select: React.FC<SelectProps> = ({
           animate={{ opacity: 1, y: 0 }}
           className="text-sm text-red-400 mt-2"
         >
-          {error}
+          {safeStringify(error)}
         </motion.p>
       )}
     </div>

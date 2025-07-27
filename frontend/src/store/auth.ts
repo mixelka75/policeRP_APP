@@ -140,14 +140,24 @@ export const useAuthStore = create<AuthState>()(
           let errorMessage = apiError.detail || 'Ошибка при получении данных пользователя';
           
           // Специальная обработка ошибок аутентификации
+          console.error('Discord callback error details:', {
+            status: apiError.status,
+            detail: apiError.detail,
+            fullError: error
+          });
+          
           if (apiError.status === 403) {
             if (errorMessage.includes('необходимых ролей')) {
-              errorMessage = 'У вас нет необходимых ролей для доступа к системе';
+              errorMessage = 'У вас нет необходимых ролей для доступа к системе. Обратитесь к администратору Discord сервера.';
             } else if (errorMessage.includes('проверить роли')) {
               errorMessage = 'Не удалось проверить роли пользователя';
+            } else if (errorMessage.includes('Текущая роль:')) {
+              errorMessage = errorMessage; // Показываем полную информацию об ошибке
             }
           } else if (apiError.status === 500 && errorMessage.includes('не настроен')) {
             errorMessage = 'Сервер не настроен для проверки ролей';
+          } else if (apiError.status === 401) {
+            errorMessage = 'Неверный токен авторизации или токен истек';
           }
 
           set({

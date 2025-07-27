@@ -1,6 +1,8 @@
 // src/components/common/MinecraftAvatar.tsx
 import React, { useState, useEffect } from 'react';
 import { User as UserIcon } from 'lucide-react';
+import { apiService } from '@/services/api';
+import AvatarCache from '@/utils/avatarCache';
 
 interface MinecraftAvatarProps {
   nickname?: string;
@@ -17,6 +19,7 @@ const MinecraftAvatar: React.FC<MinecraftAvatarProps> = ({
   showFallback = true,
   shape = 'square'
 }) => {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,12 +27,45 @@ const MinecraftAvatar: React.FC<MinecraftAvatarProps> = ({
   useEffect(() => {
     setImageError(false);
     setIsLoading(true);
-  }, [nickname]);
+    setAvatarUrl(null);
+    
+    if (nickname) {
+      loadAvatar();
+    } else {
+      setIsLoading(false);
+    }
+  }, [nickname, size]);
 
-  // Use simple single API approach
-  const getAvatarUrl = (username: string, size: number) => {
-    // Try Minotar first - it's most reliable
-    return `https://minotar.net/avatar/${username}/${size}.png`;
+  const loadAvatar = async () => {
+    if (!nickname) return;
+    
+    // Сначала проверяем кеш
+    const cached = AvatarCache.get(nickname);
+    if (cached) {
+      setAvatarUrl(cached.url);
+      setIsLoading(false);
+      return;
+    }
+    
+    try {
+      // Загружаем из API если нет в кеше
+      const response = await apiService.getAvatarByNickname(nickname);
+      const avatarUrl = response.skin_url;
+      
+      // Сохраняем в кеш
+      AvatarCache.set(nickname, avatarUrl, response.uuid);
+      setAvatarUrl(avatarUrl);
+    } catch (error) {
+      console.log('Failed to load avatar from API, using fallback:', error);
+      // Fallback to minotar.net
+      const fallbackUrl = `https://minotar.net/avatar/${nickname}/${size}.png`;
+      setAvatarUrl(fallbackUrl);
+      
+      // Кешируем и fallback URL
+      AvatarCache.set(nickname, fallbackUrl, '');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleImageLoad = () => {
@@ -74,15 +110,17 @@ const MinecraftAvatar: React.FC<MinecraftAvatarProps> = ({
           />
         </div>
       )}
-      <img
-        src={getAvatarUrl(nickname, size)}
-        alt={`${nickname} Minecraft avatar`}
-        className={`${roundedClass} object-cover`}
-        style={{ width: size, height: size }}
-        onLoad={handleImageLoad}
-        onError={handleImageError}
-        crossOrigin="anonymous"
-      />
+      {avatarUrl && (
+        <img
+          src={avatarUrl}
+          alt={`${nickname} Minecraft avatar`}
+          className={`${roundedClass} object-cover`}
+          style={{ width: size, height: size }}
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          crossOrigin="anonymous"
+        />
+      )}
     </div>
   );
 };

@@ -109,8 +109,8 @@ def collect_spworlds_config():
         spworlds_config['SPWORLDS_MAP_TOKEN'] = map_token
 
     # API URL
-    api_url = input("SP-Worlds API URL [https://api.spworlds.ru]: ").strip()
-    spworlds_config['SPWORLDS_API_URL'] = api_url or "https://api.spworlds.ru"
+    api_url = input("SP-Worlds API URL [https://spworlds.ru/api/public]: ").strip()
+    spworlds_config['SPWORLDS_API_URL'] = api_url or "https://spworlds.ru/api/public"
 
     return spworlds_config
 

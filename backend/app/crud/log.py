@@ -199,5 +199,48 @@ class CRUDLog(CRUDBase[Log, LogCreate, LogBase]):
             .all()
         )
 
+    def count_all(self, db: Session) -> int:
+        """
+        Подсчитать общее количество логов
+        """
+        return db.query(Log).count()
+
+    def count_by_user_id(self, db: Session, *, user_id: int) -> int:
+        """
+        Подсчитать количество логов для пользователя
+        """
+        return db.query(Log).filter(Log.user_id == user_id).count()
+
+    def count_by_action(self, db: Session, *, action: str) -> int:
+        """
+        Подсчитать количество логов по типу действия
+        """
+        return db.query(Log).filter(Log.action == action).count()
+
+    def count_by_entity_type(self, db: Session, *, entity_type: str) -> int:
+        """
+        Подсчитать количество логов по типу сущности
+        """
+        return db.query(Log).filter(Log.entity_type == entity_type).count()
+
+    def count_by_date_range(
+        self, 
+        db: Session, 
+        *, 
+        start_date: datetime = None, 
+        end_date: datetime = None
+    ) -> int:
+        """
+        Подсчитать количество логов за период
+        """
+        query = db.query(Log)
+        
+        if start_date:
+            query = query.filter(Log.created_at >= start_date)
+        if end_date:
+            query = query.filter(Log.created_at <= end_date)
+        
+        return query.count()
+
 
 log_crud = CRUDLog(Log)

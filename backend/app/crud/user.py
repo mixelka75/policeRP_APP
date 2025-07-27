@@ -99,6 +99,8 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             user.discord_expires_at = discord_expires_at
 
         user.last_role_check = datetime.utcnow()
+        # Активируем пользователя при успешной авторизации Discord
+        user.is_active = True
 
         db.add(user)
         db.commit()

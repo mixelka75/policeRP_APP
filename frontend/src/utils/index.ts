@@ -335,8 +335,16 @@ export function throttle<T extends (...args: any[]) => any>(
 export function getErrorMessage(error: unknown): string {
   try {
     if (error && typeof error === 'object') {
-      if ('detail' in error && typeof (error as any).detail === 'string') {
-        return (error as any).detail;
+      // Handle Pydantic validation errors (array format)
+      if ('detail' in error) {
+        const detail = (error as any).detail;
+        if (Array.isArray(detail)) {
+          return detail
+            .map(err => typeof err === 'object' ? err.msg || 'Ошибка валидации' : String(err))
+            .join(', ');
+        } else if (typeof detail === 'string') {
+          return detail;
+        }
       }
 
       if ('response' in error && error.response && typeof error.response === 'object') {
@@ -363,6 +371,31 @@ export function getErrorMessage(error: unknown): string {
     console.error('Error in getErrorMessage:', e);
     return 'Произошла неизвестная ошибка';
   }
+}
+
+// Safe string conversion for React components to prevent error #31
+export function safeStringify(value: any): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  
+  if (value === null || value === undefined) {
+    return '';
+  }
+  
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '[Object object]';
+    }
+  }
+  
+  return String(value);
 }
 
 export function parseJwt(token: string) {
@@ -409,3 +442,6 @@ export function isTokenExpired(token: string): boolean {
     return true;
   }
 }
+
+// Export avatar cache utilities
+export { default as AvatarCache } from './avatarCache';

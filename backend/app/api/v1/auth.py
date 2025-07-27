@@ -127,8 +127,12 @@ async def discord_callback(
                 user_role = discord_client.determine_user_role(member_info)
                 print(f"DEBUG: Determined user role: {user_role}")
                 
+                
                 # Проверяем, что пользователь имеет нужные роли
                 if user_role is None:
+                    print(f"DEBUG: User {discord_username} has roles: {user_roles}")
+                    print(f"DEBUG: Expected admin role ID: {settings.DISCORD_ADMIN_ROLE_ID}")
+                    print(f"DEBUG: Expected police role ID: {settings.DISCORD_POLICE_ROLE_ID}")
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail="У вас нет необходимых ролей для доступа к системе"
@@ -152,12 +156,16 @@ async def discord_callback(
             )
 
         # Получаем данные из SP-Worlds API
+        print(f"DEBUG: Fetching SP-Worlds data for Discord ID: {discord_id}")
         spworlds_data = await spworlds_client.find_user(str(discord_id))
+        print(f"DEBUG: SP-Worlds response: {spworlds_data}")
         minecraft_username = spworlds_data.get("username") if spworlds_data else None
         minecraft_uuid = spworlds_data.get("uuid") if spworlds_data else None
+        print(f"DEBUG: Extracted minecraft_username: {minecraft_username}, minecraft_uuid: {minecraft_uuid}")
 
         # Проверяем, есть ли пользователь в базе
         user = user_crud.get_by_discord_id(db, discord_id=discord_id)
+        print(f"DEBUG: Existing user found: {user.discord_username if user else 'None'}")
 
         expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in)
 
@@ -177,8 +185,10 @@ async def discord_callback(
                 discord_refresh_token=refresh_token,
                 discord_expires_at=expires_at
             )
+            print(f"DEBUG: Updated existing user: {user.discord_username}, role: {user.role}")
         else:
             # Создаем нового пользователя
+            print(f"DEBUG: Creating new user with role: {user_role}")
             user = user_crud.create_from_discord(
                 db,
                 discord_id=discord_id,
@@ -193,16 +203,19 @@ async def discord_callback(
                 discord_refresh_token=refresh_token,
                 discord_expires_at=expires_at
             )
+            print(f"DEBUG: Created new user: {user.discord_username}, role: {user.role}, active: {user.is_active}")
 
         # Логируем успешный вход
         ActionLogger.log_user_login(db=db, user=user, request=request)
 
         # Создаем JWT токен для нашего приложения
+        print(f"DEBUG: Creating JWT token for user: {user.discord_username}, role: {user.role}, discord_id: {user.discord_id}")
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         app_access_token = create_access_token(
             data={"sub": str(user.discord_id)},
             expires_delta=access_token_expires
         )
+        print(f"DEBUG: JWT token created: {app_access_token[:50]}...")
 
         # Перенаправляем на фронтенд с токеном
         redirect_url = f"{settings.FRONTEND_URL}/auth/callback?token={app_access_token}"
@@ -327,9 +340,12 @@ async def refresh_user_data(
                 )
 
         # Получаем обновленные данные из SP-Worlds
+        print(f"DEBUG REFRESH: Fetching SP-Worlds data for Discord ID: {current_user.discord_id}")
         spworlds_data = await spworlds_client.find_user(str(current_user.discord_id))
+        print(f"DEBUG REFRESH: SP-Worlds response: {spworlds_data}")
         minecraft_username = spworlds_data.get("username") if spworlds_data else None
         minecraft_uuid = spworlds_data.get("uuid") if spworlds_data else None
+        print(f"DEBUG REFRESH: Extracted minecraft_username: {minecraft_username}, minecraft_uuid: {minecraft_uuid}")
 
         # Получаем обновленную информацию о ролях через Bot API
         if settings.DISCORD_BOT_TOKEN:

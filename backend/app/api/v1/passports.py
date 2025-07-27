@@ -30,7 +30,7 @@ async def read_passports(
         db: Session = Depends(get_db),
         skip: int = 0,
         limit: int = 100,
-        search: Optional[str] = Query(None, description="Поиск по имени, фамилии или никнейму"),
+        search: Optional[str] = Query(None, description="Поиск по имени, фамилии, никнейму или Discord ID"),
         city: Optional[str] = Query(None, description="Фильтр по городу"),
         emergency_only: Optional[bool] = Query(None, description="Показать только ЧС"),
         current_user: User = Depends(get_current_police_or_admin),
@@ -51,6 +51,7 @@ async def read_passports(
                 PassportModel.first_name.ilike(f"%{search}%"),
                 PassportModel.last_name.ilike(f"%{search}%"),
                 PassportModel.nickname.ilike(f"%{search}%"),
+                PassportModel.discord_id.ilike(f"%{search}%"),
                 PassportModel.city.ilike(f"%{search}%")
             )
         ).offset(skip).limit(limit).all()
@@ -121,14 +122,14 @@ async def create_passport(
     """
     Создать новый паспорт
     """
-    # Проверяем, что никнейм уникален
-    if passport_crud.check_nickname_exists(db, nickname=passport_in.nickname):
+    # Проверяем, что Discord ID уникален
+    if passport_crud.check_discord_id_exists(db, discord_id=passport_in.discord_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Паспорт с таким никнеймом уже существует",
+            detail="Паспорт с таким Discord ID уже существует",
         )
 
-    passport = passport_crud.create(db, obj_in=passport_in)
+    passport = await passport_crud.create(db, obj_in=passport_in)
 
     # Логируем создание паспорта
     ActionLogger.log_passport_created(
@@ -216,6 +217,43 @@ def find_passport_by_nickname(
     return passport
 
 
+@router.get("/search/discord/{discord_id}", response_model=Passport)
+def find_passport_by_discord_id(
+        request: Request,
+        *,
+        db: Session = Depends(get_db),
+        discord_id: str,
+        current_user: User = Depends(get_current_police_or_admin),
+):
+    """
+    Найти паспорт по Discord ID
+    """
+    passport = passport_crud.get_by_discord_id(db, discord_id=discord_id)
+    if not passport:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Паспорт с таким Discord ID не найден",
+        )
+
+    # Логируем поиск по Discord ID
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="SEARCH_BY_DISCORD_ID",
+        entity_type="passport",
+        entity_id=passport.id,
+        details={
+            "search_discord_id": discord_id,
+            "found_passport": passport.discord_id,
+            "nickname": passport.nickname,
+            "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+
+    return passport
+
+
 @router.put("/{passport_id}", response_model=Passport)
 @with_role_check("update_passport")
 async def update_passport(
@@ -236,16 +274,17 @@ async def update_passport(
             detail="Паспорт не найден",
         )
 
-    # Проверяем уникальность никнейма при изменении
-    if passport_in.nickname and passport_in.nickname != passport.nickname:
-        if passport_crud.check_nickname_exists(db, nickname=passport_in.nickname, exclude_id=passport_id):
+    # Проверяем уникальность Discord ID при изменении
+    if passport_in.discord_id and passport_in.discord_id != passport.discord_id:
+        if passport_crud.check_discord_id_exists(db, discord_id=passport_in.discord_id, exclude_id=passport_id):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Паспорт с таким никнеймом уже существует",
+                detail="Паспорт с таким Discord ID уже существует",
             )
 
     # Сохраняем старые данные для логов
     old_data = {
+        "discord_id": passport.discord_id,
         "nickname": passport.nickname,
         "first_name": passport.first_name,
         "last_name": passport.last_name,
@@ -343,17 +382,23 @@ async def get_passport_skin(
             detail="Паспорт не найден",
         )
 
-    # Получаем данные пользователя из SP-Worlds по Discord ID (используем nickname как Discord ID для поиска)
-    user_data = await spworlds_client.find_user(passport.nickname)
-    
-    if not user_data or not user_data.get("uuid"):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="UUID игрока не найден в SP-Worlds",
-        )
+    # Если UUID уже есть в паспорте, используем его
+    if passport.uuid:
+        skin_url = await spworlds_client.get_player_skin_url(passport.uuid)
+        uuid_to_use = passport.uuid
+    else:
+        # Иначе получаем данные пользователя из SP-Worlds по Discord ID
+        user_data = await spworlds_client.find_user(passport.discord_id)
+        
+        if not user_data or not user_data.get("uuid"):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="UUID игрока не найден в SP-Worlds",
+            )
 
-    # Получаем URL скина
-    skin_url = await spworlds_client.get_player_skin_url(user_data["uuid"])
+        uuid_to_use = user_data["uuid"]
+        # Получаем URL скина
+        skin_url = await spworlds_client.get_player_skin_url(uuid_to_use)
     
     if not skin_url:
         raise HTTPException(
@@ -369,8 +414,9 @@ async def get_passport_skin(
         entity_type="passport",
         entity_id=passport.id,
         details={
+            "discord_id": passport.discord_id,
             "nickname": passport.nickname,
-            "uuid": user_data["uuid"],
+            "uuid": uuid_to_use,
             "skin_url": skin_url,
             "officer": current_user.minecraft_username
         },
@@ -379,8 +425,8 @@ async def get_passport_skin(
 
     return PassportSkinResponse(
         passport_id=passport.id,
-        nickname=passport.nickname,
-        uuid=user_data["uuid"],
+        nickname=passport.nickname or "Unknown",
+        uuid=uuid_to_use,
         skin_url=skin_url
     )
 
@@ -545,3 +591,55 @@ def get_passports_statistics(
     )
 
     return stats
+
+
+@router.get("/avatar/by-nickname/{nickname}", response_model=PlayerSkinResponse)
+async def get_avatar_by_nickname(
+        request: Request,
+        *,
+        db: Session = Depends(get_db),
+        nickname: str,
+        current_user: User = Depends(get_current_police_or_admin),
+):
+    """
+    Получить URL аватарки (головы) игрока по Minecraft nickname
+    """
+    # Получаем данные пользователя из SP-Worlds по nickname
+    user_data = await spworlds_client.find_user_by_nickname(nickname)
+    
+    if not user_data or not user_data.get("uuid"):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="UUID игрока не найден в SP-Worlds",
+        )
+    
+    # Получаем URL скина
+    skin_url = await spworlds_client.get_player_skin_url(user_data["uuid"])
+    
+    if not skin_url:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Скин игрока недоступен",
+        )
+    
+    # Логируем запрос аватарки
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="GET_AVATAR_BY_NICKNAME",
+        entity_type="avatar",
+        details={
+            "nickname": nickname,
+            "uuid": user_data["uuid"],
+            "skin_url": skin_url,
+            "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+    
+    return PlayerSkinResponse(
+        discord_id="",  # Not available when searching by nickname
+        username=nickname,
+        uuid=user_data["uuid"],
+        skin_url=skin_url
+    )

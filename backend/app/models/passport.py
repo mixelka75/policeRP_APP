@@ -22,7 +22,9 @@ class Passport(BaseModel):
 
     first_name = Column(String(100), nullable=False, index=True)
     last_name = Column(String(100), nullable=False, index=True)
-    nickname = Column(String(50), unique=True, index=True, nullable=False)
+    discord_id = Column(String(50), unique=True, index=True, nullable=False)
+    nickname = Column(String(50), index=True, nullable=True)
+    uuid = Column(String(50), index=True, nullable=True)
     age = Column(Integer, nullable=False)
     gender = Column(String(10), nullable=False)
 

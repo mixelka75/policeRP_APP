@@ -23,7 +23,7 @@ import { PassportForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import EmergencyModal from '@/components/modals/EmergencyModal';
 import { formatDate, getInitials } from '@/utils';
-import { PlayerSkin } from '@/components/common';
+import { PlayerSkin, MinecraftHead } from '@/components/common';
 
 const Passports: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -70,7 +70,8 @@ const Passports: React.FC = () => {
     // Поиск
     const matchesSearch = passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      passport.nickname.toLowerCase().includes(searchTerm.toLowerCase());
+      (passport.nickname && passport.nickname.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      passport.discord_id.includes(searchTerm);
 
     // Дополнительные фильтры из модального окна
     let matchesFilters = true;
@@ -161,11 +162,11 @@ const Passports: React.FC = () => {
             ? 'ring-2 ring-red-500 shadow-red-500/30'
             : 'ring-2 ring-primary-500 shadow-primary-glow'
         } rounded-lg animate-glow`}>
-          <PlayerSkin
+          <MinecraftHead
+            discordId={passport.discord_id}
             passportId={passport.id}
             size="lg"
             className="rounded-lg"
-            fallbackText={getInitials(passport.first_name, passport.last_name)}
           />
         </div>
       ),
@@ -185,7 +186,9 @@ const Passports: React.FC = () => {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-gray-400">{passport.nickname}</p>
+          <p className="text-sm text-gray-400">
+            {passport.nickname || `Discord: ${passport.discord_id}`}
+          </p>
         </div>
       ),
     },
@@ -313,7 +316,7 @@ const Passports: React.FC = () => {
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
         <Input
-          placeholder="Поиск по имени, фамилии или никнейму..."
+          placeholder="Поиск по имени, фамилии, никнейму или Discord ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}

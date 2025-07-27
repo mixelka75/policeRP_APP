@@ -65,7 +65,7 @@ export function useRoleUpdates() {
   };
 
   const { isConnected, error, reconnectAttempts, disconnect, reconnect } = useSSE(
-    '/api/v1/events/role-updates',
+    '/events/role-updates',
     {
       onMessage: handleSSEMessage,
       onError: (error) => {

@@ -41,7 +41,8 @@ export function useSSE(endpoint: string, options: SSEHookOptions = {}) {
 
     try {
       // Создаем URL для SSE
-      const url = new URL(endpoint, window.location.origin);
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const url = new URL(`/api/v1${endpoint}`, API_URL);
       
       // EventSource не поддерживает заголовки, поэтому передаем токен в query
       url.searchParams.append('token', token);

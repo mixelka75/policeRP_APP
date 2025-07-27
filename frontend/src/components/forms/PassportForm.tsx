@@ -25,7 +25,7 @@ const PassportForm: React.FC<PassportFormProps> = ({
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
-    nickname: '',
+    discord_id: '',
     age: '',
     gender: '',
     city: '',
@@ -64,7 +64,7 @@ const PassportForm: React.FC<PassportFormProps> = ({
       setFormData({
         first_name: passport.first_name,
         last_name: passport.last_name,
-        nickname: passport.nickname,
+        discord_id: passport.discord_id,
         age: passport.age.toString(),
         gender: passport.gender,
         city: passport.city,
@@ -74,7 +74,7 @@ const PassportForm: React.FC<PassportFormProps> = ({
       setFormData({
         first_name: '',
         last_name: '',
-        nickname: '',
+        discord_id: '',
         age: '',
         gender: '',
         city: '',
@@ -107,13 +107,13 @@ const PassportForm: React.FC<PassportFormProps> = ({
         maxLength: 100,
         label: 'Фамилия',
       },
-      nickname: {
+      discord_id: {
         required: true,
-        minLength: 3,
-        maxLength: 50,
-        label: 'Никнейм',
-        pattern: /^[a-zA-Z0-9_]+$/,
-        patternMessage: 'Никнейм может содержать только буквы, цифры и подчеркивания',
+        minLength: 17,
+        maxLength: 20,
+        label: 'Discord ID',
+        pattern: /^[0-9]+$/,
+        patternMessage: 'Discord ID должен содержать только цифры',
       },
       age: {
         required: true,
@@ -205,12 +205,12 @@ const PassportForm: React.FC<PassportFormProps> = ({
         </div>
 
         <Input
-          label="Никнейм"
-          value={formData.nickname}
-          onChange={(e) => handleChange('nickname', e.target.value)}
-          error={errors.nickname}
+          label="Discord ID"
+          value={formData.discord_id}
+          onChange={(e) => handleChange('discord_id', e.target.value)}
+          error={errors.discord_id}
           leftIcon={<AtSign className="h-4 w-4" />}
-          placeholder="Введите никнейм"
+          placeholder="Введите Discord ID (например: 123456789012345678)"
           disabled={isLoading}
           fullWidth
         />

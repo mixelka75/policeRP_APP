@@ -1,5 +1,5 @@
 // src/pages/Logs.tsx - Обновленная цветовая схема
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -18,15 +18,22 @@ import {
   Clock,
   Shield,
   ShieldAlert,
-  List
+  List,
+  ShieldCheck,
+  Key,
+  Loader2
 } from 'lucide-react';
 import { Log, User as UserType } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Card } from '@/components/ui';
+import { Button, Input, StatCard, Card } from '@/components/ui';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, formatRelativeTime } from '@/utils';
+
+// Константы для исключенных событий
+const EXCLUDED_ACTIONS = ['GET_SKIN', 'GET_SKIN_BY_DISCORD', 'GET_AVATAR_BY_NICKNAME'];
 
 const Logs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,16 +42,32 @@ const Logs: React.FC = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
 
+  const { execute: fetchUsers } = useApi(apiService.getUsers);
+
+  // Функция для загрузки логов с пагинацией
+  const fetchLogsData = useCallback(async (page: number, pageSize: number) => {
+    const result = await apiService.getLogs(page, pageSize);
+    return {
+      data: result.logs,
+      pagination: result.pagination
+    };
+  }, []);
+
+  // Использование infinite scroll
   const {
     data: logs,
     isLoading,
-    execute: fetchLogs,
-  } = useApi(apiService.getLogs);
-
-  const { execute: fetchUsers } = useApi(apiService.getUsers);
+    isLoadingMore,
+    hasMore,
+    error,
+    refresh: refreshLogs,
+    totalCount
+  } = useInfiniteScroll({
+    fetchData: fetchLogsData,
+    pageSize: 20
+  });
 
   useEffect(() => {
-    fetchLogs();
     loadUsers();
   }, []);
 
@@ -63,6 +86,11 @@ const Logs: React.FC = () => {
 
   const filteredLogs = logs?.filter(log => {
     const user = usersMap.get(log.user_id);
+
+    // Фильтрация скин-событий
+    if (EXCLUDED_ACTIONS.includes(log.action)) {
+      return false;
+    }
 
     // Поиск
     const matchesSearch = !searchTerm ||
@@ -120,6 +148,10 @@ const Logs: React.FC = () => {
         return ShieldAlert;
       case 'VIEW_LIST':
         return List;
+      case 'VIEW_EMERGENCY_LIST':
+        return ShieldCheck;
+      case 'TOKEN_CHECK':
+        return Key;
       default:
         return Activity;
     }
@@ -141,6 +173,10 @@ const Logs: React.FC = () => {
         return 'text-red-500';
       case 'VIEW_LIST':
         return 'text-secondary-400'; // ✨ НОВЫЙ цвет
+      case 'VIEW_EMERGENCY_LIST':
+        return 'text-orange-400';
+      case 'TOKEN_CHECK':
+        return 'text-blue-400';
       default:
         return 'text-gray-300';
     }
@@ -192,6 +228,10 @@ const Logs: React.FC = () => {
         return 'Изменение ЧС';
       case 'VIEW_LIST':
         return 'Просмотр списка';
+      case 'VIEW_EMERGENCY_LIST':
+        return 'Просмотр ЧС списка';
+      case 'TOKEN_CHECK':
+        return 'Проверка токена';
       default:
         return action;
     }
@@ -299,15 +339,20 @@ const Logs: React.FC = () => {
     { value: 'VIEW', label: 'Просмотр' },
     { value: 'EMERGENCY_STATUS_CHANGE', label: 'Изменение ЧС' },
     { value: 'VIEW_LIST', label: 'Просмотр списка' },
+    { value: 'VIEW_EMERGENCY_LIST', label: 'Просмотр ЧС списка' },
+    { value: 'TOKEN_CHECK', label: 'Проверка токена' },
   ];
 
-  const uniqueActions = [...new Set(logs?.map(log => log.action) || [])];
-  const totalLogs = logs?.length || 0;
-  const todayLogs = logs?.filter(log => {
+  // Исключаем скин-события из статистики
+  const validLogs = logs?.filter(log => !EXCLUDED_ACTIONS.includes(log.action)) || [];
+  
+  const uniqueActions = [...new Set(validLogs.map(log => log.action))];
+  const totalLogs = validLogs.length;
+  const todayLogs = validLogs.filter(log => {
     const today = new Date();
     const logDate = new Date(log.created_at);
     return logDate.toDateString() === today.toDateString();
-  }).length || 0;
+  }).length;
 
   const stats = [
     {
@@ -370,7 +415,7 @@ const Logs: React.FC = () => {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => fetchLogs()}
+          onClick={() => refreshLogs()}
           leftIcon={<Activity className="h-4 w-4" />}
         >
           Обновить
@@ -401,7 +446,7 @@ const Logs: React.FC = () => {
         </div>
 
         {/* Recent Activity */}
-        {logs && logs.length > 0 && (
+        {validLogs && validLogs.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -413,7 +458,7 @@ const Logs: React.FC = () => {
                 Последние действия
               </h3>
               <div className="space-y-3">
-                {logs.slice(0, 5).map((log, index) => {
+                {validLogs.slice(0, 5).map((log, index) => {
                   const user = usersMap.get(log.user_id);
                   const Icon = getActionIcon(log.action);
                   return (
@@ -446,22 +491,98 @@ const Logs: React.FC = () => {
           </motion.div>
         )}
 
-        {/* Table */}
+        {/* Logs Table with Infinite Scroll */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Table
-            columns={columns}
-            data={filteredLogs}
-            isLoading={isLoading}
-            emptyMessage={
-              searchTerm || selectedAction
-                ? 'Логи не найдены по заданным критериям'
-                : 'Логов пока нет'
-            }
-          />
+          <Card variant="minecraft">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-white flex items-center">
+                <Activity className="h-5 w-5 mr-2 text-primary-400" />
+                Все логи ({totalCount})
+              </h3>
+              {isLoading && (
+                <div className="flex items-center space-x-2 text-gray-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Загрузка...</span>
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-4">
+                <p className="text-red-400 text-sm">{error}</p>
+              </div>
+            )}
+
+            {filteredLogs.length === 0 && !isLoading ? (
+              <div className="text-center py-12">
+                <Activity className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-400">
+                  {searchTerm || selectedAction
+                    ? 'Логи не найдены по заданным критериям'
+                    : 'Логов пока нет'}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-primary-500/20">
+                      {columns.map((column) => (
+                        <th
+                          key={column.key}
+                          className="px-4 py-3 text-left text-sm font-medium text-gray-400"
+                          style={{ width: column.width }}
+                        >
+                          {column.label}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-primary-500/10">
+                    {filteredLogs.map((log, index) => (
+                      <motion.tr
+                        key={log.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.02 }}
+                        className="hover:bg-primary-500/5 transition-colors duration-200"
+                      >
+                        {columns.map((column) => (
+                          <td key={column.key} className="px-4 py-4">
+                            {column.render ? 
+                              column.render(log[column.key as keyof Log]) : 
+                              log[column.key as keyof Log]
+                            }
+                          </td>
+                        ))}
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Loading More Indicator */}
+                {isLoadingMore && (
+                  <div className="flex justify-center py-6">
+                    <div className="flex items-center space-x-2 text-gray-400">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Загружаем еще логи...</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* No More Data */}
+                {!hasMore && filteredLogs.length > 0 && (
+                  <div className="text-center py-6">
+                    <p className="text-gray-500 text-sm">Все логи загружены</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
         </motion.div>
       </div>
 

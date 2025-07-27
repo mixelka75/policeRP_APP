@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # SP-Worlds API
     SPWORLDS_MAP_ID: str = ""
     SPWORLDS_MAP_TOKEN: str = ""
-    SPWORLDS_API_URL: str = "https://api.spworlds.ru"
+    SPWORLDS_API_URL: str = "https://spworlds.ru/api/public"
 
     # Security
     SECRET_KEY: str = "your-super-secret-key-here-please-change-this-in-production"

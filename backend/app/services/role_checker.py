@@ -153,9 +153,12 @@ class RoleCheckerService:
                 return {"has_access": False, "changed": old_role != "none"}
 
             # Получаем обновленные данные из SP-Worlds
+            print(f"DEBUG ROLE_CHECKER: Fetching SP-Worlds data for Discord ID: {user.discord_id}")
             spworlds_data = await spworlds_client.find_user(str(user.discord_id))
+            print(f"DEBUG ROLE_CHECKER: SP-Worlds response: {spworlds_data}")
             minecraft_username = spworlds_data.get("username") if spworlds_data else None
             minecraft_uuid = spworlds_data.get("uuid") if spworlds_data else None
+            print(f"DEBUG ROLE_CHECKER: Extracted minecraft_username: {minecraft_username}, minecraft_uuid: {minecraft_uuid}")
 
             minecraft_data_updated = (
                     user.minecraft_username != minecraft_username or

@@ -268,11 +268,24 @@ class DiscordClient:
         """
         user_role_ids = member_data.get("roles", [])
 
-        # Проверяем по ID ролей (более надежно)
-        if settings.DISCORD_ADMIN_ROLE_ID in user_role_ids:
+        print(f"DEBUG determine_user_role: user_role_ids = {user_role_ids}")
+        print(f"DEBUG determine_user_role: admin_role_id = {settings.DISCORD_ADMIN_ROLE_ID}")
+        print(f"DEBUG determine_user_role: police_role_id = {settings.DISCORD_POLICE_ROLE_ID}")
+        print(f"DEBUG determine_user_role: admin_role_id type = {type(settings.DISCORD_ADMIN_ROLE_ID)}")
+        print(f"DEBUG determine_user_role: user_role_ids types = {[type(x) for x in user_role_ids]}")
+        
+        # Проверяем по ID ролей (более надежно) - приводим к строке для сравнения
+        admin_role_id = str(settings.DISCORD_ADMIN_ROLE_ID)
+        police_role_id = str(settings.DISCORD_POLICE_ROLE_ID)
+        user_role_ids_str = [str(role_id) for role_id in user_role_ids]
+        
+        print(f"DEBUG determine_user_role: checking {admin_role_id} in {user_role_ids_str}")
+        if admin_role_id in user_role_ids_str:
+            print(f"DEBUG determine_user_role: Found admin role!")
             return "admin"
 
-        if settings.DISCORD_POLICE_ROLE_ID in user_role_ids:
+        if police_role_id in user_role_ids_str:
+            print(f"DEBUG determine_user_role: Found police role!")
             return "police"
 
         # Дополнительная проверка по именам (резервный способ)

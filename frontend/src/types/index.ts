@@ -117,7 +117,9 @@ export interface Passport {
   id: number;
   first_name: string;
   last_name: string;
-  nickname: string;
+  discord_id: string;
+  nickname?: string;
+  uuid?: string;
   age: number;
   gender: 'male' | 'female';
   city: string;
@@ -131,7 +133,7 @@ export interface Passport {
 export interface PassportCreate {
   first_name: string;
   last_name: string;
-  nickname: string;
+  discord_id: string;
   age: number;
   gender: 'male' | 'female';
   city: string;
@@ -141,7 +143,7 @@ export interface PassportCreate {
 export interface PassportUpdate {
   first_name?: string;
   last_name?: string;
-  nickname?: string;
+  discord_id?: string;
   age?: number;
   gender?: 'male' | 'female';
   city?: string;
@@ -196,7 +198,14 @@ export interface Log {
 }
 
 export interface ApiError {
-  detail: string;
+  detail: string | Array<{
+    type?: string;
+    loc?: Array<string | number>;
+    msg?: string;
+    input?: any;
+    ctx?: any;
+    url?: string;
+  }>;
   code?: string;
   status?: number;
 }

@@ -50,7 +50,9 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    print(f"DEBUG get_current_user: User {user.discord_username} is_active: {user.is_active}")
     if not user.is_active:
+        print(f"DEBUG get_current_user: User {user.discord_username} is BLOCKED (is_active=False)")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Пользователь заблокирован"
@@ -58,11 +60,15 @@ def get_current_user(
 
     # Проверяем, что у пользователя есть валидная роль
     print(f"DEBUG deps.py: User {user.discord_username} has role: '{user.role}', is_active: {user.is_active}")
+    print(f"DEBUG deps.py: User discord_roles: {user.discord_roles}")
+    print(f"DEBUG deps.py: User created_at: {user.created_at}")
+    
     if user.role not in ["admin", "police"]:
         print(f"DEBUG deps.py: Invalid role '{user.role}', expected 'admin' or 'police'")
+        print(f"DEBUG deps.py: User full data: id={user.id}, discord_id={user.discord_id}, role={user.role}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="У вас нет необходимых ролей для доступа к системе"
+            detail=f"У вас нет необходимых ролей для доступа к системе. Текущая роль: {user.role}"
         )
 
     return user

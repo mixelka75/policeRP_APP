@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '@/services/api';
+import AvatarCache from '@/utils/avatarCache';
 
 interface PlayerSkinProps {
   passportId?: number;
@@ -54,12 +55,27 @@ export const PlayerSkin: React.FC<PlayerSkinProps> = ({
         }
 
         if (data) {
-          setSkinData({
-            skin_url: data.skin_url,
-            uuid: data.uuid,
-            nickname: 'nickname' in data ? data.nickname : undefined,
-            username: 'username' in data ? data.username || undefined : undefined
-          });
+          const nickname = ('nickname' in data ? data.nickname : data.username) || 'Unknown';
+          
+          // Проверяем кеш
+          const cached = AvatarCache.get(nickname);
+          if (cached) {
+            setSkinData({
+              skin_url: cached.url,
+              uuid: cached.uuid,
+              nickname: 'nickname' in data ? cached.nickname : undefined,
+              username: 'username' in data ? cached.nickname : undefined
+            });
+          } else {
+            // Сохраняем в кеш
+            AvatarCache.set(nickname, data.skin_url, data.uuid);
+            setSkinData({
+              skin_url: data.skin_url,
+              uuid: data.uuid,
+              nickname: 'nickname' in data ? data.nickname : undefined,
+              username: 'username' in data ? data.username || undefined : undefined
+            });
+          }
         }
       } catch (err) {
         console.error('Failed to fetch player skin:', err);

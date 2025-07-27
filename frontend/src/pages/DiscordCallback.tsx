@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { MessageCircle, CheckCircle, AlertTriangle, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { Loading, Card } from '@/components/ui';
+import { safeStringify } from '@/utils';
 
 const DiscordCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -58,9 +59,9 @@ const DiscordCallback: React.FC = () => {
                 <X className="w-8 h-8 text-red-300" />
               </div>
               <h2 className="text-xl font-semibold text-white mb-2">Ошибка авторизации</h2>
-              <p className="text-dark-300 mb-4">{error}</p>
+              <p className="text-dark-300 mb-4">{safeStringify(error)}</p>
 
-              {error?.includes('необходимых ролей') && (
+              {safeStringify(error).includes('необходимых ролей') && (
                 <div className="bg-warning-400/10 border border-warning-400/20 rounded-lg p-3 mb-4">
                   <p className="text-sm text-warning-300">
                     <strong>Что делать:</strong> Обратитесь к администратору Discord сервера

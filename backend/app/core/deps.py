@@ -63,8 +63,8 @@ def get_current_user(
     print(f"DEBUG deps.py: User discord_roles: {user.discord_roles}")
     print(f"DEBUG deps.py: User created_at: {user.created_at}")
     
-    if user.role not in ["admin", "police"]:
-        print(f"DEBUG deps.py: Invalid role '{user.role}', expected 'admin' or 'police'")
+    if user.role not in ["admin", "police", "citizen"]:
+        print(f"DEBUG deps.py: Invalid role '{user.role}', expected 'admin', 'police' or 'citizen'")
         print(f"DEBUG deps.py: User full data: id={user.id}, discord_id={user.discord_id}, role={user.role}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -176,7 +176,7 @@ async def get_current_user_by_token(token: Optional[str], db: Session) -> User:
                 detail="Пользователь заблокирован"
             )
 
-        if user.role not in ["admin", "police"]:
+        if user.role not in ["admin", "police", "citizen"]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="У вас нет необходимых ролей для доступа к системе"

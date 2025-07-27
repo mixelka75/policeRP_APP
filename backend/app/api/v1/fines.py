@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_police_or_admin
+from app.core.deps import get_current_police_or_admin, get_current_user
 from app.core.decorators import with_role_check
 from app.crud.fine import fine_crud
 from app.crud.passport import passport_crud
@@ -86,6 +86,47 @@ def read_my_fines(
             "skip": skip,
             "limit": limit,
             "officer": current_user.minecraft_username
+        },
+        request=request
+    )
+
+    return fines
+
+
+@router.get("/me", response_model=List[Fine])
+async def read_fines_on_me(
+        request: Request,
+        db: Session = Depends(get_db),
+        skip: int = 0,
+        limit: int = 100,
+        current_user: User = Depends(get_current_user),
+):
+    """
+    Получить штрафы, выписанные на меня (для обычных пользователей с паспортом)
+    """
+    # Находим паспорт текущего пользователя
+    passport = passport_crud.get_by_discord_id(db, discord_id=str(current_user.discord_id))
+    if not passport:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="У вас нет паспорта в системе",
+        )
+
+    # Получаем штрафы по ID паспорта
+    fines = fine_crud.get_by_passport_id(db, passport_id=passport.id, skip=skip, limit=limit)
+
+    # Логируем просмотр собственных штрафов
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="VIEW_FINES_ON_ME",
+        entity_type="fine",
+        details={
+            "passport_id": passport.id,
+            "count": len(fines),
+            "skip": skip,
+            "limit": limit,
+            "nickname": passport.nickname
         },
         request=request
     )

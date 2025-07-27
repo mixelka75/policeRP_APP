@@ -89,6 +89,8 @@ class ApiService {
     this.getLogs = this.getLogs.bind(this);
     this.getMyLogs = this.getMyLogs.bind(this);
     this.healthCheck = this.healthCheck.bind(this);
+    this.getMyPassport = this.getMyPassport.bind(this);
+    this.getMyFines = this.getMyFines.bind(this);
   }
 
   private clearAuthData() {
@@ -581,6 +583,26 @@ class ApiService {
   async getAvatarByNickname(nickname: string): Promise<PlayerSkinResponse> {
     try {
       const response = await this.axiosInstance.get<PlayerSkinResponse>(`/passports/avatar/by-nickname/${nickname}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getMyPassport(): Promise<Passport> {
+    try {
+      const response = await this.axiosInstance.get<Passport>('/passports/me');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getMyFines(skip: number = 0, limit: number = 100): Promise<Fine[]> {
+    try {
+      const response = await this.axiosInstance.get<Fine[]>('/fines/me', {
+        params: { skip, limit },
+      });
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError);

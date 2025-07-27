@@ -8,7 +8,7 @@ export interface User {
   discord_avatar: string;
   minecraft_username?: string;
   minecraft_uuid?: string;
-  role: 'admin' | 'police';
+  role: 'admin' | 'police' | 'citizen';
   is_active: boolean;
   discord_roles: string[];
   last_role_check: string;
@@ -102,7 +102,7 @@ export interface SecurityLogResponse {
 export interface UserCreate {
   username: string;
   password: string;
-  role: 'admin' | 'police';
+  role: 'admin' | 'police' | 'citizen';
   is_active: boolean;
 }
 

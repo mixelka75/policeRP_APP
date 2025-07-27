@@ -25,6 +25,7 @@ import { useAuthStore } from '@/store/auth';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Passport, Fine } from '@/types';
+import { UserPassportCard } from '@/components/common';
 import { Button, Loading, Input, Badge, Card } from '@/components/ui';
 import { Layout } from '@/components/layout';
 import UserAvatar from '@/components/common/UserAvatar';
@@ -74,6 +75,11 @@ const Dashboard: React.FC = () => {
   });
 
   useEffect(() => {
+    if (user?.role === 'citizen') {
+      // Для граждан не нужно загружать все данные
+      return;
+    }
+
     const loadData = async () => {
       try {
         await Promise.all([
@@ -90,7 +96,7 @@ const Dashboard: React.FC = () => {
     };
 
     loadData();
-  }, []);
+  }, [user?.role]);
 
   const filteredPassports = passports?.filter(passport =>
     passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -166,10 +172,60 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const isInitialLoading = passportsLoading && finesLoading && emergencyLoading;
+  const isInitialLoading = user?.role !== 'citizen' && passportsLoading && finesLoading && emergencyLoading;
 
   if (isInitialLoading) {
     return <Loading fullScreen text="Загрузка данных..." />;
+  }
+
+  // Для граждан отображаем только их паспорт
+  if (user?.role === 'citizen') {
+    return (
+      <Layout
+        title="Главная"
+        subtitle="Ваш паспорт"
+      >
+        <div className="space-y-6">
+          {/* User Info Banner */}
+          {user && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card variant="minecraft" className="overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <UserAvatar
+                        user={user}
+                        size={64}
+                        showStatus={true}
+                        className="shadow-primary-glow animate-glow"
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-3">
+                        <h3 className="text-2xl font-bold text-white">
+                          Добро пожаловать, {getDisplayName(user)}!
+                        </h3>
+                        <MessageCircle className="h-6 w-6 text-secondary-400" />
+                      </div>
+                      <p className="text-primary-300 font-medium">
+                        {getRoleDisplayName(user.role)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* User Passport Card */}
+          <UserPassportCard />
+        </div>
+      </Layout>
+    );
   }
 
   const hasCriticalError = (passportsError || finesError || emergencyError) &&

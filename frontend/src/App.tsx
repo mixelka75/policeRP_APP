@@ -13,10 +13,12 @@ import Emergency from '@/pages/Emergency';
 import Users from '@/pages/Users';
 import RoleManagement from '@/pages/RoleManagement';
 import Logs from '@/pages/Logs';
+import MyFines from '@/pages/MyFines';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({
+const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean; policeOrAdminOnly?: boolean }> = ({
   children,
-  adminOnly = false
+  adminOnly = false,
+  policeOrAdminOnly = false
 }) => {
   const { isAuthenticated, user } = useAuthStore();
 
@@ -25,6 +27,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean 
   }
 
   if (adminOnly && user?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (policeOrAdminOnly && user?.role !== 'admin' && user?.role !== 'police') {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -84,7 +90,7 @@ const App: React.FC = () => {
           <Route
             path="/passports"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute policeOrAdminOnly>
                 <Passports />
               </ProtectedRoute>
             }
@@ -92,7 +98,7 @@ const App: React.FC = () => {
           <Route
             path="/fines"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute policeOrAdminOnly>
                 <Fines />
               </ProtectedRoute>
             }
@@ -100,8 +106,18 @@ const App: React.FC = () => {
           <Route
             path="/emergency"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute policeOrAdminOnly>
                 <Emergency />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Citizen routes */}
+          <Route
+            path="/my-fines"
+            element={
+              <ProtectedRoute>
+                <MyFines />
               </ProtectedRoute>
             }
           />

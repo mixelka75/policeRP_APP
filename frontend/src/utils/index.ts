@@ -240,6 +240,8 @@ export function getRoleDisplayName(role: string | null | undefined): string {
       return 'Администратор';
     case 'police':
       return 'Полицейский';
+    case 'citizen':
+      return 'Житель';
     default:
       return role;
   }
@@ -256,6 +258,8 @@ export function getRoleColor(role: string | null | undefined): string {
       return 'text-red-400';
     case 'police':
       return 'text-blue-400';
+    case 'citizen':
+      return 'text-green-400';
     default:
       return 'text-gray-400';
   }
@@ -272,6 +276,8 @@ export function getRoleBackgroundColor(role: string | null | undefined): string 
       return 'bg-red-500/20';
     case 'police':
       return 'bg-blue-500/20';
+    case 'citizen':
+      return 'bg-green-500/20';
     default:
       return 'bg-gray-500/20';
   }

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_police_or_admin, get_current_user_with_minecraft
+from app.core.deps import get_current_police_or_admin, get_current_user_with_minecraft, get_current_user
 from app.core.decorators import with_role_check
 from app.crud.passport import passport_crud
 from app.schemas.passport import (
@@ -77,6 +77,41 @@ async def read_passports(
     )
 
     return passports
+
+
+@router.get("/me", response_model=Passport)
+async def get_my_passport(
+        request: Request,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+):
+    """
+    Получить свой паспорт (для обычных пользователей с паспортом)
+    """
+    passport = passport_crud.get_by_discord_id(db, discord_id=str(current_user.discord_id))
+    if not passport:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="У вас нет паспорта в системе",
+        )
+
+    # Логируем просмотр собственного паспорта
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="VIEW_OWN_PASSPORT",
+        entity_type="passport",
+        entity_id=passport.id,
+        details={
+            "nickname": passport.nickname,
+            "city": passport.city,
+            "violations_count": passport.violations_count,
+            "is_emergency": passport.is_emergency
+        },
+        request=request
+    )
+
+    return passport
 
 
 @router.get("/emergency", response_model=List[Passport])

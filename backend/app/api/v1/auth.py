@@ -128,15 +128,22 @@ async def discord_callback(
                 print(f"DEBUG: Determined user role: {user_role}")
                 
                 
-                # Проверяем, что пользователь имеет нужные роли
+                # Проверяем, что пользователь имеет нужные роли или паспорт
                 if user_role is None:
-                    print(f"DEBUG: User {discord_username} has roles: {user_roles}")
-                    print(f"DEBUG: Expected admin role ID: {settings.DISCORD_ADMIN_ROLE_ID}")
-                    print(f"DEBUG: Expected police role ID: {settings.DISCORD_POLICE_ROLE_ID}")
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="У вас нет необходимых ролей для доступа к системе"
-                    )
+                    # Проверяем, есть ли у пользователя паспорт
+                    from app.crud.passport import passport_crud
+                    passport = passport_crud.get_by_discord_id(db, discord_id=str(discord_id))
+                    if passport:
+                        user_role = "citizen"  # Назначаем роль citizen
+                        print(f"DEBUG: User {discord_username} has passport, assigned citizen role")
+                    else:
+                        print(f"DEBUG: User {discord_username} has roles: {user_roles}")
+                        print(f"DEBUG: Expected admin role ID: {settings.DISCORD_ADMIN_ROLE_ID}")
+                        print(f"DEBUG: Expected police role ID: {settings.DISCORD_POLICE_ROLE_ID}")
+                        raise HTTPException(
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail="У вас нет необходимых ролей для доступа к системе"
+                        )
                 
             except HTTPException:
                 # Пере-поднимаем HTTPException
@@ -361,12 +368,17 @@ async def refresh_user_data(
                     # Определяем роль на основе Discord ролей
                     user_role = discord_client.determine_user_role(member_info)
                     
-                    # Если роль None, пользователь потерял доступ
+                    # Если роль None, проверяем паспорт
                     if user_role is None:
-                        raise HTTPException(
-                            status_code=status.HTTP_403_FORBIDDEN,
-                            detail="У вас больше нет необходимых ролей для доступа к системе"
-                        )
+                        from app.crud.passport import passport_crud
+                        passport = passport_crud.get_by_discord_id(db, discord_id=str(current_user.discord_id))
+                        if passport:
+                            user_role = "citizen"
+                        else:
+                            raise HTTPException(
+                                status_code=status.HTTP_403_FORBIDDEN,
+                                detail="У вас больше нет необходимых ролей для доступа к системе"
+                            )
                 else:
                     raise HTTPException(
                         status_code=status.HTTP_403_FORBIDDEN,
@@ -392,10 +404,15 @@ async def refresh_user_data(
                 user_role = discord_client.determine_user_role(member_info)
                 
                 if user_role is None:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="У вас больше нет необходимых ролей для доступа к системе"
-                    )
+                    from app.crud.passport import passport_crud
+                    passport = passport_crud.get_by_discord_id(db, discord_id=str(current_user.discord_id))
+                    if passport:
+                        user_role = "citizen"
+                    else:
+                        raise HTTPException(
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail="У вас больше нет необходимых ролей для доступа к системе"
+                        )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,

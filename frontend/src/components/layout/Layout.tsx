@@ -37,17 +37,12 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
   const isDataOutdated = user ? isUserDataOutdated(user) : false;
 
   return (
-    <div className="min-h-screen bg-minecraft-dark flex">
+    <div className="min-h-screen bg-minecraft-dark">
       {/* Sidebar */}
-      <div className="lg:hidden">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      </div>
-      <div className="hidden lg:block lg:w-64">
-        <Sidebar isOpen={true} onClose={() => {}} />
-      </div>
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen lg:ml-64">
         {/* ✨ ОБНОВЛЕННЫЙ Header с новой цветовой схемой */}
         <header className="bg-black/20 backdrop-blur-sm border-b border-primary-500/30 flex-shrink-0">
           <div className="px-4 sm:px-6 lg:px-8">

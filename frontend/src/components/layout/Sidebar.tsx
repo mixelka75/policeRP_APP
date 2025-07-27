@@ -1,5 +1,5 @@
 // src/components/layout/Sidebar.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -33,48 +33,80 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { user, logout, refreshUserData } = useAuthStore();
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
 
-  const navigationItems = [
-    {
-      name: 'Главная',
-      href: '/dashboard',
-      icon: Home,
-      current: location.pathname === '/dashboard',
-    },
-    {
-      name: 'Паспорта',
-      href: '/passports',
-      icon: Users,
-      current: location.pathname === '/passports',
-    },
-    {
-      name: 'Штрафы',
-      href: '/fines',
-      icon: AlertTriangle,
-      current: location.pathname === '/fines',
-    },
-    {
-      name: 'Список ЧС',
-      href: '/emergency',
-      icon: ShieldAlert,
-      current: location.pathname === '/emergency',
-      description: 'Управление паспортами в ЧС',
-    },
-    {
-      name: 'Пользователи',
-      href: '/users',
-      icon: UserCheck,
-      current: location.pathname === '/users',
-      adminOnly: true,
-    },
-    {
-      name: 'Логи',
-      href: '/logs',
-      icon: Activity,
-      current: location.pathname === '/logs',
-      adminOnly: true,
-    },
-  ];
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  const getNavigationItems = () => {
+    const baseItems = [
+      {
+        name: 'Главная',
+        href: '/dashboard',
+        icon: Home,
+        current: location.pathname === '/dashboard',
+      }
+    ];
+
+    if (user?.role === 'citizen') {
+      return [
+        ...baseItems,
+        {
+          name: 'Мои штрафы',
+          href: '/my-fines',
+          icon: AlertTriangle,
+          current: location.pathname === '/my-fines',
+        }
+      ];
+    }
+
+    // Для admin и police
+    return [
+      ...baseItems,
+      {
+        name: 'Паспорта',
+        href: '/passports',
+        icon: Users,
+        current: location.pathname === '/passports',
+      },
+      {
+        name: 'Штрафы',
+        href: '/fines',
+        icon: AlertTriangle,
+        current: location.pathname === '/fines',
+      },
+      {
+        name: 'Список ЧС',
+        href: '/emergency',
+        icon: ShieldAlert,
+        current: location.pathname === '/emergency',
+        description: 'Управление паспортами в ЧС',
+      },
+      {
+        name: 'Пользователи',
+        href: '/users',
+        icon: UserCheck,
+        current: location.pathname === '/users',
+        adminOnly: true,
+      },
+      {
+        name: 'Логи',
+        href: '/logs',
+        icon: Activity,
+        current: location.pathname === '/logs',
+        adminOnly: true,
+      },
+    ];
+  };
+
+  const navigationItems = getNavigationItems();
 
   const handleLogout = () => {
     logout();
@@ -92,7 +124,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   };
 
   const filteredItems = navigationItems.filter(item =>
-    !item.adminOnly || user?.role === 'admin'
+    !('adminOnly' in item) || !item.adminOnly || user?.role === 'admin'
   );
 
   const isDataOutdated = user ? isUserDataOutdated(user) : false;
@@ -112,10 +144,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* ✨ ОБНОВЛЕННЫЙ Sidebar с новой цветовой схемой */}
       <motion.div
-        initial={{ x: -300 }}
-        animate={{ x: isOpen ? 0 : -300 }}
+        initial={false}
+        animate={{ 
+          x: isLargeScreen ? 0 : (isOpen ? 0 : -300)
+        }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed top-0 left-0 z-50 h-full w-64 bg-minecraft-dark border-r border-primary-500/30 shadow-2xl lg:translate-x-0 lg:static lg:inset-0 lg:h-screen"
+        className="fixed top-0 left-0 z-50 h-full w-64 bg-minecraft-dark border-r border-primary-500/30 shadow-2xl lg:translate-x-0 lg:h-screen"
       >
         <div className="flex flex-col h-full">
           {/* ✨ ОБНОВЛЕННЫЙ Header */}
@@ -251,7 +285,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     'text-gray-300 hover:text-white': !item.current,
                   }
                 )}
-                title={item.description || item.name}
+                title={'description' in item ? item.description : item.name}
               >
                 <item.icon
                   className={cn('h-5 w-5', {

@@ -204,21 +204,23 @@ const Emergency: React.FC = () => {
   ];
 
   const actions = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
         <Input
-          placeholder="Поиск по имени, городу или никнейму..."
+          placeholder="Поиск..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-full max-w-80 minecraft-input"
+          className="w-full sm:w-64 minecraft-input"
         />
         <Button
           variant="outline"
           size="sm"
           leftIcon={<Filter className="h-4 w-4" />}
+          className="w-full sm:w-auto"
         >
-          Фильтры
+          <span className="sm:hidden">Фильтры</span>
+          <span className="hidden sm:inline">Фильтры</span>
         </Button>
       </div>
       <div className="flex items-center space-x-2">
@@ -227,8 +229,10 @@ const Emergency: React.FC = () => {
           size="sm"
           onClick={loadData}
           leftIcon={<ShieldAlert className="h-4 w-4" />}
+          className="w-full sm:w-auto"
         >
-          Обновить
+          <span className="sm:hidden">Обновить</span>
+          <span className="hidden sm:inline">Обновить</span>
         </Button>
       </div>
     </div>

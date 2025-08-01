@@ -313,40 +313,45 @@ const Users: React.FC = () => {
   ];
 
   const actions = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
         <Input
-          placeholder="Поиск по имени пользователя..."
+          placeholder="Поиск..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-full max-w-80 minecraft-input"
+          className="w-full sm:w-64 minecraft-input"
         />
-        <select
-          value={searchType}
-          onChange={(e) => setSearchType(e.target.value as any)}
-          className="bg-minecraft-dark border border-primary-500/30 text-white rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
-        >
-          <option value="all">Все</option>
-          <option value="discord">Discord</option>
-          <option value="minecraft">Minecraft</option>
-        </select>
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<Filter className="h-4 w-4" />}
-        >
-          Фильтры
-        </Button>
+        <div className="flex space-x-2">
+          <select
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value as any)}
+            className="flex-1 sm:w-auto bg-minecraft-dark border border-primary-500/30 text-white rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
+          >
+            <option value="all">Все</option>
+            <option value="discord">Discord</option>
+            <option value="minecraft">Minecraft</option>
+          </select>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Filter className="h-4 w-4" />}
+            className="flex-shrink-0"
+          >
+            <span className="sr-only sm:not-sr-only">Фильтры</span>
+          </Button>
+        </div>
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
         <Button
           variant="outline"
           size="sm"
           onClick={() => fetchUsers()}
           leftIcon={<RefreshCw className="h-4 w-4" />}
+          className="w-full sm:w-auto"
         >
-          Обновить
+          <span className="sm:hidden">Обновить</span>
+          <span className="hidden sm:inline">Обновить</span>
         </Button>
         <Button
           variant="minecraft"
@@ -355,8 +360,10 @@ const Users: React.FC = () => {
           loading={isCheckingAllRoles}
           leftIcon={<Activity className="h-4 w-4" />}
           glow
+          className="w-full sm:w-auto"
         >
-          Проверить все роли
+          <span className="sm:hidden">Проверить</span>
+          <span className="hidden sm:inline">Проверить все роли</span>
         </Button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-// src/components/layout/Layout.tsx
+// src/components/layout/Layout.tsx - ИСПРАВЛЕННАЯ версия для мобильных устройств
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, RefreshCw, MessageCircle, AlertTriangle, User } from 'lucide-react';
@@ -44,30 +44,34 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
 
       {/* Main Content */}
       <div className="flex flex-col min-h-screen lg:ml-64 relative">
-        {/* ✨ ОБНОВЛЕННЫЙ Header с новой цветовой схемой */}
+        {/* ✨ ИСПРАВЛЕННЫЙ Header для мобильных */}
         <header className="bg-black/20 backdrop-blur-sm border-b border-primary-500/30 flex-shrink-0">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              {/* Left side */}
-              <div className="flex items-center">
+              {/* Left side - адаптивный для мобильных */}
+              <div className="flex items-center min-w-0 flex-1">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden mr-3"
+                  className="lg:hidden mr-2 flex-shrink-0"
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
 
                 {title && (
-                  <div className="flex items-center space-x-2 sm:space-x-3">
-                    <img src={logoImage} alt="Панд-Ратония Logo" className="w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-lg flex-shrink-0" />
-                    <div className="min-w-0">
-                      <h1 className="text-lg sm:text-xl font-semibold text-white truncate">
+                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                    <img
+                      src={logoImage}
+                      alt="Панд-Ратония Logo"
+                      className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 object-contain drop-shadow-lg flex-shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h1 className="text-sm sm:text-lg lg:text-xl font-semibold text-white truncate">
                         {title}
                       </h1>
                       {subtitle && (
-                        <p className="text-xs sm:text-sm text-gray-300 mt-1 truncate">
+                        <p className="text-xs sm:text-sm text-gray-300 truncate hidden sm:block">
                           {subtitle}
                         </p>
                       )}
@@ -76,9 +80,9 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                 )}
               </div>
 
-              {/* Right side */}
-              <div className="flex items-center space-x-2 sm:space-x-4">
-                {/* ✨ ОБНОВЛЕННАЯ кнопка обновления пользователя */}
+              {/* Right side - упрощенный для мобильных */}
+              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+                {/* ✨ Кнопка обновления только на больших экранах */}
                 {user && (
                   <Button
                     variant="ghost"
@@ -86,8 +90,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                     onClick={handleRefreshUserData}
                     disabled={isRefreshing}
                     className={cn(
-                      "p-2",
-                      // ✨ НОВЫЕ цвета для устаревших данных
+                      "p-2 hidden sm:flex",
                       isDataOutdated && "text-warning-400 hover:text-warning-300"
                     )}
                     title={isDataOutdated ? "Данные пользователя устарели" : "Обновить данные"}
@@ -100,20 +103,19 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                   </Button>
                 )}
 
-                {/* ✨ ОБНОВЛЕННАЯ информация о пользователе */}
-                <div className="flex items-center space-x-2 sm:space-x-3">
+                {/* ✨ Упрощенная информация о пользователе для мобильных */}
+                <div className="flex items-center space-x-2">
                   {user ? (
                     <>
-                      {/* ✨ Minecraft/Discord аватар пользователя */}
                       <UserAvatar
                         user={user}
-                        size={28}
+                        size={24}
                         showStatus={true}
-                        className="sm:w-8 sm:h-8"
+                        className="sm:w-7 sm:h-7 lg:w-8 lg:h-8"
                       />
 
-                      {/* ✨ ОБНОВЛЕННЫЕ детали пользователя */}
-                      <div className="hidden sm:block min-w-0">
+                      {/* Информация о пользователе только на больших экранах */}
+                      <div className="hidden lg:block min-w-0">
                         <div className="flex items-center space-x-2">
                           <p className="text-sm font-medium text-white truncate">
                             {getDisplayName(user)}
@@ -137,10 +139,10 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                     </>
                   ) : (
                     <>
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
                         <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                       </div>
-                      <div className="hidden sm:block">
+                      <div className="hidden lg:block">
                         <p className="text-sm font-medium text-white">
                           Не авторизован
                         </p>
@@ -156,12 +158,12 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
           </div>
         </header>
 
-        {/* ✨ ОБНОВЛЕННОЕ предупреждение об устаревших данных */}
+        {/* ✨ ИСПРАВЛЕННОЕ предупреждение об устаревших данных - скрыто на мобильных */}
         {user && isDataOutdated && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-warning-500/10 border-b border-warning-500/20 px-4 sm:px-6 lg:px-8 py-2"
+            className="bg-warning-500/10 border-b border-warning-500/20 px-4 sm:px-6 lg:px-8 py-2 hidden sm:block"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
@@ -183,18 +185,21 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
           </motion.div>
         )}
 
-        {/* ✨ ОБНОВЛЕННАЯ панель действий */}
+        {/* ✨ ИСПРАВЛЕННАЯ панель действий для мобильных */}
         {actions && (
-          <div className="bg-black/20 border-b border-primary-500/30 px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0 overflow-x-auto">
-            <div className="min-w-fit">
-              {actions}
+          <div className="bg-black/20 border-b border-primary-500/30 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex-shrink-0">
+            {/* Контейнер с горизонтальной прокруткой для мобильных */}
+            <div className="overflow-x-auto">
+              <div className="min-w-max">
+                {actions}
+              </div>
             </div>
           </div>
         )}
 
         {/* Page Content */}
         <main className="flex-1 backdrop-blur-sm">
-          <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+          <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             {children}
           </div>
         </main>

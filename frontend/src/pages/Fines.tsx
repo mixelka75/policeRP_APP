@@ -252,23 +252,26 @@ const Fines: React.FC = () => {
   ];
 
   const actions = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
         <Input
-          placeholder="Поиск по статье или гражданину..."
+          placeholder="Поиск..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-full max-w-80 minecraft-input"
+          className="w-full sm:w-64 minecraft-input"
         />
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<Filter className="h-4 w-4" />}
-          onClick={() => setIsFilterModalOpen(true)}
-        >
-          Фильтры
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Filter className="h-4 w-4" />}
+            onClick={() => setIsFilterModalOpen(true)}
+            className="flex-1 sm:flex-none"
+          >
+            <span className="sm:inline">Фильтры</span>
+          </Button>
+        </div>
       </div>
       <div className="flex items-center space-x-2">
         <Button
@@ -277,8 +280,10 @@ const Fines: React.FC = () => {
           onClick={handleCreateFine}
           leftIcon={<Plus className="h-4 w-4" />}
           glow
+          className="w-full sm:w-auto"
         >
-          Выписать штраф
+          <span className="sm:hidden">Штраф</span>
+          <span className="hidden sm:inline">Выписать штраф</span>
         </Button>
       </div>
     </div>

@@ -313,35 +313,38 @@ const Passports: React.FC = () => {
   ];
 
   const actions = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
         <Input
-          placeholder="Поиск по имени, фамилии, никнейму или Discord ID..."
+          placeholder="Поиск..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-full max-w-80 minecraft-input"
+          className="w-full sm:w-64 minecraft-input"
         />
-        <Select
-          options={cityOptions}
-          value={selectedCity}
-          onChange={setSelectedCity}
-          className="w-40"
-        />
-        <Select
-          options={emergencyOptions}
-          value={emergencyFilter}
-          onChange={setEmergencyFilter}
-          className="w-40"
-        />
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<Filter className="h-4 w-4" />}
-          onClick={() => setIsFilterModalOpen(true)}
-        >
-          Фильтры
-        </Button>
+        <div className="flex space-x-2">
+          <Select
+            options={cityOptions}
+            value={selectedCity}
+            onChange={setSelectedCity}
+            className="flex-1 sm:w-32"
+          />
+          <Select
+            options={emergencyOptions}
+            value={emergencyFilter}
+            onChange={setEmergencyFilter}
+            className="flex-1 sm:w-32"
+          />
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Filter className="h-4 w-4" />}
+            onClick={() => setIsFilterModalOpen(true)}
+            className="flex-shrink-0"
+          >
+            <span className="sr-only sm:not-sr-only">Фильтры</span>
+          </Button>
+        </div>
       </div>
       <div className="flex items-center space-x-2">
         <Button
@@ -350,8 +353,10 @@ const Passports: React.FC = () => {
           onClick={handleCreatePassport}
           leftIcon={<Plus className="h-4 w-4" />}
           glow
+          className="w-full sm:w-auto"
         >
-          Создать паспорт
+          <span className="sm:hidden">Паспорт</span>
+          <span className="hidden sm:inline">Создать паспорт</span>
         </Button>
       </div>
     </div>

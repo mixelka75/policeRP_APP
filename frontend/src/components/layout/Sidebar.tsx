@@ -22,8 +22,8 @@ import {
 import { useAuthStore } from '@/store/auth';
 import { getDisplayName, getRoleDisplayName, getFullUserName, isUserDataOutdated } from '@/utils';
 import { cn } from '@/utils';
-import { LiveStatusIndicator } from './LiveStatusIndicator';
 import UserAvatar from '@/components/common/UserAvatar';
+import { DiscordIcon } from '@/components/icons';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -154,17 +154,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="flex flex-col h-full">
           {/* ✨ ОБНОВЛЕННЫЙ Header */}
           <div className="p-6 border-b border-primary-500/30 flex-shrink-0">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 via-secondary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-primary-glow">
-                <Gamepad2 className="h-7 w-7 text-white" />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-xl font-bold text-white">Панд-Ратония</h1>
-                <p className="text-xs text-primary-300">Система управления</p> {/* ✨ НОВЫЙ цвет */}
-              </div>
-              <div className="flex-shrink-0">
-                <LiveStatusIndicator />
-              </div>
+            <div className="text-center">
+              <h1 className="text-xl font-bold text-white">Панд-Ратония</h1>
+              <p className="text-xs text-primary-300 mt-1">Система управления</p>
             </div>
           </div>
 
@@ -252,7 +244,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                       className="flex items-center justify-center p-2 bg-black/20 hover:bg-black/30 rounded-lg transition-colors border border-primary-500/20"
                       title="Открыть профиль в Discord"
                     >
-                      <ExternalLink className="h-4 w-4 text-primary-400" /> {/* ✨ НОВЫЙ цвет */}
+                      <DiscordIcon className="h-4 w-4 text-primary-400" /> {/* ✨ НОВЫЙ цвет */}
                     </a>
                   )}
                 </div>

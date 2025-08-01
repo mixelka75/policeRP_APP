@@ -478,3 +478,57 @@ async def refresh_user_data(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Ошибка обновления данных: {str(e)}"
         )
+
+
+@router.post("/refresh-token")
+async def refresh_token(
+        request: Request,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+):
+    """
+    Обновить JWT токен без полной повторной авторизации
+    """
+    try:
+        # Проверяем активность пользователя
+        if not current_user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Аккаунт деактивирован"
+            )
+
+        # Создаем новый JWT токен
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        new_access_token = create_access_token(
+            data={"sub": str(current_user.discord_id)},
+            expires_delta=access_token_expires
+        )
+
+        # Логируем обновление токена
+        ActionLogger.log_action(
+            db=db,
+            user=current_user,
+            action="TOKEN_REFRESH",
+            entity_type="security",
+            entity_id=current_user.id,
+            details={
+                "discord_username": current_user.discord_username,
+                "role": current_user.role
+            },
+            request=request
+        )
+
+        return {
+            "access_token": new_access_token,
+            "token_type": "bearer",
+            "user": UserSchema.model_validate(current_user),
+            "message": "Токен обновлен успешно"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка обновления токена: {str(e)}"
+        )

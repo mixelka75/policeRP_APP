@@ -258,13 +258,15 @@ class DiscordClient:
     def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None) -> Optional[str]:
         """
         Определение роли пользователя на основе ролей Discord
+        ВНИМАНИЕ: Этот метод НЕ проверяет паспорта для роли citizen.
+        Для полной проверки используйте determine_user_role из role_checker.py
 
         Args:
             member_data: Данные участника сервера
             guild_roles: Список ролей сервера (опционально)
 
         Returns:
-            Роль пользователя ('admin' или 'police') или None, если нет нужных ролей
+            Роль пользователя ('admin' или 'police') или None, если нет нужных ролей Discord
         """
         user_role_ids = member_data.get("roles", [])
 
@@ -304,7 +306,8 @@ class DiscordClient:
             if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
                 return "police"
 
-        # Если нет нужных ролей, возвращаем None
+        # Если нет нужных ролей Discord, возвращаем None
+        # ВНИМАНИЕ: Этот метод НЕ проверяет паспорта!
         return None
 
     async def close(self):

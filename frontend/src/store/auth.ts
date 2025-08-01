@@ -23,6 +23,7 @@ interface AuthState {
   logout: () => void;
   refreshUser: () => Promise<void>;
   refreshUserData: () => Promise<void>; // New method for Discord refresh
+  refreshToken: () => Promise<void>; // New method for token refresh
   updateUser: (user: User) => void; // New method for updating user data
   clearError: () => void;
   checkAuth: () => void;
@@ -203,6 +204,7 @@ export const useAuthStore = create<AuthState>()(
         try {
           const user = await apiService.getMe();
           set({ user, error: null });
+          localStorage.setItem('user', JSON.stringify(user));
         } catch (error) {
           console.error('Failed to refresh user:', error);
           if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
@@ -247,6 +249,39 @@ export const useAuthStore = create<AuthState>()(
             }
           } else {
             toast.error(apiError.detail || 'Ошибка при обновлении данных');
+          }
+        }
+      },
+
+      // ✅ NEW: Обновление JWT токена
+      refreshToken: async () => {
+        const { token, user } = get();
+        if (!token || !user) {
+          get().logout();
+          return;
+        }
+
+        try {
+          const response = await apiService.refreshToken();
+          
+          set({ 
+            token: response.access_token,
+            user: response.user,
+            error: null 
+          });
+          
+          localStorage.setItem('token', response.access_token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+
+          console.log('Token refreshed successfully');
+        } catch (error) {
+          console.error('Failed to refresh token:', error);
+          const apiError = error as ApiError;
+
+          if (apiError.code === 'SESSION_EXPIRED' || apiError.status === 403 || apiError.status === 401) {
+            get().logout();
+          } else {
+            set({ error: apiError.detail || 'Ошибка при обновлении токена' });
           }
         }
       },

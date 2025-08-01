@@ -1,6 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn
@@ -98,6 +98,13 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
 )
 
+# Middleware для пропуска предупреждения ngrok
+@app.middleware("http")
+async def add_ngrok_header(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["ngrok-skip-browser-warning"] = "true"
+    return response
+
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,
@@ -112,10 +119,11 @@ app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/")
-def root():
+def root(response: Response):
     """
     Корневой эндпоинт
     """
+    response.headers["ngrok-skip-browser-warning"] = "true"
     return {
         "message": "РП Сервер API",
         "version": settings.VERSION,
@@ -132,10 +140,11 @@ def root():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check(response: Response):
     """
     Проверка состояния сервиса
     """
+    response.headers["ngrok-skip-browser-warning"] = "true"
     try:
         # Проверяем подключение к базе данных
         db = next(get_db())

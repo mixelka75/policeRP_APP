@@ -8,6 +8,14 @@ from app.schemas.passport import (
     PassportEmergencyResponse
 )
 from app.schemas.fine import Fine, FineCreate, FineUpdate, FineInPassport
+from app.schemas.payment import (
+    PaymentCreate,
+    PaymentUpdate,
+    PaymentResponse,
+    PaymentWebhook,
+    SPWorldsPaymentCreate,
+    SPWorldsPaymentResponse
+)
 from app.schemas.log import Log, LogCreate
 
 __all__ = [
@@ -26,6 +34,12 @@ __all__ = [
     "FineCreate",
     "FineUpdate",
     "FineInPassport",
+    "PaymentCreate",
+    "PaymentUpdate",
+    "PaymentResponse",
+    "PaymentWebhook",
+    "SPWorldsPaymentCreate",
+    "SPWorldsPaymentResponse",
     "Log",
     "LogCreate"
 ]

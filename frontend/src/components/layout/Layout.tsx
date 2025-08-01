@@ -8,6 +8,7 @@ import { Button } from '@/components/ui';
 import { getDisplayName, getRoleDisplayName, isUserDataOutdated } from '@/utils';
 import { cn } from '@/utils';
 import UserAvatar from '@/components/common/UserAvatar';
+import logoImage from '@/assets/logo.png';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -42,7 +43,7 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex flex-col min-h-screen lg:ml-64">
+      <div className="flex flex-col min-h-screen lg:ml-64 relative">
         {/* ✨ ОБНОВЛЕННЫЙ Header с новой цветовой схемой */}
         <header className="bg-black/20 backdrop-blur-sm border-b border-primary-500/30 flex-shrink-0">
           <div className="px-4 sm:px-6 lg:px-8">
@@ -59,21 +60,24 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                 </Button>
 
                 {title && (
-                  <div>
-                    <h1 className="text-xl font-semibold text-white">
-                      {title}
-                    </h1>
-                    {subtitle && (
-                      <p className="text-sm text-gray-300 mt-1">
-                        {subtitle}
-                      </p>
-                    )}
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <img src={logoImage} alt="Панд-Ратония Logo" className="w-8 h-8 sm:w-12 sm:h-12 object-contain drop-shadow-lg flex-shrink-0" />
+                    <div className="min-w-0">
+                      <h1 className="text-lg sm:text-xl font-semibold text-white truncate">
+                        {title}
+                      </h1>
+                      {subtitle && (
+                        <p className="text-xs sm:text-sm text-gray-300 mt-1 truncate">
+                          {subtitle}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
 
               {/* Right side */}
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 sm:space-x-4">
                 {/* ✨ ОБНОВЛЕННАЯ кнопка обновления пользователя */}
                 {user && (
                   <Button
@@ -97,33 +101,34 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                 )}
 
                 {/* ✨ ОБНОВЛЕННАЯ информация о пользователе */}
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 sm:space-x-3">
                   {user ? (
                     <>
                       {/* ✨ Minecraft/Discord аватар пользователя */}
                       <UserAvatar
                         user={user}
-                        size={32}
+                        size={28}
                         showStatus={true}
+                        className="sm:w-8 sm:h-8"
                       />
 
                       {/* ✨ ОБНОВЛЕННЫЕ детали пользователя */}
-                      <div className="hidden sm:block">
+                      <div className="hidden sm:block min-w-0">
                         <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium text-white">
+                          <p className="text-sm font-medium text-white truncate">
                             {getDisplayName(user)}
                           </p>
-                          <MessageCircle className="h-3 w-3 text-secondary-400" /> {/* ✨ НОВЫЙ цвет */}
+                          <MessageCircle className="h-3 w-3 text-secondary-400 flex-shrink-0" />
                           {isDataOutdated && (
-                            <AlertTriangle className="h-3 w-3 text-warning-400" />
+                            <AlertTriangle className="h-3 w-3 text-warning-400 flex-shrink-0" />
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <p className="text-xs text-gray-300">
+                          <p className="text-xs text-gray-300 truncate">
                             {getRoleDisplayName(user.role)}
                           </p>
                           {isDataOutdated && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-500/20 text-warning-400">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-500/20 text-warning-400 flex-shrink-0">
                               Устарело
                             </span>
                           )}
@@ -132,8 +137,8 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
                     </>
                   ) : (
                     <>
-                      <div className="w-8 h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
-                        <User className="w-4 h-4 text-white" />
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
+                        <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                       </div>
                       <div className="hidden sm:block">
                         <p className="text-sm font-medium text-white">
@@ -180,14 +185,16 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
 
         {/* ✨ ОБНОВЛЕННАЯ панель действий */}
         {actions && (
-          <div className="bg-black/20 border-b border-primary-500/30 px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0">
-            {actions}
+          <div className="bg-black/20 border-b border-primary-500/30 px-4 sm:px-6 lg:px-8 py-4 flex-shrink-0 overflow-x-auto">
+            <div className="min-w-fit">
+              {actions}
+            </div>
           </div>
         )}
 
         {/* Page Content */}
         <main className="flex-1 backdrop-blur-sm">
-          <div className="px-4 sm:px-6 lg:px-8 py-8">
+          <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
             {children}
           </div>
         </main>

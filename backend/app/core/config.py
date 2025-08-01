@@ -28,10 +28,15 @@ class Settings(BaseSettings):
     SPWORLDS_MAP_TOKEN: str = ""
     SPWORLDS_API_URL: str = "https://spworlds.ru/api/public"
 
+    # Payment Configuration
+    PAYMENT_WEBHOOK_URL: str = "https://yourdomain.com/api/v1/payments/webhook"
+    PAYMENT_SUCCESS_REDIRECT_URL: str = "http://localhost:3000/fines?payment=success"
+    PAYMENT_CANCEL_REDIRECT_URL: str = "http://localhost:3000/fines?payment=cancelled"
+
     # Security
     SECRET_KEY: str = "your-super-secret-key-here-please-change-this-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 часа
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 525600  # 1 год (365 дней * 24 часа * 60 минут)
 
     # Role check interval (in minutes)
     ROLE_CHECK_INTERVAL: int = 30  # Проверка ролей каждые 30 минут
@@ -46,7 +51,14 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # CORS
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173"]
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000", 
+        "http://localhost:5173",
+        "http://localhost:8000",  # Add backend URL for development
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8000"
+    ]
 
     # Конфигурация модели - игнорируем лишние переменные окружения
     model_config = ConfigDict(

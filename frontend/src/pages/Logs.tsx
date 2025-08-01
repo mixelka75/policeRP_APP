@@ -389,7 +389,7 @@ const Logs: React.FC = () => {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80 minecraft-input"
+          className="w-full max-w-80 minecraft-input"
         />
         <select
           value={selectedAction}

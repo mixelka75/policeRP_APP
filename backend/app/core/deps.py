@@ -31,14 +31,7 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    try:
-        discord_id = int(discord_id)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный формат Discord ID",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    # Discord ID остается строкой как в базе данных
 
     user = user_crud.get_by_discord_id(db, discord_id=discord_id)
     print(f"DEBUG get_current_user: Found user: {user.discord_username if user else 'None'}")
@@ -152,14 +145,7 @@ async def get_current_user_by_token(token: Optional[str], db: Session) -> User:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        try:
-            discord_id = int(discord_id)
-        except ValueError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Неверный формат Discord ID",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        # Discord ID остается строкой как в базе данных
 
         user = user_crud.get_by_discord_id(db, discord_id=discord_id)
         

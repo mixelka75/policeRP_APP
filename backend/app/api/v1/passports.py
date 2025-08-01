@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import get_current_police_or_admin, get_current_user_with_minecraft, get_current_user
+from app.core.deps import get_current_police_or_admin, get_current_user_with_minecraft, get_current_user, get_current_active_admin
 from app.core.decorators import with_role_check
 from app.crud.passport import passport_crud
 from app.schemas.passport import (
@@ -120,7 +120,7 @@ def read_emergency_passports(
         db: Session = Depends(get_db),
         skip: int = 0,
         limit: int = 100,
-        current_user: User = Depends(get_current_police_or_admin),
+        current_user: User = Depends(get_current_active_admin),
 ):
     """
     Получить список паспортов в ЧС
@@ -351,7 +351,7 @@ async def toggle_emergency_status(
         db: Session = Depends(get_db),
         passport_id: int,
         emergency_data: PassportEmergencyUpdate,
-        current_user: User = Depends(get_current_police_or_admin),
+        current_user: User = Depends(get_current_active_admin),
 ):
     """
     Добавить/убрать паспорт из ЧС

@@ -136,12 +136,12 @@ class RoleCheckerService:
             guild_roles = await self.get_guild_roles()
 
             # Определяем новую роль пользователя
-            new_role = self.determine_user_role(member_info, guild_roles)
+            new_role = self.determine_user_role(member_info, guild_roles, user, db)
             old_role = user.role
             
             # Если у пользователя нет нужных ролей, деактивируем его
             if new_role is None:
-                logger.warning(f"User {user.discord_username} lost required roles, deactivating")
+                logger.warning(f"User {user.discord_username} has no valid roles and no passport, deactivating")
                 # Устанавливаем роль "none" для обозначения отсутствия доступа
                 user_crud.update_discord_data(
                     db,
@@ -266,16 +266,18 @@ class RoleCheckerService:
 
         return fake_roles
 
-    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None) -> Optional[str]:
+    def determine_user_role(self, member_data: Dict[str, Any], guild_roles: List[Dict[str, Any]] = None, user: User = None, db: Session = None) -> Optional[str]:
         """
         Определение роли пользователя на основе ролей Discord
 
         Args:
             member_data: Данные участника сервера
             guild_roles: Список ролей сервера (опционально)
+            user: Пользователь для проверки паспорта (опционально)
+            db: Сессия базы данных (опционально)
 
         Returns:
-            Роль пользователя ('admin' или 'police') или None, если нет нужных ролей
+            Роль пользователя ('admin', 'police', 'citizen') или None, если нет доступа
         """
         user_role_ids = member_data.get("roles", [])
 
@@ -302,8 +304,16 @@ class RoleCheckerService:
             if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
                 return "police"
 
-        # Если нет нужных ролей, возвращаем None
-        logger.warning(f"User has no required roles. User roles: {user_role_ids}")
+        # Если нет admin/police ролей, проверяем паспорт для роли citizen
+        if user and db:
+            from app.crud.passport import passport_crud
+            passport = passport_crud.get_by_discord_id(db, discord_id=str(user.discord_id))
+            if passport:
+                logger.info(f"User {user.discord_username} has passport, assigned citizen role")
+                return "citizen"
+
+        # Если нет нужных ролей и паспорта, возвращаем None
+        logger.warning(f"User has no required roles and no passport. User roles: {user_role_ids}")
         return None
 
     async def check_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:

@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from '@/store/auth';
+import { useTokenRefresh } from '@/hooks/useTokenRefresh';
 import { Loading } from '@/components/ui';
 import Login from '@/pages/Login';
 import DiscordCallback from '@/pages/DiscordCallback';
@@ -45,6 +46,9 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const App: React.FC = () => {
   const { checkAuth, isLoading } = useAuthStore();
+  
+  // Initialize token refresh mechanism
+  useTokenRefresh();
 
   useEffect(() => {
     checkAuth();

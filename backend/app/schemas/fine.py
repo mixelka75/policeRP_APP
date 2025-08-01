@@ -35,6 +35,7 @@ class Fine(FineBase):
     """
     id: int
     created_by_user_id: int
+    is_paid: bool = Field(default=False, description="Статус оплаты штрафа")
     created_at: datetime
     updated_at: datetime
     
@@ -50,6 +51,7 @@ class FineInPassport(BaseModel):
     article: str
     amount: int
     description: Optional[str]
+    is_paid: bool = Field(default=False, description="Статус оплаты штрафа")
     created_at: datetime
     created_by_user_id: int
     

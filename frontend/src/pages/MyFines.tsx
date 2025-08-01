@@ -10,7 +10,10 @@ import {
   Search,
   Filter,
   ExternalLink,
-  Clock
+  Clock,
+  CreditCard,
+  Check,
+  X
 } from 'lucide-react';
 import { Layout } from '@/components/layout';
 import { Card, Badge, Button, Input, Loading } from '@/components/ui';
@@ -21,6 +24,8 @@ import { formatDate, formatMoney, getErrorMessage } from '@/utils';
 
 const MyFines: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFines, setSelectedFines] = useState<number[]>([]);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const {
     data: fines,
@@ -40,7 +45,57 @@ const MyFines: React.FC = () => {
     fine.description?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  const unpaidFines = filteredFines.filter(fine => !fine.is_paid);
   const totalAmount = fines?.reduce((sum, fine) => sum + fine.amount, 0) || 0;
+  const unpaidAmount = unpaidFines.reduce((sum, fine) => sum + fine.amount, 0);
+  const selectedAmount = unpaidFines
+    .filter(fine => selectedFines.includes(fine.id))
+    .reduce((sum, fine) => sum + fine.amount, 0);
+
+  const handleSelectFine = (fineId: number) => {
+    setSelectedFines(prev => 
+      prev.includes(fineId) 
+        ? prev.filter(id => id !== fineId)
+        : [...prev, fineId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedFines.length === unpaidFines.length) {
+      setSelectedFines([]);
+    } else {
+      setSelectedFines(unpaidFines.map(fine => fine.id));
+    }
+  };
+
+  const handlePayment = async (fineIds: number[]) => {
+    if (fineIds.length === 0) return;
+
+    setPaymentLoading(true);
+    try {
+      // Получаем паспорт пользователя
+      const passport = await apiService.getMyPassport();
+      
+      // Создаём платеж
+      const payment = await apiService.createPayment({
+        passport_id: passport.id,
+        fine_ids: fineIds
+      });
+
+      // Открываем ссылку на оплату в новой вкладке
+      if (payment.payment_url) {
+        window.open(payment.payment_url, '_blank');
+      }
+
+      // Сбрасываем выбор
+      setSelectedFines([]);
+    } catch (error) {
+      console.error('Payment creation failed:', error);
+      // Здесь можно добавить toast уведомление об ошибке
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   if (isLoading) {
     return <Loading fullScreen text="Загрузка штрафов..." />;
@@ -53,7 +108,7 @@ const MyFines: React.FC = () => {
     >
       <div className="space-y-6">
         {/* Статистика */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -65,7 +120,7 @@ const MyFines: React.FC = () => {
                   <AlertTriangle className="h-8 w-8 text-warning-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Всего нарушений</p>
+                  <p className="text-gray-400 text-sm">Всего штрафов</p>
                   <p className="text-3xl font-bold text-white">
                     {fines?.length || 0}
                   </p>
@@ -82,12 +137,12 @@ const MyFines: React.FC = () => {
             <Card variant="minecraft" className="p-6">
               <div className="flex items-center space-x-4">
                 <div className="p-3 bg-danger-500/20 rounded-xl">
-                  <DollarSign className="h-8 w-8 text-danger-400" />
+                  <X className="h-8 w-8 text-danger-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Общая сумма</p>
-                  <p className="text-3xl font-bold text-white">
-                    {formatMoney(totalAmount)}
+                  <p className="text-gray-400 text-sm">Неоплачено</p>
+                  <p className="text-3xl font-bold text-danger-400">
+                    {unpaidFines.length}
                   </p>
                 </div>
               </div>
@@ -101,22 +156,85 @@ const MyFines: React.FC = () => {
           >
             <Card variant="minecraft" className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-primary-500/20 rounded-xl">
-                  <Clock className="h-8 w-8 text-primary-400" />
+                <div className="p-3 bg-success-500/20 rounded-xl">
+                  <Check className="h-8 w-8 text-success-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Последний штраф</p>
-                  <p className="text-lg font-medium text-white">
-                    {fines && fines.length > 0 
-                      ? formatDate(fines[0].created_at, 'dd.MM.yyyy')
-                      : 'Нет штрафов'
-                    }
+                  <p className="text-gray-400 text-sm">Оплачено</p>
+                  <p className="text-3xl font-bold text-success-400">
+                    {(fines?.length || 0) - unpaidFines.length}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card variant="minecraft" className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-primary-500/20 rounded-xl">
+                  <DollarSign className="h-8 w-8 text-primary-400" />
+                </div>
+                <div>
+                  <p className="text-gray-400 text-sm">К доплате</p>
+                  <p className="text-2xl font-bold text-white">
+                    {formatMoney(unpaidAmount)}
                   </p>
                 </div>
               </div>
             </Card>
           </motion.div>
         </div>
+
+        {/* Панель оплаты штрафов */}
+        {unpaidFines.length > 0 && (
+          <Card variant="minecraft" className="p-6 border-orange-500/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-orange-500/20 rounded-xl">
+                  <CreditCard className="h-8 w-8 text-orange-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-1">
+                    Оплата штрафов
+                  </h3>
+                  <div className="flex items-center space-x-4 text-sm text-gray-400">
+                    <span>Выбрано: {selectedFines.length} штрафов</span>
+                    {selectedFines.length > 0 && (
+                      <span className="text-orange-400 font-medium">
+                        К оплате: {formatMoney(selectedAmount)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  disabled={paymentLoading}
+                >
+                  {selectedFines.length === unpaidFines.length ? 'Снять все' : 'Выбрать все'}
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  leftIcon={<CreditCard className="h-4 w-4" />}
+                  onClick={() => handlePayment(selectedFines)}
+                  disabled={selectedFines.length === 0 || paymentLoading}
+                  loading={paymentLoading}
+                >
+                  Оплатить выбранные
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Поиск и фильтры */}
         <Card variant="minecraft" className="p-6">
@@ -182,48 +300,92 @@ const MyFines: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
                 >
-                  <Card variant="glass" hover className="p-6">
+                  <Card 
+                    variant="glass" 
+                    hover 
+                    className={`p-6 ${fine.is_paid ? 'opacity-60' : ''} ${
+                      !fine.is_paid && selectedFines.includes(fine.id) ? 'ring-2 ring-primary-500' : ''
+                    }`}
+                  >
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-3">
-                          <Badge 
-                            variant="warning" 
-                            className="flex items-center space-x-1"
-                          >
-                            <AlertTriangle className="h-3 w-3" />
-                            <span>Штраф #{fine.id}</span>
-                          </Badge>
-                          <div className="flex items-center space-x-1 text-gray-400 text-sm">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDate(fine.created_at)}</span>
+                      <div className="flex items-start space-x-4 flex-1">
+                        {/* Чекбокс для неоплаченных штрафов */}
+                        {!fine.is_paid && (
+                          <div className="pt-1">
+                            <input
+                              type="checkbox"
+                              checked={selectedFines.includes(fine.id)}
+                              onChange={() => handleSelectFine(fine.id)}
+                              className="w-4 h-4 text-primary-600 bg-gray-700 border-gray-600 rounded focus:ring-primary-500 focus:ring-2"
+                            />
                           </div>
-                        </div>
-
-                        <h3 className="text-lg font-semibold text-white mb-2">
-                          {fine.article}
-                        </h3>
-
-                        {fine.description && (
-                          <p className="text-gray-300 mb-3">
-                            {fine.description}
-                          </p>
                         )}
 
-                        <div className="flex items-center space-x-4 text-sm">
-                          <div className="flex items-center space-x-1 text-gray-400">
-                            <User className="h-4 w-4" />
-                            <span>Выписал: Сотрудник #{fine.created_by_user_id}</span>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-3">
+                            <Badge 
+                              variant={fine.is_paid ? "success" : "warning"}
+                              className="flex items-center space-x-1"
+                            >
+                              {fine.is_paid ? (
+                                <Check className="h-3 w-3" />
+                              ) : (
+                                <AlertTriangle className="h-3 w-3" />
+                              )}
+                              <span>Штраф #{fine.id}</span>
+                            </Badge>
+                            {fine.is_paid && (
+                              <Badge variant="success" className="text-xs">
+                                Оплачено
+                              </Badge>
+                            )}
+                            <div className="flex items-center space-x-1 text-gray-400 text-sm">
+                              <Calendar className="h-4 w-4" />
+                              <span>{formatDate(fine.created_at)}</span>
+                            </div>
+                          </div>
+
+                          <h3 className="text-lg font-semibold text-white mb-2">
+                            {fine.article}
+                          </h3>
+
+                          {fine.description && (
+                            <p className="text-gray-300 mb-3">
+                              {fine.description}
+                            </p>
+                          )}
+
+                          <div className="flex items-center space-x-4 text-sm">
+                            <div className="flex items-center space-x-1 text-gray-400">
+                              <User className="h-4 w-4" />
+                              <span>Выписал: Сотрудник #{fine.created_by_user_id}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
 
                       <div className="text-right ml-6">
-                        <div className="text-2xl font-bold text-danger-400 mb-1">
+                        <div className={`text-2xl font-bold mb-1 ${
+                          fine.is_paid ? 'text-success-400' : 'text-danger-400'
+                        }`}>
                           {formatMoney(fine.amount)}
                         </div>
                         <div className="text-gray-400 text-sm">
                           {formatDate(fine.updated_at, 'HH:mm')}
                         </div>
+                        {!fine.is_paid && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="mt-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                            leftIcon={<CreditCard className="h-4 w-4" />}
+                            onClick={() => handlePayment([fine.id])}
+                            disabled={paymentLoading}
+                            glow
+                          >
+                            Оплатить
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </Card>

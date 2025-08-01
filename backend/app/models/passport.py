@@ -36,3 +36,4 @@ class Passport(BaseModel):
 
     # Связи
     fines = relationship("Fine", back_populates="passport", cascade="all, delete-orphan")
+    payments = relationship("Payment", back_populates="passport", cascade="all, delete-orphan")

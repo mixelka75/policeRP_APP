@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -13,11 +13,11 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     CRUD операции для пользователей
     """
 
-    def get_by_discord_id(self, db: Session, *, discord_id: int) -> Optional[User]:
+    def get_by_discord_id(self, db: Session, *, discord_id: Union[int, str]) -> Optional[User]:
         """
         Получить пользователя по Discord ID
         """
-        return db.query(User).filter(User.discord_id == discord_id).first()
+        return db.query(User).filter(User.discord_id == str(discord_id)).first()
 
     def create_from_discord(
             self,

@@ -1,7 +1,9 @@
 // src/pages/Login.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, MessageCircle, AlertTriangle, Clock, CheckCircle, X, Gamepad2 } from 'lucide-react';
+import { Shield, MessageCircle, AlertTriangle, Clock, CheckCircle, X } from 'lucide-react';
+import { DiscordIcon } from '@/components/icons';
+import logoImage from '@/assets/logo.png';
 import { useAuthStore } from '@/store/auth';
 import { Button, Card, Badge, Loading } from '@/components/ui';
 import { apiService } from '@/services/api';
@@ -91,11 +93,11 @@ const Login: React.FC = () => {
           <motion.div
             animate={{ y: [-10, 10, -10] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="w-20 h-20 bg-gradient-to-br from-primary-400 via-secondary-500 to-accent-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-primary-glow animate-glow"
+            className="w-40 h-40 bg-gray-900/90 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl border border-gray-700/50 p-5"
           >
-            <MessageCircle className="w-10 h-10 text-white animate-pulse" />
+            <img src={logoImage} alt="Панд-Ратония Logo" className="w-full h-full object-contain drop-shadow-xl animate-pulse" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-white mb-2">Переход к Discord</h2>
+          <h2 className="text-2xl font-bold text-white mb-2 whitespace-nowrap">Переход к Discord</h2>
           <p className="text-gray-300 mb-6">Перенаправляем вас на Discord для авторизации...</p>
           <div className="flex items-center justify-center space-x-3">
             <Clock className="w-5 h-5 text-primary-400 animate-pulse" />
@@ -140,12 +142,12 @@ const Login: React.FC = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="mx-auto w-20 h-20 bg-gradient-to-br from-primary-400 via-secondary-500 to-accent-500 rounded-2xl flex items-center justify-center mb-6 shadow-primary-glow animate-glow"
+              className="mx-auto w-40 h-40 bg-gray-900/90 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 shadow-2xl border border-gray-700/50 p-5"
             >
-              <Gamepad2 className="w-10 h-10 text-white" />
+              <img src={logoImage} alt="Панд-Ратония Logo" className="w-full h-full object-contain drop-shadow-xl" />
             </motion.div>
             <motion.h1
-              className="text-3xl font-bold text-white mb-2 minecraft-gradient-text"
+              className="text-3xl font-bold text-white mb-2 minecraft-gradient-text whitespace-nowrap"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -244,7 +246,7 @@ const Login: React.FC = () => {
               fullWidth
               size="lg"
               glow
-              leftIcon={!isLoading && !isGettingUrl ? <MessageCircle className="w-5 h-5" /> : undefined}
+              leftIcon={!isLoading && !isGettingUrl ? <DiscordIcon className="w-5 h-5" /> : undefined}
             >
               {isLoading || isGettingUrl ? 'Подключение...' : 'Войти через Discord'}
             </Button>

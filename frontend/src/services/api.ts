@@ -9,6 +9,7 @@ import {
   DiscordAuthResponse,
   DiscordStatusResponse,
   UserRefreshResponse,
+  TokenRefreshResponse,
   UserRoleCheckResponse,
   UserSearchResponse,
   UserStatisticsResponse,
@@ -26,6 +27,9 @@ import {
   Fine,
   FineCreate,
   FineUpdate,
+  PaymentCreate,
+  PaymentResponse,
+  Payment,
   Log,
   ApiError
 } from '@/types';
@@ -65,6 +69,11 @@ class ApiService {
     this.getPassportSkin = this.getPassportSkin.bind(this);
     this.getSkinByDiscordId = this.getSkinByDiscordId.bind(this);
     this.getAvatarByNickname = this.getAvatarByNickname.bind(this);
+
+    // Методы для платежей
+    this.createPayment = this.createPayment.bind(this);
+    this.getPayments = this.getPayments.bind(this);
+    this.getPayment = this.getPayment.bind(this);
 
     // Старые методы (привязываем к контексту)
     this.login = this.login.bind(this);
@@ -118,10 +127,17 @@ class ApiService {
       (response: AxiosResponse) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          this.clearAuthData();
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login';
+          // Only clear auth data and redirect for specific endpoints
+          const isAuthEndpoint = error.config?.url?.includes('/auth/me') || 
+                                 error.config?.url?.includes('/auth/refresh');
+          
+          if (isAuthEndpoint) {
+            this.clearAuthData();
+            if (window.location.pathname !== '/login' && !window.location.pathname.includes('/auth/callback')) {
+              window.location.href = '/login';
+            }
           }
+          
           return Promise.reject({
             detail: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
             code: 'SESSION_EXPIRED'
@@ -192,6 +208,15 @@ class ApiService {
   async refreshUserData(): Promise<UserRefreshResponse> {
     try {
       const response = await this.axiosInstance.post<UserRefreshResponse>('/auth/refresh');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async refreshToken(): Promise<TokenRefreshResponse> {
+    try {
+      const response = await this.axiosInstance.post<TokenRefreshResponse>('/auth/refresh-token');
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError);
@@ -603,6 +628,35 @@ class ApiService {
       const response = await this.axiosInstance.get<Fine[]>('/fines/me', {
         params: { skip, limit },
       });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  // ✅ МЕТОДЫ ДЛЯ РАБОТЫ С ПЛАТЕЖАМИ
+
+  async createPayment(paymentData: PaymentCreate): Promise<PaymentResponse> {
+    try {
+      const response = await this.axiosInstance.post<PaymentResponse>('/payments/create', paymentData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getPayments(): Promise<Payment[]> {
+    try {
+      const response = await this.axiosInstance.get<Payment[]>('/payments/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getPayment(paymentId: number): Promise<PaymentResponse> {
+    try {
+      const response = await this.axiosInstance.get<PaymentResponse>(`/payments/${paymentId}`);
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError);

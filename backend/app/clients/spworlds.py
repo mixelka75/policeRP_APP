@@ -1,7 +1,11 @@
 import httpx
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import asyncio
+import hashlib
+import hmac
+import base64
 from app.core.config import settings
+from app.schemas.payment import SPWorldsPaymentCreate, SPWorldsPaymentResponse
 
 
 class SPWorldsClient:
@@ -168,6 +172,82 @@ class SPWorldsClient:
             return False
         except Exception as e:
             print(f"SP-Worlds ping failed: {e}")
+            return False
+
+    async def create_payment(self, payment_data: SPWorldsPaymentCreate) -> SPWorldsPaymentResponse:
+        """
+        Создание платежа в SP-Worlds
+        
+        Args:
+            payment_data: Данные для создания платежа
+            
+        Returns:
+            Ответ от SP-Worlds API
+        """
+        if not self.map_id or not self.map_token:
+            return SPWorldsPaymentResponse(
+                success=False,
+                message="SP-Worlds API credentials not configured"
+            )
+        
+        try:
+            response = await self.client.post(
+                "/payments",
+                json=payment_data.model_dump(),
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code in [200, 201]:  # SP-Worlds возвращает 201 при создании платежа
+                data = response.json()
+                # SP-Worlds API возвращает данные платежа напрямую, без поля "success"
+                if data.get("url"):
+                    return SPWorldsPaymentResponse(
+                        success=True,
+                        url=data.get("url"),
+                        message="Payment created successfully"
+                    )
+                else:
+                    return SPWorldsPaymentResponse(
+                        success=False,
+                        message=data.get("message", "No payment URL returned")
+                    )
+            else:
+                return SPWorldsPaymentResponse(
+                    success=False,
+                    message=f"HTTP {response.status_code}: {response.text}"
+                )
+                
+        except Exception as e:
+            return SPWorldsPaymentResponse(
+                success=False,
+                message=f"Request failed: {str(e)}"
+            )
+    
+    def validate_webhook_signature(self, body: bytes, signature: str) -> bool:
+        """
+        Валидация подписи webhook'а от SP-Worlds
+        
+        Args:
+            body: Тело запроса в байтах
+            signature: Подпись из заголовка X-Body-Hash
+            
+        Returns:
+            True если подпись валидна
+        """
+        if not self.map_token:
+            print("validate_webhook_signature: map_token not configured")
+            return False
+            
+        try:
+            # SP-Worlds использует Base64 кодирование HMAC-SHA256
+            expected_signature = base64.b64encode(
+                hmac.new(self.map_token.encode('utf-8'), body, hashlib.sha256).digest()
+            ).decode('utf-8')
+            
+            return hmac.compare_digest(expected_signature, signature)
+            
+        except Exception as e:
+            print(f"Webhook signature validation failed: {e}")
             return False
 
     async def close(self):

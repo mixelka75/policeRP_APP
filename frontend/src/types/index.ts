@@ -47,6 +47,13 @@ export interface UserRefreshResponse {
   message: string;
 }
 
+export interface TokenRefreshResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+  message: string;
+}
+
 export interface UserRoleCheckResponse {
   user_id: number;
   old_role: string;
@@ -169,6 +176,7 @@ export interface Fine {
   amount: number;
   description?: string;
   created_by_user_id: number;
+  is_paid: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -245,4 +253,36 @@ export interface PlayerSkinResponse {
   username: string | null;
   uuid: string;
   skin_url: string;
+}
+
+// Типы для платежей
+export interface Payment {
+  id: number;
+  passport_id: number;
+  fine_ids: number[];
+  total_amount: number;
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  payment_url?: string;
+  payer_nickname?: string;
+  created_at: string;
+  paid_at?: string;
+  expires_at?: string;
+}
+
+export interface PaymentCreate {
+  passport_id: number;
+  fine_ids: number[];
+}
+
+export interface PaymentResponse {
+  id: number;
+  passport_id: number;
+  fine_ids: number[];
+  total_amount: number;
+  status: string;
+  payment_url?: string;
+  payer_nickname?: string;
+  created_at: string;
+  paid_at?: string;
+  expires_at?: string;
 }

@@ -13,7 +13,8 @@ import {
   MapPin,
   Shield,
   ShieldAlert,
-  ScrollText
+  ScrollText,
+  Receipt
 } from 'lucide-react';
 import { Passport } from '@/types';
 import { apiService } from '@/services/api';
@@ -25,6 +26,7 @@ import { PassportForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import EmergencyModal from '@/components/modals/EmergencyModal';
 import PassportLogsModal from '@/components/modals/PassportLogsModal';
+import PassportFinesModal from '@/components/modals/PassportFinesModal';
 import { formatDate, getInitials } from '@/utils';
 import { PlayerSkin, MinecraftHead } from '@/components/common';
 
@@ -41,6 +43,8 @@ const Passports: React.FC = () => {
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
   const [isPassportLogsModalOpen, setIsPassportLogsModalOpen] = useState(false);
   const [passportForLogs, setPassportForLogs] = useState<Passport | null>(null);
+  const [isPassportFinesModalOpen, setIsPassportFinesModalOpen] = useState(false);
+  const [passportForFines, setPassportForFines] = useState<Passport | null>(null);
 
   const {
     data: passports,
@@ -125,6 +129,11 @@ const Passports: React.FC = () => {
   const handleShowPassportLogs = (passport: Passport) => {
     setPassportForLogs(passport);
     setIsPassportLogsModalOpen(true);
+  };
+
+  const handleShowPassportFines = (passport: Passport) => {
+    setPassportForFines(passport);
+    setIsPassportFinesModalOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -244,7 +253,7 @@ const Passports: React.FC = () => {
     {
       key: 'actions',
       label: 'Действия',
-      width: '220px',
+      width: '260px',
       render: (_: any, passport: Passport) => (
         <div className="flex items-center space-x-2">
           <Button
@@ -268,6 +277,15 @@ const Passports: React.FC = () => {
             title={passport.is_emergency ? 'Убрать из ЧС' : 'Добавить в ЧС'}
           >
             {passport.is_emergency ? <Shield className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleShowPassportFines(passport)}
+            className="!p-2 text-accent-400 hover:text-accent-300"
+            title="Показать штрафы паспорта"
+          >
+            <Receipt className="h-4 w-4" />
           </Button>
           {user?.role === 'admin' && (
             <Button
@@ -466,6 +484,13 @@ const Passports: React.FC = () => {
         isOpen={isPassportLogsModalOpen}
         onClose={() => setIsPassportLogsModalOpen(false)}
         passport={passportForLogs}
+      />
+
+      {/* Passport Fines Modal */}
+      <PassportFinesModal
+        isOpen={isPassportFinesModalOpen}
+        onClose={() => setIsPassportFinesModalOpen(false)}
+        passport={passportForFines}
       />
     </Layout>
   );

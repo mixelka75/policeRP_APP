@@ -561,7 +561,16 @@ const PassportLogsModal: React.FC<PassportLogsModalProps> = ({
                 <span className="text-sm text-gray-400">Штрафов</span>
               </div>
               <p className="text-xl font-bold text-white mt-1">
-                {filteredLogs.filter(log => log.entity_type === 'fine').length}
+                {(() => {
+                  // Считаем уникальные штрафы по entity_id для логов типа 'fine'
+                  const fineEntityIds = new Set();
+                  filteredLogs.forEach(log => {
+                    if (log.entity_type === 'fine' && log.entity_id) {
+                      fineEntityIds.add(log.entity_id);
+                    }
+                  });
+                  return fineEntityIds.size;
+                })()}
               </p>
             </div>
           </div>

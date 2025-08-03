@@ -205,7 +205,7 @@ const Dashboard: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
                         <h3 className="text-lg sm:text-2xl font-bold text-white truncate">
-                          Добро пожаловать, {getDisplayName(user)}!
+                          Добро пожаловать, {getDisplayName(user)}!!!!!
                         </h3>
                         <MessageCircle className="h-4 w-4 sm:h-6 sm:w-6 text-secondary-400 hidden sm:block" />
                       </div>
@@ -318,7 +318,7 @@ const Dashboard: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
                       <h3 className="text-lg sm:text-2xl font-bold text-white truncate">
-                        Добро пожаловать, {getDisplayName(user)}!
+                        Добро пожаловать, {getDisplayName(user)}!!!!
                       </h3>
                       <MessageCircle className="h-4 w-4 sm:h-6 sm:w-6 text-secondary-400 hidden sm:block" />
                     </div>

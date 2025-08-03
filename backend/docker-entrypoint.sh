@@ -1,9 +1,43 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Starting RP Server Backend..."
+echo "🚀 Starting RP Server Backend with Discord Auth..."
 echo "🔧 Environment: ${ENVIRONMENT:-development}"
 echo "🗄️  Database: ${DATABASE_URL}"
+echo "🎮 Discord Client ID: ${DISCORD_CLIENT_ID:0:8}..."
+echo "🌐 SP-Worlds Map ID: ${SPWORLDS_MAP_ID}"
+
+# Функция для проверки переменных окружения
+check_environment() {
+    echo "🔍 Checking environment variables..."
+
+    # Обязательные переменные для Discord
+    if [ -z "$DISCORD_CLIENT_ID" ]; then
+        echo "❌ DISCORD_CLIENT_ID is required"
+        exit 1
+    fi
+
+    if [ -z "$DISCORD_CLIENT_SECRET" ]; then
+        echo "❌ DISCORD_CLIENT_SECRET is required"
+        exit 1
+    fi
+
+    if [ -z "$DISCORD_GUILD_ID" ]; then
+        echo "❌ DISCORD_GUILD_ID is required"
+        exit 1
+    fi
+
+    # Обязательные переменные для SP-Worlds
+    if [ -z "$SPWORLDS_MAP_ID" ]; then
+        echo "⚠️  SPWORLDS_MAP_ID is not set, SP-Worlds integration will be disabled"
+    fi
+
+    if [ -z "$SPWORLDS_MAP_TOKEN" ]; then
+        echo "⚠️  SPWORLDS_MAP_TOKEN is not set, SP-Worlds integration will be disabled"
+    fi
+
+    echo "✅ Environment check completed"
+}
 
 # Функция для ожидания базы данных
 wait_for_db() {
@@ -90,7 +124,7 @@ run_migrations() {
         create_enums
 
         # Создаем миграцию
-        python -m alembic revision --autogenerate -m "Initial migration with proper enums"
+        python -m alembic revision --autogenerate -m "Initial Discord auth migration"
     else
         echo "📋 Found $migration_count existing migrations:"
         ls -la alembic/versions/ | grep "\.py$" | grep -v "__init__"
@@ -103,57 +137,104 @@ run_migrations() {
     echo "✅ Migrations completed successfully!"
 }
 
-# Функция для создания администратора
-create_admin() {
-    echo "👤 Checking admin user..."
-    python -c "
+# Функция для проверки внешних сервисов
+check_external_services() {
+    echo "🌐 Checking external services..."
+
+    # Проверяем SP-Worlds API
+    if [ -n "$SPWORLDS_MAP_ID" ] && [ -n "$SPWORLDS_MAP_TOKEN" ]; then
+        python -c "
+import asyncio
 import sys
 sys.path.append('/app')
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-from app.core.config import settings
-from app.crud.user import user_crud
-from app.schemas.user import UserCreate
-from app.models.user import UserRole
+from app.clients.spworlds import spworlds_client
 
-try:
-    engine = create_engine(settings.DATABASE_URL)
-    SessionLocal = sessionmaker(bind=engine)
-    db = SessionLocal()
+async def check_spworlds():
+    try:
+        result = await spworlds_client.ping()
+        if result:
+            print('✅ SP-Worlds API: connected')
+        else:
+            print('⚠️  SP-Worlds API: not responding')
+    except Exception as e:
+        print(f'❌ SP-Worlds API error: {e}')
+    finally:
+        await spworlds_client.close()
 
-    admin_user = user_crud.get_by_username(db, username=settings.ADMIN_USERNAME)
-    if not admin_user:
-        admin_create = UserCreate(
-            username=settings.ADMIN_USERNAME,
-            password=settings.ADMIN_PASSWORD,
-            role=UserRole.ADMIN,
-            is_active=True
-        )
-        admin_user = user_crud.create(db, obj_in=admin_create)
-        print(f'✅ Admin user created: {admin_user.username}')
-    else:
-        print(f'✅ Admin user already exists: {admin_user.username}')
+asyncio.run(check_spworlds())
+" || echo "⚠️ Could not check SP-Worlds API"
+    else
+        echo "⚠️ SP-Worlds API: not configured"
+    fi
 
-    db.close()
-except Exception as e:
-    print(f'❌ Error creating admin user: {e}')
-    sys.exit(1)
-"
+    # Проверяем Discord API (базовая проверка)
+    echo "🔍 Discord integration configured for Guild ID: ${DISCORD_GUILD_ID}"
+    echo "🔍 Discord roles: Police='${DISCORD_POLICE_ROLE_NAME}', Admin='${DISCORD_ADMIN_ROLE_NAME}'"
+}
+
+# Функция для настройки логирования
+setup_logging() {
+    echo "📝 Setting up logging..."
+
+    # Создаем директорию для логов
+    mkdir -p logs
+
+    # Устанавливаем права доступа
+    chmod 755 logs
+
+    echo "✅ Logging configured"
+}
+
+# Функция для отображения информации о конфигурации
+show_config_info() {
+    echo ""
+    echo "🔧 Configuration Summary:"
+    echo "================================"
+    echo "🎮 Discord OAuth2: Enabled"
+    echo "   - Client ID: ${DISCORD_CLIENT_ID:0:8}..."
+    echo "   - Guild ID: ${DISCORD_GUILD_ID}"
+    echo "   - Redirect URI: ${DISCORD_REDIRECT_URI}"
+    echo "   - Police Role: ${DISCORD_POLICE_ROLE_NAME}"
+    echo "   - Admin Role: ${DISCORD_ADMIN_ROLE_NAME}"
+    echo ""
+    echo "🌐 SP-Worlds Integration: $([ -n "$SPWORLDS_MAP_ID" ] && echo "Enabled" || echo "Disabled")"
+    if [ -n "$SPWORLDS_MAP_ID" ]; then
+        echo "   - Map ID: ${SPWORLDS_MAP_ID}"
+        echo "   - API URL: ${SPWORLDS_API_URL}"
+    fi
+    echo ""
+    echo "⚙️  Role Checking: $([ "$ROLE_CHECK_INTERVAL" -gt 0 ] 2>/dev/null && echo "Enabled (${ROLE_CHECK_INTERVAL} min)" || echo "Disabled")"
+    echo "🔗 Frontend URL: ${FRONTEND_URL}"
+    echo "🛡️  Environment: ${ENVIRONMENT:-development}"
+    echo "================================"
+    echo ""
 }
 
 # Основная логика
 if [ "$1" = "python" ] || [ "$1" = "uvicorn" ] || [[ "$1" == *"uvicorn"* ]]; then
+    # Проверяем переменные окружения
+    check_environment
+
+    # Настраиваем логирование
+    setup_logging
+
     # Ждем базу данных
     wait_for_db
 
     # Выполняем миграции
     run_migrations
 
-    # Создаем администратора
-    create_admin
+    # Проверяем внешние сервисы
+    check_external_services
+
+    # Показываем информацию о конфигурации
+    show_config_info
 
     echo "🎉 Backend initialization completed!"
     echo "🌐 Starting web server..."
+    echo "📚 API Documentation: $([ "$DEBUG" = "true" ] && echo "http://localhost:8000/docs" || echo "Disabled in production")"
+    echo "🔐 Discord Auth URL: http://localhost:8000/api/v1/auth/discord/login"
+    echo ""
 fi
 
 # Выполняем переданную команду

@@ -62,6 +62,8 @@ export function useApi<T>(
         return result;
       } catch (error) {
         console.error('API Error:', error);
+        console.error('API Error detail:', (error as any)?.detail);
+        console.error('API Error full object:', JSON.stringify(error, null, 2));
 
         let errorMessage: string;
         let shouldShowToast = options.showErrorToast !== false;
@@ -69,7 +71,15 @@ export function useApi<T>(
         // ✨ Обработка различных типов ошибок с особым вниманием к истекшим токенам
         if (error && typeof error === 'object' && 'detail' in error) {
           const apiError = error as ApiError;
-          errorMessage = apiError.detail;
+          
+          // Обработка ошибок валидации Pydantic (массив объектов)
+          if (Array.isArray(apiError.detail)) {
+            errorMessage = apiError.detail
+              .map(err => typeof err === 'object' ? err.msg || 'Ошибка валидации' : String(err))
+              .join(', ');
+          } else {
+            errorMessage = String(apiError.detail);
+          }
 
           // ✨ Если это ошибка истекшей сессии, не показываем тост
           if (apiError.code === 'SESSION_EXPIRED') {

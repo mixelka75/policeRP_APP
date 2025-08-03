@@ -8,7 +8,7 @@ interface StatCardProps {
   title: string;
   value: string | number;
   icon: LucideIcon;
-  color?: 'blue' | 'green' | 'red' | 'yellow' | 'purple';
+  color?: 'primary' | 'secondary' | 'accent' | 'final' | 'green' | 'red' | 'yellow' | 'purple' | 'blue';
   trend?: {
     value: number;
     isPositive: boolean;
@@ -21,24 +21,43 @@ const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
   icon: Icon,
-  color = 'blue',
+  color = 'primary',
   trend,
   className,
 }) => {
+  // ✨ ОБНОВЛЕННЫЕ цветовые классы с новой схемой
   const colorClasses = cn({
-    'bg-blue-500/10 text-blue-400 border-blue-500/20': color === 'blue',
+    // Новые основные цвета
+    'bg-primary-500/10 text-primary-400 border-primary-500/20': color === 'primary',
+    'bg-secondary-500/10 text-secondary-400 border-secondary-500/20': color === 'secondary' || color === 'blue',
+    'bg-accent-500/10 text-accent-400 border-accent-500/20': color === 'accent' || color === 'purple',
+    'bg-final-500/10 text-final-400 border-final-500/20': color === 'final',
+
+    // Функциональные цвета (остаются без изменений)
     'bg-green-500/10 text-green-400 border-green-500/20': color === 'green',
     'bg-red-500/10 text-red-400 border-red-500/20': color === 'red',
     'bg-yellow-500/10 text-yellow-400 border-yellow-500/20': color === 'yellow',
-    'bg-purple-500/10 text-purple-400 border-purple-500/20': color === 'purple',
   });
 
   const iconBgClasses = cn({
-    'bg-blue-500/20': color === 'blue',
+    // Новые фоны для иконок
+    'bg-primary-500/20': color === 'primary',
+    'bg-secondary-500/20': color === 'secondary' || color === 'blue',
+    'bg-accent-500/20': color === 'accent' || color === 'purple',
+    'bg-final-500/20': color === 'final',
+
+    // Функциональные фоны
     'bg-green-500/20': color === 'green',
     'bg-red-500/20': color === 'red',
     'bg-yellow-500/20': color === 'yellow',
-    'bg-purple-500/20': color === 'purple',
+  });
+
+  // ✨ ОБНОВЛЕННЫЕ hover эффекты с новыми цветами
+  const hoverClasses = cn({
+    'hover:shadow-primary-glow': color === 'primary',
+    'hover:shadow-secondary-glow': color === 'secondary',
+    'hover:shadow-accent-glow': color === 'accent',
+    'hover:shadow-lg': ['final', 'green', 'red', 'yellow', 'purple', 'blue'].includes(color),
   });
 
   return (
@@ -50,6 +69,7 @@ const StatCard: React.FC<StatCardProps> = ({
       className={cn(
         'bg-dark-800 border border-dark-600 rounded-xl p-6 shadow-lg',
         'hover:shadow-xl hover:border-dark-500 transition-all duration-200',
+        hoverClasses,
         className
       )}
     >

@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Check } from 'lucide-react';
-import { cn } from '@/utils';
+import { cn, safeStringify } from '@/utils';
 
 interface SelectOption {
   value: string;
@@ -69,12 +69,17 @@ const Select: React.FC<SelectProps> = ({
           disabled={disabled}
           className={cn(
             'w-full bg-dark-800 border border-dark-600 text-dark-100 rounded-lg px-4 py-3 text-base',
-            'transition-all duration-200 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none',
+            'transition-all duration-200 focus:outline-none',
+            // ✨ ОБНОВЛЕННЫЕ focus состояния с новой цветовой схемой
+            'focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20',
             'flex items-center justify-between',
             {
               'border-red-500 focus:border-red-500 focus:ring-red-500/20': error,
               'opacity-50 cursor-not-allowed': disabled,
-              'hover:border-dark-500': !disabled && !error,
+              // ✨ ОБНОВЛЕННЫЙ hover эффект
+              'hover:border-primary-400': !disabled && !error,
+              // ✨ НОВЫЙ: активное состояние
+              'border-primary-500 ring-1 ring-primary-500/20': isOpen && !error,
             }
           )}
         >
@@ -87,6 +92,8 @@ const Select: React.FC<SelectProps> = ({
           <ChevronDown
             className={cn('h-4 w-4 text-dark-400 transition-transform duration-200', {
               'rotate-180': isOpen,
+              // ✨ НОВЫЙ: цвет иконки при активности
+              'text-primary-400': isOpen,
             })}
           />
         </button>
@@ -98,7 +105,13 @@ const Select: React.FC<SelectProps> = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="absolute z-50 w-full mt-1 bg-dark-800 border border-dark-600 rounded-lg shadow-xl max-h-60 overflow-y-auto scrollbar-thin"
+              className={cn(
+                'absolute z-50 w-full mt-1 rounded-lg shadow-xl max-h-60 overflow-y-auto scrollbar-thin',
+                // ✨ ОБНОВЛЕННЫЙ фон выпадающего списка
+                'bg-dark-800 border border-primary-500/30',
+                // ✨ НОВЫЙ: дополнительное свечение для выпадающего списка
+                'shadow-primary-glow/50'
+              )}
             >
               {options.map((option, index) => (
                 <motion.button
@@ -113,15 +126,25 @@ const Select: React.FC<SelectProps> = ({
                     'w-full px-4 py-3 text-left transition-colors duration-150',
                     'flex items-center justify-between',
                     {
+                      // ✨ ОБНОВЛЕННЫЙ цвет выбранного элемента
                       'bg-primary-500/10 text-primary-400': value === option.value,
-                      'text-dark-100 hover:bg-dark-700': value !== option.value && !option.disabled,
+                      // ✨ ОБНОВЛЕННЫЙ hover эффект
+                      'text-dark-100 hover:bg-primary-500/5 hover:text-primary-300': value !== option.value && !option.disabled,
                       'text-dark-500 cursor-not-allowed': option.disabled,
+                      // ✨ НОВЫЙ: дополнительная подсветка активного элемента
+                      'border-l-2 border-primary-500': value === option.value,
                     }
                   )}
                 >
                   <span className="truncate">{option.label}</span>
                   {value === option.value && (
-                    <Check className="h-4 w-4 text-primary-400" />
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    >
+                      <Check className="h-4 w-4 text-primary-400" />
+                    </motion.div>
                   )}
                 </motion.button>
               ))}
@@ -131,9 +154,13 @@ const Select: React.FC<SelectProps> = ({
       </div>
 
       {error && (
-        <p className="text-sm text-red-400 mt-2 animate-slide-in">
-          {error}
-        </p>
+        <motion.p
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-sm text-red-400 mt-2"
+        >
+          {safeStringify(error)}
+        </motion.p>
       )}
     </div>
   );

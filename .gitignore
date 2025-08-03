@@ -3,8 +3,12 @@
 /answer.md
 .idea
 .env
+.env.docker
+**/.env
+**/.env.docker
 node_modules
 .pyc
+venv
 
 # Python cache files
 __pycache__/

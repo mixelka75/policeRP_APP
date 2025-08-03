@@ -1,34 +1,48 @@
-// src/pages/Users.tsx
+// src/pages/Users.tsx - Обновленная цветовая схема
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Plus,
   Search,
   Filter,
-  Edit,
-  Trash2,
   Users as UsersIcon,
   UserCheck,
   UserX,
   Shield,
-  ShieldCheck
+  ShieldCheck,
+  MessageCircle,
+  RefreshCw,
+  CheckCircle,
+  X,
+  AlertTriangle,
+  Settings,
+  ExternalLink,
+  Activity,
+  Clock
 } from 'lucide-react';
 import { User } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal } from '@/components/ui';
-import { UserForm } from '@/components/forms';
-import { formatDate } from '@/utils';
+import { Button, Input, Table, StatCard, Modal, Card, Badge } from '@/components/ui';
+import UserAvatar from '@/components/common/UserAvatar';
+import {
+  getDisplayName,
+  getRoleDisplayName,
+  getFullUserName,
+  isUserDataOutdated,
+  formatDate,
+  formatRelativeTime
+} from '@/utils';
 
 const Users: React.FC = () => {
   const { user: currentUser } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchType, setSearchType] = useState<'all' | 'discord' | 'minecraft'>('all');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isRoleCheckModalOpen, setIsRoleCheckModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [userToManage, setUserToManage] = useState<User | null>(null);
 
   const {
     data: users,
@@ -36,54 +50,114 @@ const Users: React.FC = () => {
     execute: fetchUsers,
   } = useApi(apiService.getUsers);
 
-  const { execute: deleteUser, isLoading: isDeleting } = useApi(
-    apiService.deleteUser,
+  const {
+    data: userStatistics,
+    execute: fetchUserStatistics,
+  } = useApi(apiService.getUserStatistics);
+
+  const { execute: checkUserRoles, isLoading: isCheckingRoles } = useApi(
+    apiService.checkUserRoles,
     {
       showSuccessToast: true,
-      successMessage: 'Пользователь удален успешно',
+      successMessage: 'Роли пользователя проверены',
       onSuccess: () => {
         fetchUsers();
-        setIsDeleteModalOpen(false);
-        setUserToDelete(null);
+        fetchUserStatistics();
+        setIsRoleCheckModalOpen(false);
+        setUserToManage(null);
+      },
+    }
+  );
+
+  const { execute: activateUser, isLoading: isActivating } = useApi(
+    apiService.activateUser,
+    {
+      showSuccessToast: true,
+      successMessage: 'Пользователь активирован',
+      onSuccess: () => {
+        fetchUsers();
+        fetchUserStatistics();
+        setIsStatusModalOpen(false);
+        setUserToManage(null);
+      },
+    }
+  );
+
+  const { execute: deactivateUser, isLoading: isDeactivating } = useApi(
+    apiService.deactivateUser,
+    {
+      showSuccessToast: true,
+      successMessage: 'Пользователь деактивирован',
+      onSuccess: () => {
+        fetchUsers();
+        fetchUserStatistics();
+        setIsStatusModalOpen(false);
+        setUserToManage(null);
+      },
+    }
+  );
+
+  const { execute: checkAllRoles, isLoading: isCheckingAllRoles } = useApi(
+    apiService.checkAllRoles,
+    {
+      showSuccessToast: true,
+      successMessage: 'Массовая проверка ролей запущена',
+      onSuccess: () => {
+        fetchUsers();
+        fetchUserStatistics();
       },
     }
   );
 
   useEffect(() => {
     fetchUsers();
+    fetchUserStatistics();
   }, []);
 
-  const filteredUsers = users?.filter(user =>
-    user.username.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredUsers = users?.filter(user => {
+    const searchLower = searchTerm.toLowerCase();
 
-  const handleCreateUser = () => {
-    setSelectedUser(null);
-    setIsFormOpen(true);
+    switch (searchType) {
+      case 'discord':
+        return user.discord_username.toLowerCase().includes(searchLower);
+      case 'minecraft':
+        return user.minecraft_username?.toLowerCase().includes(searchLower) || false;
+      default:
+        return (
+          user.discord_username.toLowerCase().includes(searchLower) ||
+          (user.minecraft_username?.toLowerCase().includes(searchLower) || false)
+        );
+    }
+  }) || [];
+
+  const handleCheckRoles = (user: User) => {
+    setUserToManage(user);
+    setIsRoleCheckModalOpen(true);
   };
 
-  const handleEditUser = (user: User) => {
-    setSelectedUser(user);
-    setIsFormOpen(true);
+  const handleStatusChange = (user: User) => {
+    setUserToManage(user);
+    setIsStatusModalOpen(true);
   };
 
-  const handleDeleteUser = (user: User) => {
-    setUserToDelete(user);
-    setIsDeleteModalOpen(true);
-  };
-
-  const confirmDelete = async () => {
-    if (userToDelete) {
-      await deleteUser(userToDelete.id);
+  const confirmCheckRoles = async () => {
+    if (userToManage) {
+      await checkUserRoles(userToManage.id);
     }
   };
 
-  const handleFormSuccess = () => {
-    fetchUsers();
+  const confirmStatusChange = async () => {
+    if (userToManage) {
+      if (userToManage.is_active) {
+        await deactivateUser(userToManage.id);
+      } else {
+        await activateUser(userToManage.id);
+      }
+    }
   };
 
   const getRoleColor = (role: string) => {
-    return role === 'admin' ? 'text-red-400' : 'text-blue-400';
+    return role === 'admin' ? 'text-red-400' : 'text-primary-400'; // ✨ НОВЫЙ цвет
   };
 
   const getRoleIcon = (role: string) => {
@@ -96,33 +170,41 @@ const Users: React.FC = () => {
       label: '',
       width: '60px',
       render: (_: any, user: User) => (
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-          user.role === 'admin' 
-            ? 'bg-gradient-to-br from-red-500 to-red-600'
-            : 'bg-gradient-to-br from-blue-500 to-blue-600'
-        }`}>
-          <span className="text-white font-medium text-sm">
-            {user.username.charAt(0).toUpperCase()}
-          </span>
-        </div>
+        <UserAvatar
+          user={user}
+          size={40}
+          showStatus={true}
+        />
       ),
     },
     {
-      key: 'username',
+      key: 'user_info',
       label: 'Пользователь',
-      render: (username: string, user: User) => (
-        <div className="flex items-center space-x-3">
-          <div>
-            <p className="font-medium text-white">{username}</p>
-            <div className="flex items-center space-x-2">
-              <span className={`text-sm capitalize ${getRoleColor(user.role)}`}>
-                {user.role === 'admin' ? 'Администратор' : 'Полицейский'}
+      render: (_: any, user: User) => (
+        <div className="space-y-1">
+          <div className="flex items-center space-x-2">
+            <p className="font-medium text-white">{getDisplayName(user)}</p>
+            <div className="flex items-center space-x-1">
+              <MessageCircle className="h-3 w-3 text-secondary-400" />
+              <span className={`text-xs ${getRoleColor(user.role)}`}>
+                {getRoleDisplayName(user.role)}
               </span>
-              {React.createElement(getRoleIcon(user.role), {
-                className: `h-4 w-4 ${getRoleColor(user.role)}`
-              })}
             </div>
           </div>
+          <div className="flex items-center space-x-2 text-xs text-gray-400">
+            <span>{getFullUserName(user)}</span>
+            {user.minecraft_username && (
+              <>
+                <span>•</span>
+                <span>{user.minecraft_username}</span>
+              </>
+            )}
+          </div>
+          {isUserDataOutdated(user) && (
+            <Badge variant="warning" size="sm">
+              Устарело
+            </Badge>
+          )}
         </div>
       ),
     },
@@ -142,36 +224,62 @@ const Users: React.FC = () => {
       ),
     },
     {
+      key: 'last_role_check',
+      label: 'Последняя проверка',
+      width: '160px',
+      render: (date: string) => (
+        <div className="text-sm">
+          <p className="text-gray-300">{formatDate(date, 'dd.MM.yyyy')}</p>
+          <p className="text-gray-500 text-xs">{formatRelativeTime(date)}</p>
+        </div>
+      ),
+    },
+    {
       key: 'created_at',
       label: 'Дата создания',
       width: '150px',
       render: (date: string) => (
-        <span className="text-dark-400">{formatDate(date)}</span>
+        <span className="text-gray-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),
     },
     {
       key: 'actions',
       label: 'Действия',
-      width: '150px',
+      width: '200px',
       render: (_: any, user: User) => (
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleEditUser(user)}
-            className="!p-2"
+            onClick={() => handleCheckRoles(user)}
+            className="!p-2 text-primary-400 hover:text-primary-300"
+            title="Проверить роли"
           >
-            <Edit className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleDeleteUser(user)}
-            className="!p-2 text-red-400 hover:text-red-300"
+            onClick={() => handleStatusChange(user)}
+            className={`!p-2 ${
+              user.is_active 
+                ? 'text-red-400 hover:text-red-300' 
+                : 'text-green-400 hover:text-green-300'
+            }`}
+            title={user.is_active ? 'Деактивировать' : 'Активировать'}
             disabled={user.id === currentUser?.id}
           >
-            <Trash2 className="h-4 w-4" />
+            {user.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
           </Button>
+          <a
+            href={`https://discord.com/users/${user.discord_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-gray-100 transition-colors"
+            title="Открыть профиль в Discord"
+          >
+            <ExternalLink className="h-4 w-4" />
+          </a>
         </div>
       ),
     },
@@ -180,56 +288,82 @@ const Users: React.FC = () => {
   const stats = [
     {
       title: 'Всего пользователей',
-      value: users?.length || 0,
+      value: userStatistics?.total_users || 0,
       icon: UsersIcon,
-      color: 'blue' as const,
-    },
-    {
-      title: 'Администраторов',
-      value: users?.filter(u => u.role === 'admin').length || 0,
-      icon: ShieldCheck,
-      color: 'red' as const,
-    },
-    {
-      title: 'Полицейских',
-      value: users?.filter(u => u.role === 'police').length || 0,
-      icon: Shield,
-      color: 'green' as const,
+      color: 'primary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Активных',
-      value: users?.filter(u => u.is_active).length || 0,
+      value: userStatistics?.active_users || 0,
       icon: UserCheck,
-      color: 'yellow' as const,
+      color: 'success' as const,
+    },
+    {
+      title: 'Администраторов',
+      value: userStatistics?.admin_users || 0,
+      icon: ShieldCheck,
+      color: 'danger' as const,
+    },
+    {
+      title: 'Полицейских',
+      value: userStatistics?.police_users || 0,
+      icon: Shield,
+      color: 'secondary' as const, // ✨ НОВЫЙ цвет
     },
   ];
 
   const actions = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
         <Input
-          placeholder="Поиск по имени пользователя..."
+          placeholder="Поиск..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80"
+          className="w-full sm:w-64 minecraft-input"
         />
+        <div className="flex space-x-2">
+          <select
+            value={searchType}
+            onChange={(e) => setSearchType(e.target.value as any)}
+            className="flex-1 sm:w-auto bg-minecraft-dark border border-primary-500/30 text-white rounded-lg px-3 py-2 text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 focus:outline-none"
+          >
+            <option value="all">Все</option>
+            <option value="discord">Discord</option>
+            <option value="minecraft">Minecraft</option>
+          </select>
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Filter className="h-4 w-4" />}
+            className="flex-shrink-0"
+          >
+            <span className="sr-only sm:not-sr-only">Фильтры</span>
+          </Button>
+        </div>
+      </div>
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
         <Button
           variant="outline"
           size="sm"
-          leftIcon={<Filter className="h-4 w-4" />}
+          onClick={() => fetchUsers()}
+          leftIcon={<RefreshCw className="h-4 w-4" />}
+          className="w-full sm:w-auto"
         >
-          Фильтры
+          <span className="sm:hidden">Обновить</span>
+          <span className="hidden sm:inline">Обновить</span>
         </Button>
-      </div>
-      <div className="flex items-center space-x-2">
         <Button
-          variant="primary"
+          variant="minecraft"
           size="sm"
-          onClick={handleCreateUser}
-          leftIcon={<Plus className="h-4 w-4" />}
+          onClick={() => checkAllRoles()}
+          loading={isCheckingAllRoles}
+          leftIcon={<Activity className="h-4 w-4" />}
+          glow
+          className="w-full sm:w-auto"
         >
-          Создать пользователя
+          <span className="sm:hidden">Проверить</span>
+          <span className="hidden sm:inline">Проверить все роли</span>
         </Button>
       </div>
     </div>
@@ -238,10 +372,32 @@ const Users: React.FC = () => {
   return (
     <Layout
       title="Пользователи"
-      subtitle="Управление пользователями системы"
+      subtitle="Управление пользователями Discord"
       actions={actions}
     >
       <div className="space-y-6">
+        {/* Info Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <Card variant="minecraft" className="bg-secondary-500/10 border-secondary-500/20">
+            <div className="flex items-center space-x-3">
+              <MessageCircle className="h-6 w-6 text-secondary-400" />
+              <div>
+                <h3 className="text-lg font-semibold text-secondary-400">
+                  Discord авторизация
+                </h3>
+                <p className="text-secondary-300">
+                  Пользователи создаются автоматически при первом входе через Discord.
+                  Роли определяются на основе ролей в Discord сервере.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
@@ -269,52 +425,116 @@ const Users: React.FC = () => {
             emptyMessage={
               searchTerm
                 ? `Пользователи не найдены по запросу "${searchTerm}"`
-                : 'Пользователей пока нет. Создайте первого пользователя.'
+                : 'Пользователи появятся после авторизации через Discord'
             }
           />
         </motion.div>
       </div>
 
-      {/* User Form Modal */}
-      <UserForm
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        user={selectedUser}
-        onSuccess={handleFormSuccess}
-      />
-
-      {/* Delete Confirmation Modal */}
+      {/* Role Check Modal */}
       <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Подтвердите удаление"
+        isOpen={isRoleCheckModalOpen}
+        onClose={() => setIsRoleCheckModalOpen(false)}
+        title="Проверка ролей"
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-dark-300">
-            Вы уверены, что хотите удалить пользователя{' '}
-            <span className="font-medium text-white">
-              {userToDelete?.username}
-            </span>
-            ?
+          <div className="flex items-center space-x-3">
+            {userToManage && (
+              <UserAvatar
+                user={userToManage}
+                size={40}
+              />
+            )}
+            <div>
+              <p className="font-medium text-white">
+                {userToManage ? getDisplayName(userToManage) : ''}
+              </p>
+              <p className="text-sm text-gray-400">
+                {userToManage ? getFullUserName(userToManage) : ''}
+              </p>
+            </div>
+          </div>
+
+          <p className="text-gray-300">
+            Проверить роли пользователя в Discord и обновить данные в системе?
           </p>
-          <p className="text-sm text-red-400">
-            Это действие нельзя отменить.
-          </p>
+
+          <div className="bg-accent-500/10 border border-accent-500/20 rounded-lg p-3">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="h-4 w-4 text-accent-400" />
+              <span className="text-sm text-accent-400">
+                Это может изменить роль пользователя в системе
+              </span>
+            </div>
+          </div>
+
           <div className="flex justify-end space-x-3">
             <Button
               variant="outline"
-              onClick={() => setIsDeleteModalOpen(false)}
-              disabled={isDeleting}
+              onClick={() => setIsRoleCheckModalOpen(false)}
+              disabled={isCheckingRoles}
             >
               Отмена
             </Button>
             <Button
-              variant="danger"
-              onClick={confirmDelete}
-              loading={isDeleting}
+              variant="minecraft"
+              onClick={confirmCheckRoles}
+              loading={isCheckingRoles}
+              glow
             >
-              Удалить
+              Проверить роли
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Status Change Modal */}
+      <Modal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        title={userToManage?.is_active ? 'Деактивировать пользователя' : 'Активировать пользователя'}
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center space-x-3">
+            {userToManage && (
+              <UserAvatar
+                user={userToManage}
+                size={40}
+              />
+            )}
+            <div>
+              <p className="font-medium text-white">
+                {userToManage ? getDisplayName(userToManage) : ''}
+              </p>
+              <p className="text-sm text-gray-400">
+                {userToManage ? getFullUserName(userToManage) : ''}
+              </p>
+            </div>
+          </div>
+
+          <p className="text-gray-300">
+            {userToManage?.is_active
+              ? 'Деактивировать пользователя? Он потеряет доступ к системе.'
+              : 'Активировать пользователя? Он получит доступ к системе согласно своей роли.'
+            }
+          </p>
+
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsStatusModalOpen(false)}
+              disabled={isActivating || isDeactivating}
+            >
+              Отмена
+            </Button>
+            <Button
+              variant={userToManage?.is_active ? "danger" : "success"}
+              onClick={confirmStatusChange}
+              loading={isActivating || isDeactivating}
+            >
+              {userToManage?.is_active ? 'Деактивировать' : 'Активировать'}
             </Button>
           </div>
         </div>

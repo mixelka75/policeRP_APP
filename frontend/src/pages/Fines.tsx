@@ -1,4 +1,4 @@
-// src/pages/Fines.tsx
+// src/pages/Fines.tsx - Обновленная цветовая схема
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -20,6 +20,7 @@ import { Button, Input, Table, StatCard, Modal } from '@/components/ui';
 import { FineForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, formatMoney, getInitials } from '@/utils';
+import MinecraftAvatar from '@/components/common/MinecraftAvatar';
 
 const Fines: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -143,20 +144,20 @@ const Fines: React.FC = () => {
       label: 'Гражданин',
       render: (_: any, fine: Fine) => {
         const passport = passportMap.get(fine.passport_id);
-        if (!passport) return <span className="text-dark-500">Неизвестен</span>;
+        if (!passport) return <span className="text-gray-500">Неизвестен</span>;
 
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-medium text-sm">
-                {getInitials(passport.first_name, passport.last_name)}
-              </span>
-            </div>
+            <MinecraftAvatar
+              nickname={passport.nickname}
+              size={40}
+              shape="square"
+            />
             <div>
               <p className="font-medium text-white">
                 {passport.first_name} {passport.last_name}
               </p>
-              <p className="text-sm text-dark-400">{passport.nickname}</p>
+              <p className="text-sm text-gray-400">{passport.nickname}</p>
             </div>
           </div>
         );
@@ -186,7 +187,7 @@ const Fines: React.FC = () => {
       label: 'Дата выписки',
       width: '150px',
       render: (date: string) => (
-        <span className="text-dark-400">{formatDate(date)}</span>
+        <span className="text-gray-400">{formatDate(date)}</span>
       ),
     },
     {
@@ -199,7 +200,7 @@ const Fines: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={() => handleEditFine(fine)}
-            className="!p-2"
+            className="!p-2 text-primary-400 hover:text-primary-300"
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -224,19 +225,19 @@ const Fines: React.FC = () => {
       title: 'Всего штрафов',
       value: fines?.length || 0,
       icon: FileText,
-      color: 'blue' as const,
+      color: 'primary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Общая сумма',
       value: formatMoney(totalAmount),
       icon: DollarSign,
-      color: 'red' as const,
+      color: 'danger' as const,
     },
     {
       title: 'Средний штраф',
       value: formatMoney(avgAmount),
       icon: TrendingUp,
-      color: 'yellow' as const,
+      color: 'accent' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'За сегодня',
@@ -246,37 +247,43 @@ const Fines: React.FC = () => {
         return fineDate.toDateString() === today.toDateString();
       }).length || 0,
       icon: AlertTriangle,
-      color: 'green' as const,
+      color: 'secondary' as const, // ✨ НОВЫЙ цвет
     },
   ];
 
   const actions = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
         <Input
-          placeholder="Поиск по статье или гражданину..."
+          placeholder="Поиск..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80"
+          className="w-full sm:w-64 minecraft-input"
         />
-        <Button
-          variant="outline"
-          size="sm"
-          leftIcon={<Filter className="h-4 w-4" />}
-          onClick={() => setIsFilterModalOpen(true)}
-        >
-          Фильтры
-        </Button>
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            leftIcon={<Filter className="h-4 w-4" />}
+            onClick={() => setIsFilterModalOpen(true)}
+            className="flex-1 sm:flex-none"
+          >
+            <span className="sm:inline">Фильтры</span>
+          </Button>
+        </div>
       </div>
       <div className="flex items-center space-x-2">
         <Button
-          variant="danger"
+          variant="minecraft"
           size="sm"
           onClick={handleCreateFine}
           leftIcon={<Plus className="h-4 w-4" />}
+          glow
+          className="w-full sm:w-auto"
         >
-          Выписать штраф
+          <span className="sm:hidden">Штраф</span>
+          <span className="hidden sm:inline">Выписать штраф</span>
         </Button>
       </div>
     </div>
@@ -348,7 +355,7 @@ const Fines: React.FC = () => {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-dark-300">
+          <p className="text-gray-300">
             Вы уверены, что хотите удалить штраф{' '}
             <span className="font-medium text-white">
               "{fineToDelete?.article}"

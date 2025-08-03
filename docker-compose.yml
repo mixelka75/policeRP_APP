@@ -28,6 +28,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: rp_backend
+    env_file:
+      - ./backend/.env.docker
     environment:
       # Только backend переменные
       DATABASE_URL: postgresql://rp_user:rp_password@database:5432/rp_server_db

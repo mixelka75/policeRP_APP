@@ -1,130 +1,340 @@
 // src/pages/Login.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LogIn, User, Lock, Eye, EyeOff, Shield } from 'lucide-react';
+import { Shield, MessageCircle, AlertTriangle, Clock, CheckCircle, X } from 'lucide-react';
+import { DiscordIcon } from '@/components/icons';
+import logoImage from '@/assets/logo.png';
 import { useAuthStore } from '@/store/auth';
-import { Button, Input, Card } from '@/components/ui';
+import { Button, Card, Badge, Loading } from '@/components/ui';
+import { apiService } from '@/services/api';
+import { useApi } from '@/hooks/useApi';
+import { safeStringify } from '@/utils';
 
 const Login: React.FC = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [credentials, setCredentials] = useState({
-    username: '',
-    password: ''
-  });
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [callbackLoading, setCallbackLoading] = useState(false);
 
-  const { login, isLoading, error } = useAuthStore();
+  const { isLoading, error } = useAuthStore();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { execute: getDiscordLoginUrl, isLoading: isGettingUrl } = useApi(
+    apiService.getDiscordLoginUrl,
+    {
+      showErrorToast: true,
+      onSuccess: (data) => {
+        localStorage.setItem('discord_auth_state', data.state);
+        setIsRedirecting(true);
+        window.location.href = data.oauth_url;
+      },
+    }
+  );
 
-    if (!credentials.username || !credentials.password) {
+  const { execute: getDiscordStatus, data: discordStatus } = useApi(
+    apiService.getDiscordStatus,
+    {
+      showErrorToast: false,
+    }
+  );
+
+  useEffect(() => {
+    getDiscordStatus();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const error = urlParams.get('error');
+
+    if (token) {
+      setCallbackLoading(true);
+      localStorage.setItem('token', token);
+
+      apiService.getMe()
+        .then(user => {
+          localStorage.setItem('user', JSON.stringify(user));
+          window.location.href = '/dashboard';
+        })
+        .catch(err => {
+          setAuthError('Ошибка при получении данных пользователя');
+          localStorage.removeItem('token');
+          setCallbackLoading(false);
+        });
+    } else if (error) {
+      setAuthError(decodeURIComponent(error));
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const handleDiscordLogin = async () => {
+    setAuthError(null);
+
+    if (!discordStatus?.discord_configured) {
+      setAuthError('Discord интеграция не настроена');
       return;
     }
 
-    try {
-      await login(credentials);
-    } catch (error) {
-      // Error handling is done in the store
-      console.error('Login error:', error);
-    }
+    await getDiscordLoginUrl();
   };
 
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCredentials(prev => ({ ...prev, username: e.target.value }));
-  };
+  if (callbackLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-minecraft-dark">
+        <Loading size="lg" text="Завершение авторизации..." />
+      </div>
+    );
+  }
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCredentials(prev => ({ ...prev, password: e.target.value }));
-  };
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-minecraft-dark">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ y: [-10, 10, -10] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-40 h-40 bg-gray-900/90 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl border border-gray-700/50 p-5"
+          >
+            <img src={logoImage} alt="Панд-Ратония Logo" className="w-full h-full object-contain drop-shadow-xl animate-pulse" />
+          </motion.div>
+          <h2 className="text-2xl font-bold text-white mb-2 whitespace-nowrap">Переход к Discord</h2>
+          <p className="text-gray-300 mb-6">Перенаправляем вас на Discord для авторизации...</p>
+          <div className="flex items-center justify-center space-x-3">
+            <Clock className="w-5 h-5 text-primary-400 animate-pulse" />
+            <span className="text-primary-400 animate-pulse">Подождите...</span>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-minecraft-dark p-4 relative overflow-hidden">
+      {/* Animated background particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-primary-500/30 rounded-full"
+            animate={{
+              y: [0, -window.innerHeight],
+              x: [Math.random() * window.innerWidth, Math.random() * window.innerWidth],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: Math.random() * 10 + 10,
+              repeat: Infinity,
+              delay: Math.random() * 10,
+            }}
+          />
+        ))}
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md relative z-10"
       >
-        <Card className="bg-dark-800/80 backdrop-blur-lg border-gray-700/50">
+        <Card variant="minecraft" className="overflow-hidden">
           <div className="text-center mb-8">
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="mx-auto w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mb-4"
+              className="mx-auto w-40 h-40 bg-gray-900/90 backdrop-blur-sm rounded-2xl flex items-center justify-center mb-6 shadow-2xl border border-gray-700/50 p-5"
             >
-              <Shield className="w-8 h-8 text-white" />
+              <img src={logoImage} alt="Панд-Ратония Logo" className="w-full h-full object-contain drop-shadow-xl" />
             </motion.div>
-            <h1 className="text-2xl font-bold text-white mb-2">PR Police</h1>
-            <p className="text-gray-400">Система управления паспортами и штрафами</p>
+            <motion.h1
+              className="text-3xl font-bold text-white mb-2 minecraft-gradient-text whitespace-nowrap"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              Панд-Ратония
+            </motion.h1>
+            <motion.p
+              className="text-gray-300"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              Система управления паспортами и штрафами
+            </motion.p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              label="Имя пользователя"
-              type="text"
-              placeholder="Введите имя пользователя"
-              value={credentials.username}
-              onChange={handleUsernameChange}
-              leftIcon={<User className="w-5 h-5" />}
-              required
-              disabled={isLoading}
-              fullWidth
-            />
+          {/* Discord Status */}
+          {discordStatus && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mb-6"
+            >
+              <Card variant="glass" className="p-4 space-y-3">
+                <h3 className="text-sm font-medium text-white mb-3 flex items-center">
+                  <Shield className="w-4 h-4 mr-2 text-primary-400" />
+                  Статус интеграции
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-300">Discord</span>
+                    <div className="flex items-center space-x-2">
+                      {discordStatus.discord_configured ? (
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-400" />
+                      )}
+                      <Badge
+                        variant={discordStatus.discord_configured ? "success" : "danger"}
+                        size="sm"
+                      >
+                        {discordStatus.discord_configured ? "Настроен" : "Не настроен"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-300">Сервер</span>
+                    <div className="flex items-center space-x-2">
+                      {discordStatus.guild_configured ? (
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-400" />
+                      )}
+                      <Badge
+                        variant={discordStatus.guild_configured ? "success" : "danger"}
+                        size="sm"
+                      >
+                        {discordStatus.guild_configured ? "Подключен" : "Не подключен"}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-300">Роли</span>
+                    <div className="flex items-center space-x-2">
+                      {discordStatus.roles_configured ? (
+                        <CheckCircle className="w-4 h-4 text-green-400" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-400" />
+                      )}
+                      <Badge
+                        variant={discordStatus.roles_configured ? "success" : "danger"}
+                        size="sm"
+                      >
+                        {discordStatus.roles_configured ? "Настроены" : "Не настроены"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          )}
 
-            <Input
-              label="Пароль"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Введите пароль"
-              value={credentials.password}
-              onChange={handlePasswordChange}
-              leftIcon={<Lock className="w-5 h-5" />}
-              rightIcon={
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="p-1 hover:bg-gray-700 rounded transition-colors"
-                  disabled={isLoading}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              }
-              required
-              disabled={isLoading}
+          {/* Login Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="space-y-4"
+          >
+            <Button
+              onClick={handleDiscordLogin}
+              variant="minecraft"
+              loading={isLoading || isGettingUrl}
+              disabled={!discordStatus?.discord_configured}
               fullWidth
-            />
+              size="lg"
+              glow
+              leftIcon={!isLoading && !isGettingUrl ? <DiscordIcon className="w-5 h-5" /> : undefined}
+            >
+              {isLoading || isGettingUrl ? 'Подключение...' : 'Войти через Discord'}
+            </Button>
 
-            {error && (
+            {!discordStatus?.discord_configured && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/10 border border-red-500/20 rounded-lg p-3"
+                className="bg-warning-500/10 border border-warning-500/20 rounded-xl p-3"
               >
-                <p className="text-red-400 text-sm">{error}</p>
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="h-4 w-4 text-warning-400" />
+                  <span className="text-sm text-warning-400">
+                    Discord интеграция не настроена
+                  </span>
+                </div>
               </motion.div>
             )}
+          </motion.div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              loading={isLoading}
-              fullWidth
-              size="lg"
-              leftIcon={!isLoading ? <LogIn className="w-5 h-5" /> : undefined}
+          {/* Error Display */}
+          {(error || authError) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-danger-500/10 border border-danger-500/20 rounded-xl p-3 mt-4"
             >
-              Войти в систему
-            </Button>
-          </form>
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="h-4 w-4 text-danger-400" />
+                <div className="flex-1">
+                  <span className="text-sm text-danger-400 block">
+                    {safeStringify(error || authError)}
+                  </span>
+                  {safeStringify(error || authError).includes('необходимых ролей') && (
+                    <p className="text-xs text-danger-300 mt-1">
+                      Убедитесь, что у вас есть роль админа или полицейского на Discord сервере
+                    </p>
+                  )}
+                  {(error || authError)?.includes('проверить роли') && (
+                    <p className="text-xs text-danger-300 mt-1">
+                      Возможно, бот не имеет доступа к информации о ваших ролях
+                    </p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
 
-          <div className="mt-6 text-center">
+          {/* Info */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7 }}
+            className="mt-6 text-center"
+          >
             <p className="text-gray-400 text-sm">
-              Логин по умолчанию: <span className="font-mono text-primary-400">admin</span> / <span className="font-mono text-primary-400">admin123</span>
+              Для входа в систему необходимо иметь роль админа или полицейского
             </p>
-          </div>
+          </motion.div>
+
+          {/* Additional Info */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="mt-6"
+          >
+            <Card variant="glass" className="p-4">
+              <h4 className="text-sm font-medium text-white mb-3 flex items-center">
+                <Shield className="w-4 h-4 mr-2 text-primary-400" />
+                Требования для доступа:
+              </h4>
+              <ul className="text-xs text-gray-300 space-y-1">
+                <li className="flex items-center">
+                  <div className="w-1.5 h-1.5 bg-primary-500 rounded-full mr-2" />
+                  Членство в Discord сервере
+                </li>
+                <li className="flex items-center">
+                  <div className="w-1.5 h-1.5 bg-secondary-500 rounded-full mr-2" />
+                  Роль админа или полицейского на сервере
+                </li>
+                <li className="flex items-center">
+                  <div className="w-1.5 h-1.5 bg-accent-500 rounded-full mr-2" />
+                  Активная учетная запись Discord
+                </li>
+              </ul>
+            </Card>
+          </motion.div>
         </Card>
       </motion.div>
     </div>

@@ -99,16 +99,37 @@ class ActionLogger:
                     "new": new_data.get(key)
                 }
 
+        # Получаем актуальные данные паспорта из базы для полной информации
+        from app.crud.passport import passport_crud
+        current_passport = passport_crud.get(db, id=passport_id)
+        
+        # Формируем полный набор данных для логирования
+        log_details = {
+            "changes": changes,
+            # Используем новые данные если они есть, иначе текущие из БД, иначе старые
+            "nickname": new_data.get("nickname") or (current_passport.nickname if current_passport else None) or old_data.get("nickname"),
+            "first_name": new_data.get("first_name") or (current_passport.first_name if current_passport else None) or old_data.get("first_name"),
+            "last_name": new_data.get("last_name") or (current_passport.last_name if current_passport else None) or old_data.get("last_name"),
+            "discord_id": new_data.get("discord_id") or (current_passport.discord_id if current_passport else None) or old_data.get("discord_id"),
+            "age": new_data.get("age") or (current_passport.age if current_passport else None) or old_data.get("age"),
+            "city": new_data.get("city") or (current_passport.city if current_passport else None) or old_data.get("city"),
+            "gender": new_data.get("gender") or (current_passport.gender if current_passport else None) or old_data.get("gender")
+        }
+        
+        # Добавляем full_name для удобства фильтрации
+        if log_details["first_name"] and log_details["last_name"]:
+            log_details["full_name"] = f"{log_details['first_name']} {log_details['last_name']}"
+        
+        # Добавляем информацию об исполнителе
+        log_details["officer"] = user.minecraft_username or user.discord_username
+
         ActionLogger.log_action(
             db=db,
             user=user,
             action="UPDATE",
             entity_type="passport",
             entity_id=passport_id,
-            details={
-                "changes": changes,
-                "nickname": new_data.get("nickname")
-            },
+            details=log_details,
             request=request
         )
 
@@ -145,6 +166,21 @@ class ActionLogger:
             request: Optional[Request] = None
     ) -> None:
         """Логирование создания штрафа"""
+        # Получаем информацию о паспорте для полного логирования
+        passport_info = None
+        if fine_data.get("passport_id"):
+            from app.crud.passport import passport_crud
+            passport = passport_crud.get(db, id=fine_data.get("passport_id"))
+            if passport:
+                passport_info = {
+                    "first_name": passport.first_name,
+                    "last_name": passport.last_name,
+                    "nickname": passport.nickname,
+                    "discord_id": passport.discord_id,
+                    "age": passport.age,
+                    "city": passport.city
+                }
+        
         ActionLogger.log_action(
             db=db,
             user=user,
@@ -153,10 +189,11 @@ class ActionLogger:
             entity_id=fine_id,
             details={
                 "passport_id": fine_data.get("passport_id"),
-                "passport_nickname": fine_data.get("passport_nickname"),
+                "passport_info": passport_info,
                 "article": fine_data.get("article"),
                 "amount": fine_data.get("amount"),
-                "description": fine_data.get("description")
+                "description": fine_data.get("description"),
+                "officer": user.minecraft_username or user.discord_username
             },
             request=request
         )
@@ -180,6 +217,22 @@ class ActionLogger:
                     "new": new_data.get(key)
                 }
 
+        # Получаем информацию о паспорте
+        passport_info = None
+        passport_id = new_data.get("passport_id") or old_data.get("passport_id")
+        if passport_id:
+            from app.crud.passport import passport_crud
+            passport = passport_crud.get(db, id=passport_id)
+            if passport:
+                passport_info = {
+                    "first_name": passport.first_name,
+                    "last_name": passport.last_name,
+                    "nickname": passport.nickname,
+                    "discord_id": passport.discord_id,
+                    "age": passport.age,
+                    "city": passport.city
+                }
+
         ActionLogger.log_action(
             db=db,
             user=user,
@@ -188,8 +241,11 @@ class ActionLogger:
             entity_id=fine_id,
             details={
                 "changes": changes,
-                "passport_id": new_data.get("passport_id"),
-                "current_amount": new_data.get("amount")
+                "passport_id": passport_id,
+                "passport_info": passport_info,
+                "current_amount": new_data.get("amount"),
+                "article": new_data.get("article") or old_data.get("article"),
+                "officer": user.minecraft_username or user.discord_username
             },
             request=request
         )
@@ -203,6 +259,21 @@ class ActionLogger:
             request: Optional[Request] = None
     ) -> None:
         """Логирование удаления штрафа"""
+        # Получаем информацию о паспорте
+        passport_info = None
+        if fine_data.get("passport_id"):
+            from app.crud.passport import passport_crud
+            passport = passport_crud.get(db, id=fine_data.get("passport_id"))
+            if passport:
+                passport_info = {
+                    "first_name": passport.first_name,
+                    "last_name": passport.last_name,
+                    "nickname": passport.nickname,
+                    "discord_id": passport.discord_id,
+                    "age": passport.age,
+                    "city": passport.city
+                }
+        
         ActionLogger.log_action(
             db=db,
             user=user,
@@ -211,9 +282,11 @@ class ActionLogger:
             entity_id=fine_id,
             details={
                 "passport_id": fine_data.get("passport_id"),
+                "passport_info": passport_info,
                 "article": fine_data.get("article"),
                 "amount": fine_data.get("amount"),
-                "description": fine_data.get("description")
+                "description": fine_data.get("description"),
+                "officer": user.minecraft_username or user.discord_username
             },
             request=request
         )
@@ -232,7 +305,7 @@ class ActionLogger:
             entity_type="user",
             entity_id=user.id,
             details={
-                "username": user.username,
+                "username": user.discord_username,
                 "role": user.role
             },
             request=request
@@ -252,7 +325,7 @@ class ActionLogger:
             entity_type="user",
             entity_id=user.id,
             details={
-                "username": user.username
+                "username": user.discord_username
             },
             request=request
         )
@@ -366,11 +439,11 @@ class ActionLogger:
             )
 
         # Создаем лог без пользователя - для анонимных событий
-        # Используем специальный user_id = -1 для анонимных событий
+        # Используем user_id = None для анонимных событий
         try:
             from app.models.log import Log
             log_entry = Log(
-                user_id=-1,  # Специальный ID для анонимных событий
+                user_id=None,  # NULL для анонимных событий
                 action="SECURITY_EVENT",
                 entity_type="security",
                 details={

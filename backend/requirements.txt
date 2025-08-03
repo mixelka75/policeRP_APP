@@ -12,6 +12,15 @@ passlib[bcrypt]==1.7.4
 python-jose[cryptography]==3.4.0
 python-multipart==0.0.19
 
+# OAuth2 & Discord
+authlib==1.2.1
+requests==2.31.0
+httpx==0.25.2
+
+# Background tasks
+celery==5.3.4
+redis==5.0.1
+
 # Validation
 pydantic==2.5.0
 pydantic-settings==2.1.0
@@ -19,9 +28,6 @@ email-validator==2.1.0
 
 # Date handling
 python-dateutil==2.8.2
-
-# HTTP client
-httpx==0.25.2
 
 # Environment variables
 python-dotenv==1.0.0
@@ -45,3 +51,6 @@ structlog==23.2.0
 
 # Timezone handling
 pytz==2023.3
+
+# Scheduled tasks
+APScheduler==3.10.4

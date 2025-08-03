@@ -1,6 +1,6 @@
 // src/components/ui/Input.tsx
 import React from 'react';
-import { cn } from '@/utils';
+import { cn, safeStringify } from '@/utils';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -57,7 +57,7 @@ const Input: React.FC<InputProps> = ({
       </div>
       {error && (
         <p className="text-sm text-red-400 animate-slide-in">
-          {error}
+          {safeStringify(error)}
         </p>
       )}
     </div>

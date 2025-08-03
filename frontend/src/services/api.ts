@@ -6,14 +6,30 @@ import {
   User, 
   UserCreate, 
   UserUpdate,
+  DiscordAuthResponse,
+  DiscordStatusResponse,
+  UserRefreshResponse,
+  TokenRefreshResponse,
+  UserRoleCheckResponse,
+  UserSearchResponse,
+  UserStatisticsResponse,
+  RoleCheckAllResponse,
+  RoleStatusResponse,
+  RoleSyncIssuesResponse,
+  SecurityLogResponse,
   Passport,
   PassportCreate,
   PassportUpdate,
   PassportEmergencyUpdate,
   PassportEmergencyResponse,
+  PassportSkinResponse,
+  PlayerSkinResponse,
   Fine,
   FineCreate,
   FineUpdate,
+  PaymentCreate,
+  PaymentResponse,
+  Payment,
   Log,
   ApiError
 } from '@/types';
@@ -35,7 +51,31 @@ class ApiService {
 
     this.setupInterceptors();
 
-    // Привязываем методы к контексту класса
+    // Новые методы Discord авторизации
+    this.getDiscordLoginUrl = this.getDiscordLoginUrl.bind(this);
+    this.refreshUserData = this.refreshUserData.bind(this);
+    this.getDiscordStatus = this.getDiscordStatus.bind(this);
+    this.checkUserRoles = this.checkUserRoles.bind(this);
+    this.activateUser = this.activateUser.bind(this);
+    this.deactivateUser = this.deactivateUser.bind(this);
+    this.searchUsersByMinecraft = this.searchUsersByMinecraft.bind(this);
+    this.searchUsersByDiscord = this.searchUsersByDiscord.bind(this);
+    this.getUserStatistics = this.getUserStatistics.bind(this);
+    this.checkAllRoles = this.checkAllRoles.bind(this);
+    this.getRoleStatus = this.getRoleStatus.bind(this);
+    this.getRoleSyncIssues = this.getRoleSyncIssues.bind(this);
+    this.getSecurityLogs = this.getSecurityLogs.bind(this);
+    this.exportLogs = this.exportLogs.bind(this);
+    this.getPassportSkin = this.getPassportSkin.bind(this);
+    this.getSkinByDiscordId = this.getSkinByDiscordId.bind(this);
+    this.getAvatarByNickname = this.getAvatarByNickname.bind(this);
+
+    // Методы для платежей
+    this.createPayment = this.createPayment.bind(this);
+    this.getPayments = this.getPayments.bind(this);
+    this.getPayment = this.getPayment.bind(this);
+
+    // Старые методы (привязываем к контексту)
     this.login = this.login.bind(this);
     this.loginJson = this.loginJson.bind(this);
     this.getMe = this.getMe.bind(this);
@@ -58,6 +98,8 @@ class ApiService {
     this.getLogs = this.getLogs.bind(this);
     this.getMyLogs = this.getMyLogs.bind(this);
     this.healthCheck = this.healthCheck.bind(this);
+    this.getMyPassport = this.getMyPassport.bind(this);
+    this.getMyFines = this.getMyFines.bind(this);
   }
 
   private clearAuthData() {
@@ -73,7 +115,6 @@ class ApiService {
         if (token && !isTokenExpired(token)) {
           config.headers.Authorization = `Bearer ${token}`;
         } else if (token && isTokenExpired(token)) {
-          // ✨ Автоматически удаляем истекший токен
           this.clearAuthData();
         }
         return config;
@@ -85,30 +126,62 @@ class ApiService {
     this.axiosInstance.interceptors.response.use(
       (response: AxiosResponse) => response,
       (error: AxiosError) => {
-        // ✨ Улучшенная обработка 401 ошибок
         if (error.response?.status === 401) {
-          this.clearAuthData();
-          // Перенаправляем только если мы не на странице логина
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login';
+          // Only clear auth data and redirect for specific endpoints
+          const isAuthEndpoint = error.config?.url?.includes('/auth/me') || 
+                                 error.config?.url?.includes('/auth/refresh');
+          
+          if (isAuthEndpoint) {
+            this.clearAuthData();
+            if (window.location.pathname !== '/login' && !window.location.pathname.includes('/auth/callback')) {
+              window.location.href = '/login';
+            }
           }
-          // Возвращаем более понятную ошибку
+          
           return Promise.reject({
             detail: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
             code: 'SESSION_EXPIRED'
           });
         }
+        
+        if (error.response?.status === 403) {
+          // Не очищаем данные автоматически для callback процесса
+          // Только для обычных API запросов
+          const isCallbackFlow = window.location.pathname.includes('/auth/callback') || 
+                                window.location.pathname.includes('/login');
+          
+          if (!isCallbackFlow) {
+            this.clearAuthData();
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
+          }
+          
+          return Promise.reject({
+            detail: error.response?.data?.detail || 'У вас нет прав доступа к системе',
+            code: 'ACCESS_DENIED',
+            status: 403
+          });
+        }
+        
         return Promise.reject(error);
       }
     );
   }
 
   private handleError(error: AxiosError): ApiError {
-    // ✨ Специальная обработка для истекших сессий
     if (error.response?.status === 401) {
       return {
         detail: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
         code: 'SESSION_EXPIRED'
+      };
+    }
+
+    if (error.response?.status === 403) {
+      return {
+        detail: error.response?.data?.detail || 'У вас нет прав доступа к системе',
+        code: 'ACCESS_DENIED',
+        status: 403
       };
     }
 
@@ -121,7 +194,160 @@ class ApiService {
     };
   }
 
-  // Auth endpoints
+  // ✅ НОВЫЕ ЭНДПОИНТЫ DISCORD АВТОРИЗАЦИИ
+
+  async getDiscordLoginUrl(): Promise<DiscordAuthResponse> {
+    try {
+      const response = await this.axiosInstance.get<DiscordAuthResponse>('/auth/discord/login');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async refreshUserData(): Promise<UserRefreshResponse> {
+    try {
+      const response = await this.axiosInstance.post<UserRefreshResponse>('/auth/refresh');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async refreshToken(): Promise<TokenRefreshResponse> {
+    try {
+      const response = await this.axiosInstance.post<TokenRefreshResponse>('/auth/refresh-token');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getDiscordStatus(): Promise<DiscordStatusResponse> {
+    try {
+      const response = await this.axiosInstance.get<DiscordStatusResponse>('/auth/discord/status');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  // ✅ НОВЫЕ ЭНДПОИНТЫ УПРАВЛЕНИЯ ПОЛЬЗОВАТЕЛЯМИ
+
+  async checkUserRoles(userId: number): Promise<UserRoleCheckResponse> {
+    try {
+      const response = await this.axiosInstance.post<UserRoleCheckResponse>(`/users/${userId}/check-roles`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async activateUser(userId: number): Promise<User> {
+    try {
+      const response = await this.axiosInstance.post<User>(`/users/${userId}/activate`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async deactivateUser(userId: number): Promise<User> {
+    try {
+      const response = await this.axiosInstance.post<User>(`/users/${userId}/deactivate`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async searchUsersByMinecraft(query: string): Promise<UserSearchResponse> {
+    try {
+      const response = await this.axiosInstance.get<UserSearchResponse>('/users/search/minecraft', {
+        params: { q: query }
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async searchUsersByDiscord(query: string): Promise<UserSearchResponse> {
+    try {
+      const response = await this.axiosInstance.get<UserSearchResponse>('/users/search/discord', {
+        params: { q: query }
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getUserStatistics(): Promise<UserStatisticsResponse> {
+    try {
+      const response = await this.axiosInstance.get<UserStatisticsResponse>('/users/statistics');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  // ✅ НОВЫЕ ЭНДПОИНТЫ УПРАВЛЕНИЯ РОЛЯМИ
+
+  async checkAllRoles(): Promise<RoleCheckAllResponse> {
+    try {
+      const response = await this.axiosInstance.post<RoleCheckAllResponse>('/roles/check-all');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getRoleStatus(): Promise<RoleStatusResponse> {
+    try {
+      const response = await this.axiosInstance.get<RoleStatusResponse>('/roles/status');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getRoleSyncIssues(): Promise<RoleSyncIssuesResponse> {
+    try {
+      const response = await this.axiosInstance.get<RoleSyncIssuesResponse>('/roles/sync-issues');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  // ✅ НОВЫЕ ЭНДПОИНТЫ ЛОГОВ
+
+  async getSecurityLogs(days: number = 7): Promise<SecurityLogResponse> {
+    try {
+      const response = await this.axiosInstance.get<SecurityLogResponse>('/logs/security', {
+        params: { days }
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async exportLogs(format: string = 'json', days: number = 30): Promise<Blob> {
+    try {
+      const response = await this.axiosInstance.get('/logs/export', {
+        params: { format, days },
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  // ❌ УСТАРЕВШИЕ МЕТОДЫ (сохранены для обратной совместимости, но не используются)
+
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
       const formData = new FormData();
@@ -155,27 +381,6 @@ class ApiService {
     }
   }
 
-  // User endpoints
-  async getMe(): Promise<User> {
-    try {
-      const response = await this.axiosInstance.get<User>('/users/me');
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error as AxiosError);
-    }
-  }
-
-  async getUsers(skip: number = 0, limit: number = 100): Promise<User[]> {
-    try {
-      const response = await this.axiosInstance.get<User[]>('/users/', {
-        params: { skip, limit },
-      });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error as AxiosError);
-    }
-  }
-
   async createUser(userData: UserCreate): Promise<User> {
     try {
       const response = await this.axiosInstance.post<User>('/users/', userData);
@@ -203,7 +408,28 @@ class ApiService {
     }
   }
 
-  // Passport endpoints
+  // ✅ СОХРАНЕННЫЕ МЕТОДЫ
+
+  async getMe(): Promise<User> {
+    try {
+      const response = await this.axiosInstance.get<{user: User, message: string}>('/auth/me');
+      return response.data.user;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getUsers(skip: number = 0, limit: number = 100): Promise<User[]> {
+    try {
+      const response = await this.axiosInstance.get<User[]>('/users/', {
+        params: { skip, limit },
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
   async getPassports(
     skip: number = 0,
     limit: number = 100,
@@ -257,7 +483,6 @@ class ApiService {
     }
   }
 
-  // Emergency methods
   async updatePassportEmergency(
     passportId: number,
     emergencyData: PassportEmergencyUpdate
@@ -284,7 +509,6 @@ class ApiService {
     }
   }
 
-  // Fine endpoints
   async getFines(skip: number = 0, limit: number = 100, passportId?: number): Promise<Fine[]> {
     try {
       const response = await this.axiosInstance.get<Fine[]>('/fines/', {
@@ -332,11 +556,10 @@ class ApiService {
     }
   }
 
-  // Log endpoints
-  async getLogs(skip: number = 0, limit: number = 100): Promise<Log[]> {
+  async getLogs(page: number = 0, pageSize: number = 20): Promise<{logs: Log[], pagination: any}> {
     try {
-      const response = await this.axiosInstance.get<Log[]>('/logs/', {
-        params: { skip, limit },
+      const response = await this.axiosInstance.get<{logs: Log[], pagination: any}>('/logs/', {
+        params: { page, page_size: pageSize },
       });
       return response.data;
     } catch (error) {
@@ -355,10 +578,85 @@ class ApiService {
     }
   }
 
-  // Health check
   async healthCheck(): Promise<{ status: string; database: string; version: string }> {
     try {
       const response = await axios.get(`${API_URL}/health`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getPassportSkin(passportId: number): Promise<PassportSkinResponse> {
+    try {
+      const response = await this.axiosInstance.get<PassportSkinResponse>(`/passports/${passportId}/skin`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getSkinByDiscordId(discordId: string): Promise<PlayerSkinResponse> {
+    try {
+      const response = await this.axiosInstance.get<PlayerSkinResponse>(`/passports/skin/by-discord/${discordId}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getAvatarByNickname(nickname: string): Promise<PlayerSkinResponse> {
+    try {
+      const response = await this.axiosInstance.get<PlayerSkinResponse>(`/passports/avatar/by-nickname/${nickname}`);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getMyPassport(): Promise<Passport> {
+    try {
+      const response = await this.axiosInstance.get<Passport>('/passports/me');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getMyFines(skip: number = 0, limit: number = 100): Promise<Fine[]> {
+    try {
+      const response = await this.axiosInstance.get<Fine[]>('/fines/me', {
+        params: { skip, limit },
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  // ✅ МЕТОДЫ ДЛЯ РАБОТЫ С ПЛАТЕЖАМИ
+
+  async createPayment(paymentData: PaymentCreate): Promise<PaymentResponse> {
+    try {
+      const response = await this.axiosInstance.post<PaymentResponse>('/payments/create', paymentData);
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getPayments(): Promise<Payment[]> {
+    try {
+      const response = await this.axiosInstance.get<Payment[]>('/payments/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
+  async getPayment(paymentId: number): Promise<PaymentResponse> {
+    try {
+      const response = await this.axiosInstance.get<PaymentResponse>(`/payments/${paymentId}`);
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError);

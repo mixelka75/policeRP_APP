@@ -1,4 +1,4 @@
-// src/pages/Passports.tsx
+// src/pages/Passports.tsx - Обновленная цветовая схема
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
@@ -12,22 +12,25 @@ import {
   AlertTriangle,
   MapPin,
   Shield,
-  ShieldAlert
+  ShieldAlert,
+  ScrollText
 } from 'lucide-react';
 import { Passport } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
+import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal, Select, Badge } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, Badge } from '@/components/ui';
 import { PassportForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import EmergencyModal from '@/components/modals/EmergencyModal';
+import PassportLogsModal from '@/components/modals/PassportLogsModal';
 import { formatDate, getInitials } from '@/utils';
+import { PlayerSkin, MinecraftHead } from '@/components/common';
 
 const Passports: React.FC = () => {
+  const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
-  const [emergencyFilter, setEmergencyFilter] = useState('');
   const [selectedPassport, setSelectedPassport] = useState<Passport | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -36,6 +39,8 @@ const Passports: React.FC = () => {
   const [passportForEmergency, setPassportForEmergency] = useState<Passport | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
+  const [isPassportLogsModalOpen, setIsPassportLogsModalOpen] = useState(false);
+  const [passportForLogs, setPassportForLogs] = useState<Passport | null>(null);
 
   const {
     data: passports,
@@ -58,18 +63,22 @@ const Passports: React.FC = () => {
 
   useEffect(() => {
     loadPassports();
-  }, [selectedCity, emergencyFilter]);
+  }, []);
 
   const loadPassports = () => {
-    const emergency_only = emergencyFilter === 'true' ? true : emergencyFilter === 'false' ? false : undefined;
-    fetchPassports(0, 100, undefined, selectedCity || undefined, emergency_only);
+    fetchPassports(0, 100, undefined, undefined, undefined);
   };
 
   const filteredPassports = passports?.filter(passport => {
     // Поиск
-    const matchesSearch = passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      passport.nickname.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const fullName = `${passport.first_name} ${passport.last_name}`.toLowerCase();
+    const matchesSearch = 
+      passport.first_name.toLowerCase().includes(searchLower) ||
+      passport.last_name.toLowerCase().includes(searchLower) ||
+      fullName.includes(searchLower) ||
+      (passport.nickname && passport.nickname.toLowerCase().includes(searchLower)) ||
+      passport.discord_id.includes(searchTerm);
 
     // Дополнительные фильтры из модального окна
     let matchesFilters = true;
@@ -113,6 +122,11 @@ const Passports: React.FC = () => {
     setIsEmergencyModalOpen(true);
   };
 
+  const handleShowPassportLogs = (passport: Passport) => {
+    setPassportForLogs(passport);
+    setIsPassportLogsModalOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (passportToDelete) {
       await deletePassport(passportToDelete.id);
@@ -135,19 +149,6 @@ const Passports: React.FC = () => {
     setAppliedFilters({});
   };
 
-  // ✨ Уникальные города из данных
-  const uniqueCities = [...new Set(passports?.map(p => p.city) || [])].sort();
-
-  const cityOptions = [
-    { value: '', label: 'Все города' },
-    ...uniqueCities.map(city => ({ value: city, label: city }))
-  ];
-
-  const emergencyOptions = [
-    { value: '', label: 'Все статусы' },
-    { value: 'true', label: 'Только в ЧС' },
-    { value: 'false', label: 'Только не в ЧС' },
-  ];
 
   const columns = [
     {
@@ -155,14 +156,17 @@ const Passports: React.FC = () => {
       label: '',
       width: '60px',
       render: (_: any, passport: Passport) => (
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+        <div className={`relative ${
           passport.is_emergency 
-            ? 'bg-gradient-to-br from-red-500 to-red-600'
-            : 'bg-gradient-to-br from-blue-500 to-blue-600'
-        }`}>
-          <span className="text-white font-medium text-sm">
-            {getInitials(passport.first_name, passport.last_name)}
-          </span>
+            ? 'ring-2 ring-red-500 shadow-red-500/30'
+            : 'ring-2 ring-primary-500 shadow-primary-glow'
+        } rounded-lg animate-glow`}>
+          <MinecraftHead
+            discordId={passport.discord_id}
+            passportId={passport.id}
+            size="lg"
+            className="rounded-lg"
+          />
         </div>
       ),
     },
@@ -181,19 +185,20 @@ const Passports: React.FC = () => {
               </Badge>
             )}
           </div>
-          <p className="text-sm text-dark-400">{passport.nickname}</p>
+          <p className="text-sm text-gray-400">
+            {passport.nickname || `Discord: ${passport.discord_id}`}
+          </p>
         </div>
       ),
     },
-    // ✨ НОВАЯ КОЛОНКА: Город
     {
       key: 'city',
       label: 'Город',
       width: '120px',
       render: (city: string) => (
         <div className="flex items-center space-x-2">
-          <MapPin className="h-4 w-4 text-dark-400" />
-          <span className="text-dark-300">{city}</span>
+          <MapPin className="h-4 w-4 text-primary-400" />
+          <span className="text-primary-300">{city}</span>
         </div>
       ),
     },
@@ -202,7 +207,7 @@ const Passports: React.FC = () => {
       label: 'Возраст',
       width: '100px',
       render: (age: number) => (
-        <span className="text-blue-400 font-medium">{age} лет</span>
+        <span className="text-secondary-400 font-medium">{age} лет</span>
       ),
     },
     {
@@ -210,12 +215,11 @@ const Passports: React.FC = () => {
       label: 'Пол',
       width: '100px',
       render: (gender: string) => (
-        <span className="text-dark-300">
+        <span className="text-gray-300">
           {gender === 'male' ? 'Мужской' : 'Женский'}
         </span>
       ),
     },
-    // ✨ НОВАЯ КОЛОНКА: Нарушения
     {
       key: 'violations_count',
       label: 'Нарушения',
@@ -234,20 +238,20 @@ const Passports: React.FC = () => {
       label: 'Въезд в город',
       width: '130px',
       render: (date: string) => (
-        <span className="text-dark-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
+        <span className="text-gray-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),
     },
     {
       key: 'actions',
       label: 'Действия',
-      width: '180px',
+      width: '220px',
       render: (_: any, passport: Passport) => (
         <div className="flex items-center space-x-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => handleEditPassport(passport)}
-            className="!p-2"
+            className="!p-2 text-primary-400 hover:text-primary-300"
             title="Редактировать"
           >
             <Edit className="h-4 w-4" />
@@ -265,6 +269,17 @@ const Passports: React.FC = () => {
           >
             {passport.is_emergency ? <Shield className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
           </Button>
+          {user?.role === 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleShowPassportLogs(passport)}
+              className="!p-2 text-secondary-400 hover:text-secondary-300"
+              title="Показать логи паспорта"
+            >
+              <ScrollText className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -279,75 +294,65 @@ const Passports: React.FC = () => {
     },
   ];
 
-  // ✨ ОБНОВЛЕННАЯ статистика
+  // Обновленная статистика с новыми цветами
   const stats = [
     {
       title: 'Всего паспортов',
       value: passports?.length || 0,
       icon: Users,
-      color: 'blue' as const,
+      color: 'primary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'В списке ЧС',
       value: passports?.filter(p => p.is_emergency).length || 0,
       icon: ShieldAlert,
-      color: 'red' as const,
+      color: 'danger' as const,
     },
     {
       title: 'Мужчин',
       value: passports?.filter(p => p.gender === 'male').length || 0,
       icon: UserPlus,
-      color: 'green' as const,
+      color: 'secondary' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'Женщин',
       value: passports?.filter(p => p.gender === 'female').length || 0,
       icon: UserPlus,
-      color: 'purple' as const,
+      color: 'accent' as const, // ✨ НОВЫЙ цвет
     },
   ];
 
   const actions = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-4">
+    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
         <Input
-          placeholder="Поиск по имени, фамилии или никнейму..."
+          placeholder="Поиск по имени, фамилии, нику или Discord ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
-          className="w-80"
-        />
-        {/* ✨ НОВЫЙ фильтр по городу */}
-        <Select
-          options={cityOptions}
-          value={selectedCity}
-          onChange={setSelectedCity}
-          className="w-40"
-        />
-        {/* ✨ НОВЫЙ фильтр по ЧС статусу */}
-        <Select
-          options={emergencyOptions}
-          value={emergencyFilter}
-          onChange={setEmergencyFilter}
-          className="w-40"
+          className="w-full sm:w-64 minecraft-input"
         />
         <Button
           variant="outline"
           size="sm"
           leftIcon={<Filter className="h-4 w-4" />}
           onClick={() => setIsFilterModalOpen(true)}
+          className="flex-shrink-0"
         >
-          Фильтры
+          <span className="sr-only sm:not-sr-only">Фильтры</span>
         </Button>
       </div>
       <div className="flex items-center space-x-2">
         <Button
-          variant="primary"
+          variant="minecraft"
           size="sm"
           onClick={handleCreatePassport}
           leftIcon={<Plus className="h-4 w-4" />}
+          glow
+          className="w-full sm:w-auto"
         >
-          Создать паспорт
+          <span className="sm:hidden">Паспорт</span>
+          <span className="hidden sm:inline">Создать паспорт</span>
         </Button>
       </div>
     </div>
@@ -385,7 +390,7 @@ const Passports: React.FC = () => {
             data={filteredPassports}
             isLoading={isLoading}
             emptyMessage={
-              searchTerm || selectedCity || emergencyFilter
+              searchTerm
                 ? 'Паспорта не найдены по заданным критериям'
                 : 'Паспортов пока нет. Создайте первый паспорт.'
             }
@@ -401,7 +406,7 @@ const Passports: React.FC = () => {
         onSuccess={handleFormSuccess}
       />
 
-      {/* ✨ НОВОЕ: Emergency Management Modal */}
+      {/* Emergency Management Modal */}
       <EmergencyModal
         isOpen={isEmergencyModalOpen}
         onClose={() => setIsEmergencyModalOpen(false)}
@@ -427,7 +432,7 @@ const Passports: React.FC = () => {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-dark-300">
+          <p className="text-gray-300">
             Вы уверены, что хотите удалить паспорт пользователя{' '}
             <span className="font-medium text-white">
               {passportToDelete?.first_name} {passportToDelete?.last_name}
@@ -455,6 +460,13 @@ const Passports: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Passport Logs Modal */}
+      <PassportLogsModal
+        isOpen={isPassportLogsModalOpen}
+        onClose={() => setIsPassportLogsModalOpen(false)}
+        passport={passportForLogs}
+      />
     </Layout>
   );
 };

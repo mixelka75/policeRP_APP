@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Text
+from sqlalchemy import Column, String, Integer, ForeignKey, Text, Boolean
 from sqlalchemy.orm import relationship
 
 from app.models.base import BaseModel
@@ -15,6 +15,7 @@ class Fine(BaseModel):
     amount = Column(Integer, nullable=False)  # Сумма штрафа в рублях
     description = Column(Text, nullable=True)  # Дополнительное описание
     created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    is_paid = Column(Boolean, default=False, nullable=False, index=True)  # Статус оплаты
     
     # Связи
     passport = relationship("Passport", back_populates="fines")

@@ -13,12 +13,21 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   
+  // Discord-specific states
+  isDiscordConfigured: boolean;
+  discordAuthUrl: string | null;
+
   // Actions
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>; // Deprecated but kept for compatibility
+  loginWithDiscord: () => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  refreshUserData: () => Promise<void>; // New method for Discord refresh
+  refreshToken: () => Promise<void>; // New method for token refresh
+  updateUser: (user: User) => void; // New method for updating user data
   clearError: () => void;
   checkAuth: () => void;
+  handleDiscordCallback: (token: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,13 +38,16 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      isDiscordConfigured: false,
+      discordAuthUrl: null,
 
+      // ❌ DEPRECATED: Старый метод логина (сохранен для совместимости)
       login: async (credentials: LoginCredentials) => {
         set({ isLoading: true, error: null });
-        
+
         try {
           const response = await apiService.loginJson(credentials);
-          
+
           set({
             user: response.user,
             token: response.access_token,
@@ -46,12 +58,12 @@ export const useAuthStore = create<AuthState>()(
 
           localStorage.setItem('token', response.access_token);
           localStorage.setItem('user', JSON.stringify(response.user));
-          
-          toast.success(`Добро пожаловать, ${response.user.username}!`);
+
+          toast.success(`Добро пожаловать, ${response.user.discord_username}!`);
         } catch (error) {
           const apiError = error as ApiError;
           const errorMessage = apiError.detail || 'Ошибка авторизации';
-          
+
           set({
             user: null,
             token: null,
@@ -62,7 +74,104 @@ export const useAuthStore = create<AuthState>()(
 
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+
+          toast.error(errorMessage);
+          throw error;
+        }
+      },
+
+      // ✅ NEW: Discord OAuth логин
+      loginWithDiscord: async () => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await apiService.getDiscordLoginUrl();
+
+          set({
+            discordAuthUrl: response.oauth_url,
+            isDiscordConfigured: true,
+            isLoading: false,
+            error: null,
+          });
+
+          // Сохраняем state для проверки безопасности
+          localStorage.setItem('discord_auth_state', response.state);
+
+          // Перенаправляем на Discord OAuth
+          window.location.href = response.oauth_url;
+        } catch (error) {
+          const apiError = error as ApiError;
+          const errorMessage = apiError.detail || 'Ошибка подключения к Discord';
+
+          set({
+            isLoading: false,
+            error: errorMessage,
+            isDiscordConfigured: false,
+          });
+
+          toast.error(errorMessage);
+          throw error;
+        }
+      },
+
+      // ✅ NEW: Обработка callback от Discord
+      handleDiscordCallback: async (token: string) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          // Сохраняем токен
+          localStorage.setItem('token', token);
+
+          // Получаем данные пользователя
+          const user = await apiService.getMe();
+
+          set({
+            user,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          });
+
+          localStorage.setItem('user', JSON.stringify(user));
+
+          toast.success(`Добро пожаловать, ${user.discord_username}!`);
+        } catch (error) {
+          const apiError = error as ApiError;
+          let errorMessage = apiError.detail || 'Ошибка при получении данных пользователя';
           
+          // Специальная обработка ошибок аутентификации
+          console.error('Discord callback error details:', {
+            status: apiError.status,
+            detail: apiError.detail,
+            fullError: error
+          });
+          
+          if (apiError.status === 403) {
+            if (errorMessage.includes('необходимых ролей')) {
+              errorMessage = 'У вас нет необходимых ролей для доступа к системе. Обратитесь к администратору Discord сервера.';
+            } else if (errorMessage.includes('проверить роли')) {
+              errorMessage = 'Не удалось проверить роли пользователя';
+            } else if (errorMessage.includes('Текущая роль:')) {
+              errorMessage = errorMessage; // Показываем полную информацию об ошибке
+            }
+          } else if (apiError.status === 500 && errorMessage.includes('не настроен')) {
+            errorMessage = 'Сервер не настроен для проверки ролей';
+          } else if (apiError.status === 401) {
+            errorMessage = 'Неверный токен авторизации или токен истек';
+          }
+
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false,
+            error: errorMessage,
+          });
+
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+
           toast.error(errorMessage);
           throw error;
         }
@@ -75,18 +184,19 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
           isLoading: false,
           error: null,
+          discordAuthUrl: null,
         });
 
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        
+        localStorage.removeItem('discord_auth_state');
+
         toast.success('Вы вышли из системы');
       },
 
       refreshUser: async () => {
         const { token } = get();
         if (!token || isTokenExpired(token)) {
-          // ✨ Тихо очищаем данные если токен истек
           get().logout();
           return;
         }
@@ -94,11 +204,10 @@ export const useAuthStore = create<AuthState>()(
         try {
           const user = await apiService.getMe();
           set({ user, error: null });
+          localStorage.setItem('user', JSON.stringify(user));
         } catch (error) {
           console.error('Failed to refresh user:', error);
-          // ✨ Проверяем, не истекла ли сессия
           if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
-            // Тихо выходим без показа тоста
             set({
               user: null,
               token: null,
@@ -114,8 +223,76 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
+      // ✅ NEW: Обновление данных пользователя через Discord API
+      refreshUserData: async () => {
+        const { token, user } = get();
+        if (!token || isTokenExpired(token) || !user) {
+          get().logout();
+          return;
+        }
+
+        try {
+          const response = await apiService.refreshUserData();
+          set({ user: response.user, error: null });
+          localStorage.setItem('user', JSON.stringify(response.user));
+
+          toast.success('Данные пользователя обновлены');
+        } catch (error) {
+          console.error('Failed to refresh user data:', error);
+          const apiError = error as ApiError;
+
+          if (apiError.code === 'SESSION_EXPIRED' || apiError.status === 403) {
+            // Если пользователь потерял доступ, выходим из системы
+            get().logout();
+            if (apiError.status === 403) {
+              toast.error('Ваши роли изменились. Необходимо войти заново');
+            }
+          } else {
+            toast.error(apiError.detail || 'Ошибка при обновлении данных');
+          }
+        }
+      },
+
+      // ✅ NEW: Обновление JWT токена
+      refreshToken: async () => {
+        const { token, user } = get();
+        if (!token || !user) {
+          get().logout();
+          return;
+        }
+
+        try {
+          const response = await apiService.refreshToken();
+          
+          set({ 
+            token: response.access_token,
+            user: response.user,
+            error: null 
+          });
+          
+          localStorage.setItem('token', response.access_token);
+          localStorage.setItem('user', JSON.stringify(response.user));
+
+          console.log('Token refreshed successfully');
+        } catch (error) {
+          console.error('Failed to refresh token:', error);
+          const apiError = error as ApiError;
+
+          if (apiError.code === 'SESSION_EXPIRED' || apiError.status === 403 || apiError.status === 401) {
+            get().logout();
+          } else {
+            set({ error: apiError.detail || 'Ошибка при обновлении токена' });
+          }
+        }
+      },
+
       clearError: () => {
         set({ error: null });
+      },
+
+      updateUser: (user: User) => {
+        set({ user, error: null });
+        localStorage.setItem('user', JSON.stringify(user));
       },
 
       checkAuth: () => {
@@ -137,9 +314,9 @@ export const useAuthStore = create<AuthState>()(
             localStorage.removeItem('user');
           }
         } else {
-          // ✨ Тихо очищаем истекшие данные
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          localStorage.removeItem('discord_auth_state');
           set({
             user: null,
             token: null,
@@ -155,6 +332,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         token: state.token,
         isAuthenticated: state.isAuthenticated,
+        isDiscordConfigured: state.isDiscordConfigured,
       }),
     }
   )

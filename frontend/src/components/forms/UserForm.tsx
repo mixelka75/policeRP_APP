@@ -208,17 +208,17 @@ const UserForm: React.FC<UserFormProps> = ({
           className={`p-4 rounded-lg border ${
             formData.role === 'admin'
               ? 'bg-red-500/10 border-red-500/20'
-              : 'bg-blue-500/10 border-blue-500/20'
+              : 'bg-secondary-500/10 border-secondary-500/20'
           }`}
         >
           <div className="flex items-center space-x-2 mb-2">
             {formData.role === 'admin' ? (
               <ShieldCheck className="h-5 w-5 text-red-400" />
             ) : (
-              <Shield className="h-5 w-5 text-blue-400" />
+              <Shield className="h-5 w-5 text-secondary-400" />
             )}
             <h4 className={`font-medium ${
-              formData.role === 'admin' ? 'text-red-400' : 'text-blue-400'
+              formData.role === 'admin' ? 'text-red-400' : 'text-secondary-400'
             }`}>
               {formData.role === 'admin' ? 'Администратор' : 'Полицейский'}
             </h4>

@@ -2,9 +2,16 @@
 
 export interface User {
   id: number;
-  username: string;
-  role: 'admin' | 'police';
+  discord_id: string;
+  discord_username: string;
+  discord_discriminator: string;
+  discord_avatar: string;
+  minecraft_username?: string;
+  minecraft_uuid?: string;
+  role: 'admin' | 'police' | 'citizen';
   is_active: boolean;
+  discord_roles: string[];
+  last_role_check: string;
   created_at: string;
   updated_at: string;
 }
@@ -20,10 +27,89 @@ export interface LoginCredentials {
   password: string;
 }
 
+// Новые типы для Discord авторизации
+export interface DiscordAuthResponse {
+  oauth_url: string;
+  state: string;
+}
+
+export interface DiscordStatusResponse {
+  discord_configured: boolean;
+  guild_configured: boolean;
+  roles_configured: boolean;
+  spworlds_configured: boolean;
+  role_check_interval: number;
+  redirect_uri: string;
+}
+
+export interface UserRefreshResponse {
+  user: User;
+  message: string;
+}
+
+export interface TokenRefreshResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+  message: string;
+}
+
+export interface UserRoleCheckResponse {
+  user_id: number;
+  old_role: string;
+  new_role: string;
+  changed: boolean;
+  has_access: boolean;
+  minecraft_data_updated: boolean;
+}
+
+export interface UserSearchResponse {
+  users: User[];
+}
+
+export interface UserStatisticsResponse {
+  total_users: number;
+  active_users: number;
+  admin_users: number;
+  police_users: number;
+}
+
+export interface RoleCheckAllResponse {
+  message: string;
+  triggered_by: string;
+}
+
+export interface RoleStatusResponse {
+  service_running: boolean;
+  check_interval_minutes: number;
+  last_cache_update: string;
+  guild_roles_cached: number;
+}
+
+export interface RoleSyncIssue {
+  user_id: number;
+  discord_username: string;
+  minecraft_username?: string;
+  last_role_check: string;
+  issues: string[];
+}
+
+export interface RoleSyncIssuesResponse {
+  total_users: number;
+  users_with_issues: number;
+  issues: RoleSyncIssue[];
+}
+
+export interface SecurityLogResponse {
+  logs: Log[];
+  total_security_events: number;
+  period_days: number;
+}
+
 export interface UserCreate {
   username: string;
   password: string;
-  role: 'admin' | 'police';
+  role: 'admin' | 'police' | 'citizen';
   is_active: boolean;
 }
 
@@ -38,7 +124,9 @@ export interface Passport {
   id: number;
   first_name: string;
   last_name: string;
-  nickname: string;
+  discord_id: string;
+  nickname?: string;
+  uuid?: string;
   age: number;
   gender: 'male' | 'female';
   city: string;
@@ -49,29 +137,26 @@ export interface Passport {
   updated_at: string;
 }
 
-// ✨ ОБНОВЛЕННЫЙ интерфейс PassportCreate с entry_date
 export interface PassportCreate {
   first_name: string;
   last_name: string;
-  nickname: string;
+  discord_id: string;
   age: number;
   gender: 'male' | 'female';
   city: string;
-  entry_date?: string;  // ✨ НОВОЕ ПОЛЕ: дата въезда (опциональное)
+  entry_date?: string;
 }
 
-// ✨ ОБНОВЛЕННЫЙ интерфейс PassportUpdate
 export interface PassportUpdate {
   first_name?: string;
   last_name?: string;
-  nickname?: string;
+  discord_id?: string;
   age?: number;
   gender?: 'male' | 'female';
   city?: string;
-  entry_date?: string;  // ✨ НОВОЕ ПОЛЕ: дата въезда
+  entry_date?: string;
 }
 
-// Интерфейсы для работы с ЧС
 export interface PassportEmergencyUpdate {
   is_emergency: boolean;
   reason?: string;
@@ -91,6 +176,7 @@ export interface Fine {
   amount: number;
   description?: string;
   created_by_user_id: number;
+  is_paid: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -120,8 +206,16 @@ export interface Log {
 }
 
 export interface ApiError {
-  detail: string;
+  detail: string | Array<{
+    type?: string;
+    loc?: Array<string | number>;
+    msg?: string;
+    input?: any;
+    ctx?: any;
+    url?: string;
+  }>;
   code?: string;
+  status?: number;
 }
 
 export interface PaginatedResponse<T> {
@@ -144,4 +238,51 @@ export interface AppState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+}
+
+// Типы для скинов игроков
+export interface PassportSkinResponse {
+  passport_id: number;
+  nickname: string;
+  uuid: string;
+  skin_url: string;
+}
+
+export interface PlayerSkinResponse {
+  discord_id: string;
+  username: string | null;
+  uuid: string;
+  skin_url: string;
+}
+
+// Типы для платежей
+export interface Payment {
+  id: number;
+  passport_id: number;
+  fine_ids: number[];
+  total_amount: number;
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  payment_url?: string;
+  payer_nickname?: string;
+  created_at: string;
+  paid_at?: string;
+  expires_at?: string;
+}
+
+export interface PaymentCreate {
+  passport_id: number;
+  fine_ids: number[];
+}
+
+export interface PaymentResponse {
+  id: number;
+  passport_id: number;
+  fine_ids: number[];
+  total_amount: number;
+  status: string;
+  payment_url?: string;
+  payer_nickname?: string;
+  created_at: string;
+  paid_at?: string;
+  expires_at?: string;
 }

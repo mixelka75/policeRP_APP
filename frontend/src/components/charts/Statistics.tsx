@@ -20,6 +20,7 @@ import {
 import { Passport, Fine, User, Log } from '@/types';
 import { Card } from '@/components/ui';
 import { formatMoney } from '@/utils';
+import { EXCLUDED_LOG_ACTIONS } from '@/constants/logs';
 
 interface StatisticsProps {
   passports?: Passport[];
@@ -66,12 +67,12 @@ const Statistics: React.FC<StatisticsProps> = ({
     }, {} as Record<string, number>);
 
     return [
-      { name: 'Мужчины', value: genderCount.male || 0, color: '#3b82f6' },
-      { name: 'Женщины', value: genderCount.female || 0, color: '#ec4899' },
+      { name: 'Мужчины', value: genderCount.male || 0, color: '#c084fc' },
+      { name: 'Женщины', value: genderCount.female || 0, color: '#e879f9' },
     ];
   }, [passports]);
 
-  // ✨ НОВАЯ статистика по городам
+  // Статистика по городам
   const cityStatistics = useMemo(() => {
     const cityCount = passports.reduce((acc, passport) => {
       acc[passport.city] = (acc[passport.city] || 0) + 1;
@@ -80,14 +81,14 @@ const Statistics: React.FC<StatisticsProps> = ({
 
     return Object.entries(cityCount)
       .sort(([,a], [,b]) => b - a)
-      .slice(0, 10) // Топ 10 городов
+      .slice(0, 10)
       .map(([city, count]) => ({
         city: city.length > 15 ? city.substring(0, 15) + '...' : city,
         count,
       }));
   }, [passports]);
 
-  // ✨ НОВАЯ статистика по ЧС
+  // Статистика по ЧС
   const emergencyStatistics = useMemo(() => {
     const emergencyCount = passports.filter(p => p.is_emergency).length;
     const normalCount = passports.length - emergencyCount;
@@ -98,7 +99,7 @@ const Statistics: React.FC<StatisticsProps> = ({
     ];
   }, [passports]);
 
-  // ✨ НОВАЯ статистика по нарушениям
+  // Статистика по нарушениям
   const violationsStatistics = useMemo(() => {
     const violationGroups = {
       '0': 0,
@@ -168,9 +169,11 @@ const Statistics: React.FC<StatisticsProps> = ({
   // Статистика активности пользователей
   const userActivityStatistics = useMemo(() => {
     const activityData = users.map(user => {
-      const userLogs = logs.filter(log => log.user_id === user.id);
+      const userLogs = logs.filter(log => 
+        log.user_id === user.id && !EXCLUDED_LOG_ACTIONS.includes(log.action as any)
+      );
       return {
-        username: user.username,
+        username: user.discord_username,
         actions: userLogs.length,
         role: user.role,
       };
@@ -213,13 +216,13 @@ const Statistics: React.FC<StatisticsProps> = ({
               <XAxis dataKey="age" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" fill="#d4a574" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
       </motion.div>
 
-      {/* ✨ НОВАЯ: Emergency Status Distribution */}
+      {/* Emergency Status Distribution */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -263,7 +266,7 @@ const Statistics: React.FC<StatisticsProps> = ({
         </Card>
       </motion.div>
 
-      {/* ✨ НОВАЯ: Cities Distribution */}
+      {/* Cities Distribution */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -279,13 +282,13 @@ const Statistics: React.FC<StatisticsProps> = ({
               <XAxis type="number" stroke="#9ca3af" />
               <YAxis dataKey="city" type="category" stroke="#9ca3af" width={120} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" fill="#10b981" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill="#e879f9" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
       </motion.div>
 
-      {/* ✨ НОВАЯ: Violations Distribution */}
+      {/* Violations Distribution */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -301,7 +304,7 @@ const Statistics: React.FC<StatisticsProps> = ({
               <XAxis dataKey="range" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" fill="#b67bb8" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -371,8 +374,8 @@ const Statistics: React.FC<StatisticsProps> = ({
                 type="monotone"
                 dataKey="count"
                 stackId="1"
-                stroke="#ef4444"
-                fill="#ef4444"
+                stroke="#9381b3"
+                fill="#9381b3"
                 fillOpacity={0.3}
                 name="Количество"
               />
@@ -397,7 +400,7 @@ const Statistics: React.FC<StatisticsProps> = ({
               <XAxis type="number" stroke="#9ca3af" />
               <YAxis dataKey="article" type="category" stroke="#9ca3af" width={100} />
               <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill="#d946ef" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Card>

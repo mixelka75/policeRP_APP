@@ -62,7 +62,7 @@ export const useAuthStore = create<AuthState>()(
           toast.success(`Добро пожаловать, ${response.user.discord_username}!`);
         } catch (error) {
           const apiError = error as ApiError;
-          const errorMessage = apiError.detail || 'Ошибка авторизации';
+          const errorMessage = typeof apiError.detail === 'string' ? apiError.detail : 'Ошибка авторизации';
 
           set({
             user: null,
@@ -101,7 +101,7 @@ export const useAuthStore = create<AuthState>()(
           window.location.href = response.oauth_url;
         } catch (error) {
           const apiError = error as ApiError;
-          const errorMessage = apiError.detail || 'Ошибка подключения к Discord';
+          const errorMessage = typeof apiError.detail === 'string' ? apiError.detail : 'Ошибка подключения к Discord';
 
           set({
             isLoading: false,
@@ -122,8 +122,23 @@ export const useAuthStore = create<AuthState>()(
           // Сохраняем токен
           localStorage.setItem('token', token);
 
-          // Получаем данные пользователя
-          const user = await apiService.getMe();
+          // Получаем данные пользователя с повторными попытками
+          let user;
+          let retries = 3;
+          
+          while (retries > 0) {
+            try {
+              user = await apiService.getMe();
+              break;
+            } catch (retryError) {
+              retries--;
+              if (retries === 0) throw retryError;
+              
+              console.warn(`Retry getMe() failed, ${retries} attempts left:`, retryError);
+              // Небольшая пауза перед повторной попыткой
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
 
           set({
             user,
@@ -135,15 +150,16 @@ export const useAuthStore = create<AuthState>()(
 
           localStorage.setItem('user', JSON.stringify(user));
 
-          toast.success(`Добро пожаловать, ${user.discord_username}!`);
+          toast.success(`Добро пожаловать, ${user!.discord_username}!`);
         } catch (error) {
           const apiError = error as ApiError;
-          let errorMessage = apiError.detail || 'Ошибка при получении данных пользователя';
+          let errorMessage = typeof apiError.detail === 'string' ? apiError.detail : 'Ошибка при получении данных пользователя';
           
           // Специальная обработка ошибок аутентификации
           console.error('Discord callback error details:', {
             status: apiError.status,
             detail: apiError.detail,
+            code: apiError.code,
             fullError: error
           });
           
@@ -159,6 +175,8 @@ export const useAuthStore = create<AuthState>()(
             errorMessage = 'Сервер не настроен для проверки ролей';
           } else if (apiError.status === 401) {
             errorMessage = 'Неверный токен авторизации или токен истек';
+          } else if (apiError.code === 'ECONNABORTED' || apiError.code === 'NETWORK_ERROR' || apiError.code === 'ERR_NETWORK') {
+            errorMessage = 'Проблема соединения с сервером. Попробуйте ещё раз или обратитесь к администратору.';
           }
 
           set({
@@ -248,7 +266,8 @@ export const useAuthStore = create<AuthState>()(
               toast.error('Ваши роли изменились. Необходимо войти заново');
             }
           } else {
-            toast.error(apiError.detail || 'Ошибка при обновлении данных');
+            const errorMsg = typeof apiError.detail === 'string' ? apiError.detail : 'Ошибка при обновлении данных';
+            toast.error(errorMsg);
           }
         }
       },
@@ -281,7 +300,8 @@ export const useAuthStore = create<AuthState>()(
           if (apiError.code === 'SESSION_EXPIRED' || apiError.status === 403 || apiError.status === 401) {
             get().logout();
           } else {
-            set({ error: apiError.detail || 'Ошибка при обновлении токена' });
+            const errorMsg = typeof apiError.detail === 'string' ? apiError.detail : 'Ошибка при обновлении токена';
+            set({ error: errorMsg });
           }
         }
       },

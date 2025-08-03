@@ -5,12 +5,50 @@
 ## Предварительные требования
 
 - Ubuntu/Debian сервер с root доступом
-- Установленные Docker и Docker Compose
 - Домены, настроенные на ваш сервер:
   - `police.test.yuuri.online` (фронтенд)
   - `apipolice.test.yuuri.online` (backend API)
 
-## 1. Установка Nginx
+## 1. Установка Docker и Docker Compose
+
+```bash
+# Обновить систему
+sudo apt update && sudo apt upgrade -y
+
+# Установить зависимости
+sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release -y
+
+# Добавить GPG ключ Docker
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# Добавить репозиторий Docker
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Обновить индекс пакетов
+sudo apt update
+
+# Установить Docker Engine
+sudo apt install docker-ce docker-ce-cli containerd.io -y
+
+# Запустить и добавить в автозагрузку
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Добавить пользователя в группу docker (необязательно, но удобно)
+sudo usermod -aG docker $USER
+
+# Установить Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Проверить установку
+docker --version
+docker-compose --version
+```
+
+**Важно:** После добавления пользователя в группу docker, перезайдите в систему или выполните `newgrp docker`.
+
+## 2. Установка Nginx
 
 ```bash
 # Обновить список пакетов
@@ -43,16 +81,21 @@ sudo ln -s /snap/bin/certbot /usr/bin/certbot
 
 ## 3. Настройка Nginx
 
+**Важно:** Сначала нужно настроить временную конфигурацию без SSL, так как сертификаты еще не созданы.
+
 ```bash
 # Удалить стандартную конфигурацию nginx
 sudo rm /etc/nginx/sites-enabled/default
 
-# Скопировать вашу конфигурацию nginx
-sudo cp nginx.conf /etc/nginx/sites-available/policeRP
-sudo ln -s /etc/nginx/sites-available/policeRP /etc/nginx/sites-enabled/
+# Скопировать временную конфигурацию без SSL
+sudo cp nginx-temp.conf /etc/nginx/sites-available/policeRP-temp
+sudo ln -s /etc/nginx/sites-available/policeRP-temp /etc/nginx/sites-enabled/
 
 # Проверить конфигурацию nginx
 sudo nginx -t
+
+# Перезагрузить nginx
+sudo systemctl reload nginx
 ```
 
 ## 4. Получение SSL сертификатов
@@ -70,6 +113,23 @@ sudo certbot --nginx -d apipolice.test.yuuri.online
 - Согласитесь с условиями использования (введите 'Y')
 - Выберите, делиться ли email с EFF (необязательно)
 - Выберите опцию 2 для перенаправления HTTP на HTTPS
+
+**После получения сертификатов замените на полную конфигурацию:**
+
+```bash
+# Удалить временную конфигурацию
+sudo rm /etc/nginx/sites-enabled/policeRP-temp
+
+# Установить полную конфигурацию с SSL
+sudo cp nginx.conf /etc/nginx/sites-available/policeRP
+sudo ln -s /etc/nginx/sites-available/policeRP /etc/nginx/sites-enabled/
+
+# Проверить конфигурацию с SSL
+sudo nginx -t
+
+# Перезагрузить nginx
+sudo systemctl reload nginx
+```
 
 ## 5. Настройка автоматического продления
 
@@ -197,6 +257,36 @@ sudo certbot renew
 
 # Тестировать SSL конфигурацию
 openssl s_client -connect police.test.yuuri.online:443
+```
+
+#### Ошибка: "не может загрузить сертификат"
+
+Если получаете ошибку "cannot load certificate", это означает, что сертификаты еще не созданы. Выполните:
+
+```bash
+# Удалить текущую конфигурацию с SSL
+sudo rm /etc/nginx/sites-enabled/policeRP
+
+# Скопировать временную конфигурацию без SSL
+sudo cp nginx-temp.conf /etc/nginx/sites-available/policeRP-temp
+sudo ln -s /etc/nginx/sites-available/policeRP-temp /etc/nginx/sites-enabled/
+
+# Проверить конфигурацию
+sudo nginx -t
+
+# Перезагрузить nginx
+sudo systemctl reload nginx
+
+# Получить сертификаты
+sudo certbot --nginx -d police.test.yuuri.online
+sudo certbot --nginx -d apipolice.test.yuuri.online
+
+# После получения сертификатов, заменить на полную конфигурацию
+sudo rm /etc/nginx/sites-enabled/policeRP-temp
+sudo cp nginx.conf /etc/nginx/sites-available/policeRP
+sudo ln -s /etc/nginx/sites-available/policeRP /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
 ### Проблемы с приложением

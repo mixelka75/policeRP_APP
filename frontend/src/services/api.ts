@@ -43,7 +43,7 @@ class ApiService {
   constructor() {
     this.axiosInstance = axios.create({
       baseURL: `${API_URL}/api/v1`,
-      timeout: 10000,
+      timeout: 15000, // Increased timeout for production
       headers: {
         'Content-Type': 'application/json',
       },
@@ -158,7 +158,7 @@ class ApiService {
           }
           
           return Promise.reject({
-            detail: error.response?.data?.detail || 'У вас нет прав доступа к системе',
+            detail: (error.response?.data as any)?.detail || 'У вас нет прав доступа к системе',
             code: 'ACCESS_DENIED',
             status: 403
           });
@@ -170,6 +170,14 @@ class ApiService {
   }
 
   private handleError(error: AxiosError): ApiError {
+    console.error('API Error:', {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      url: error.config?.url,
+      data: error.response?.data
+    });
+
     if (error.response?.status === 401) {
       return {
         detail: 'Сессия истекла. Пожалуйста, войдите в систему заново.',
@@ -179,7 +187,7 @@ class ApiService {
 
     if (error.response?.status === 403) {
       return {
-        detail: error.response?.data?.detail || 'У вас нет прав доступа к системе',
+        detail: (error.response?.data as any)?.detail || 'У вас нет прав доступа к системе',
         code: 'ACCESS_DENIED',
         status: 403
       };
@@ -188,8 +196,24 @@ class ApiService {
     if (error.response?.data) {
       return error.response.data as ApiError;
     }
+
+    // More specific error messages
+    if (error.code === 'ECONNABORTED' || error.code === 'NETWORK_ERROR') {
+      return {
+        detail: 'Превышено время ожидания запроса. Проверьте соединение с сервером.',
+        code: error.code,
+      };
+    }
+
+    if (error.code === 'ERR_NETWORK') {
+      return {
+        detail: 'Ошибка сети. Проверьте подключение к интернету.',
+        code: error.code,
+      };
+    }
+
     return {
-      detail: error.message || 'Произошла ошибка сети',
+      detail: error.message || 'Произошла неизвестная ошибка',
       code: error.code,
     };
   }

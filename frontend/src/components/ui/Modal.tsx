@@ -1,8 +1,9 @@
 // src/components/ui/Modal.tsx
 import React, { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '@/utils';
+import { usePortal } from '@/hooks/usePortal';
 import Button from './Button';
 
 interface ModalProps {
@@ -26,6 +27,14 @@ const Modal: React.FC<ModalProps> = ({
   closeOnOverlayClick = true,
   closeOnEsc = true,
 }) => {
+  console.log('=== Modal Render ===');
+  console.log('isOpen:', isOpen);
+  console.log('title:', title);
+  console.log('size:', size);
+  
+  const portalRoot = usePortal('modal-root');
+  console.log('portalRoot:', portalRoot);
+
   useEffect(() => {
     if (!closeOnEsc) return;
 
@@ -37,12 +46,16 @@ const Modal: React.FC<ModalProps> = ({
 
     if (isOpen) {
       document.addEventListener('keydown', handleEsc);
+      // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEsc);
+      // Restore body scroll when modal is closed
       document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
     };
   }, [isOpen, onClose, closeOnEsc]);
 
@@ -53,30 +66,23 @@ const Modal: React.FC<ModalProps> = ({
     'max-w-2xl': size === 'xl',
   });
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={closeOnOverlayClick ? onClose : undefined}
-          />
+  const modalContent = isOpen ? (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ display: 'flex' }}>
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={closeOnOverlayClick ? onClose : undefined}
+      />
 
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={cn(
-              'relative w-full bg-dark-800/80 backdrop-blur-md rounded-xl border border-dark-600/50 shadow-2xl',
-              sizeClasses
-            )}
-          >
+      {/* Modal */}
+      <div
+        className={cn(
+          'relative w-full bg-dark-800/80 backdrop-blur-md rounded-xl border border-dark-600/50 shadow-2xl',
+          sizeClasses
+        )}
+        onClick={(e) => e.stopPropagation()}
+        style={{ zIndex: 10000 }}
+      >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-dark-600/50">
               <h2 className="text-lg font-semibold text-dark-100">
@@ -94,15 +100,23 @@ const Modal: React.FC<ModalProps> = ({
               )}
             </div>
 
-            {/* Body */}
-            <div className="p-6 max-h-[80vh] overflow-y-auto">
-              {children}
-            </div>
-          </motion.div>
+        {/* Body */}
+        <div className="p-6 max-h-[80vh] overflow-y-auto">
+          {children}
         </div>
-      )}
-    </AnimatePresence>
-  );
+      </div>
+    </div>
+  ) : null;
+
+  console.log('Modal - about to render:', { portalRoot: !!portalRoot, modalContent: !!modalContent });
+  
+  // If portalRoot is not available, render directly to body as fallback
+  if (!portalRoot && modalContent) {
+    console.log('Portal root not available, rendering fallback');
+    return modalContent;
+  }
+  
+  return portalRoot ? createPortal(modalContent, portalRoot) : null;
 };
 
 export default Modal;

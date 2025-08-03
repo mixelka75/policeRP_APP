@@ -39,12 +39,14 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-def verify_token(token: str) -> dict:
+def verify_token(token: str, allow_expired: bool = False) -> dict:
     """
     Проверка и декодирование JWT токена
     """
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        # Если allow_expired=True, не проверяем истечение токена
+        options = {"verify_exp": not allow_expired} if allow_expired else {}
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM], options=options)
         username: str = payload.get("sub")
         if username is None:
             raise HTTPException(

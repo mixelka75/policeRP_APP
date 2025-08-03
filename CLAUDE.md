@@ -15,6 +15,7 @@ This is a PoliceRP management system built with FastAPI backend and React fronte
 - **Authentication**: Discord OAuth2 + JWT tokens
 - **External APIs**: Discord API for role checking, SP-Worlds API for Minecraft nicknames
 - **Background Services**: Automated role synchronization service
+- **Background Tasks**: Celery with Redis for asynchronous operations
 
 ### Frontend (React)
 - **Location**: `frontend/src/`
@@ -24,9 +25,10 @@ This is a PoliceRP management system built with FastAPI backend and React fronte
 - **Routing**: React Router v6
 - **Forms**: React Hook Form
 - **UI Components**: Headless UI, Lucide React icons
+- **Build Tool**: Vite
 
 ### Key Components
-- **Models**: Database models in `backend/app/models/` (User, Passport, Fine, Log)
+- **Models**: Database models in `backend/app/models/` (User, Passport, Fine, Log, Payment)
 - **API Routes**: REST endpoints in `backend/app/api/v1/`
 - **CRUD Operations**: Database operations in `backend/app/crud/`
 - **Schemas**: Pydantic models in `backend/app/schemas/`
@@ -66,22 +68,26 @@ make status
 # Install dependencies (in backend/)
 pip install -r requirements.txt
 
-# Run development server
+# Run development server (from backend/)
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Database migrations
+# Alternative with environment variables
+DATABASE_URL="postgresql://rp_user:rp_password@localhost:5432/rp_server_db" python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Database migrations (from backend/)
 alembic upgrade head
 alembic revision --autogenerate -m "description"
 
-# Code quality
+# Code quality (from backend/)
 black .
 isort .
 flake8 .
 mypy .
 
-# Run tests
+# Run tests (from backend/)
 pytest
 pytest tests/test_api.py -v
+pytest -v  # verbose mode
 ```
 
 ### Frontend Development
@@ -98,7 +104,7 @@ npm run build
 # Type checking
 npm run type-check
 
-# Linting
+# Linting (if configured)
 npm run lint
 ```
 
@@ -119,13 +125,15 @@ npm run lint
 
 ### Core Models
 - **User**: Discord-authenticated users with roles (admin/police)
-- **Passport**: Citizen data (name, nickname, age, gender, city, emergency status)
-- **Fine**: Traffic violations and penalties
-- **Log**: System activity logging
+- **Passport**: Citizen data (first_name, last_name, nickname, age, gender, city, emergency status)
+- **Fine**: Traffic violations and penalties linked to passports
+- **Payment**: Fine payment records
+- **Log**: System activity logging for all operations
 
 ### Key Relationships
 - User → Passport (one-to-many): Users can create multiple passports
 - Passport → Fine (one-to-many): Passports can have multiple fines
+- Fine → Payment (one-to-one): Each fine can have one payment record
 - All models have audit fields (created_at, updated_at)
 
 ## Authentication Flow
@@ -145,10 +153,12 @@ npm run lint
 ## API Structure
 
 All API routes are prefixed with `/api/v1/`:
-- `/auth/` - Authentication endpoints
+- `/auth/` - Authentication endpoints (login, Discord OAuth callback)
 - `/users/` - User management (admin only)
-- `/passports/` - Passport CRUD operations
-- `/fines/` - Fine management
+- `/passports/` - Passport CRUD operations (includes emergency status management)
+- `/fines/` - Fine management and tracking
+- `/payments/` - Fine payment processing
+- `/events/` - Server-sent events for real-time updates
 - `/logs/` - System activity logs
 - `/roles/` - Role management utilities
 
@@ -157,18 +167,33 @@ All API routes are prefixed with `/api/v1/`:
 ### Testing
 - Backend tests in `backend/tests/`
 - Use `pytest` for backend testing
+- Test basic API endpoints with `pytest tests/test_api.py -v`
 - Frontend testing not currently configured
 
-### Deployment
-- Production deployment via Docker Compose
-- Health checks configured for all services
-- Logs stored in `./logs/` directory
+### Data Management
+- Database setup scripts in `init-db.sql`
+- Sample data creation available via Python script execution
+- Alembic migrations handle schema changes
+- Backup and restore functionality via Makefile
 
-### External Dependencies
-- Discord API for authentication and role checking
-- SP-Worlds API for Minecraft nickname validation
-- PostgreSQL for data persistence
-- Redis for caching and background tasks (optional)
+### External Integrations
+- **Discord API**: Role-based authentication and periodic role synchronization
+- **SP-Worlds API**: Minecraft nickname validation for passport creation
+- Real-time features via Server-Sent Events (SSE)
+
+### Project Structure
+- Modular backend architecture with separate CRUD, models, schemas, and services
+- React frontend with component-based architecture
+- Shared UI components in `frontend/src/components/ui/`
+- Custom hooks for API interactions and real-time updates
+- Zustand for client-side state management
+
+### Key Features
+- Emergency status management for citizens
+- Fine payment system with tracking
+- Real-time role updates and notifications
+- Comprehensive activity logging
+- Export functionality for data analysis
 
 ## Current Branch Context
 

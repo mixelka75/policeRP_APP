@@ -3,6 +3,9 @@
 /answer.md
 .idea
 .env
+.env.docker
+**/.env
+**/.env.docker
 node_modules
 .pyc
 venv

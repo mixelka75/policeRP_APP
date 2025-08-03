@@ -9,7 +9,7 @@ from typing import Optional
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import create_access_token
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_current_user_for_refresh
 from app.crud.user import user_crud
 from app.schemas.user import Token, DiscordAuthCallback, User as UserSchema
 from app.models.user import User
@@ -484,7 +484,7 @@ async def refresh_user_data(
 async def refresh_token(
         request: Request,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_user_for_refresh),
 ):
     """
     Обновить JWT токен без полной повторной авторизации

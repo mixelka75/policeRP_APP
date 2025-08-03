@@ -12,23 +12,25 @@ import {
   AlertTriangle,
   MapPin,
   Shield,
-  ShieldAlert
+  ShieldAlert,
+  ScrollText
 } from 'lucide-react';
 import { Passport } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
+import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal, Select, Badge } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, Badge } from '@/components/ui';
 import { PassportForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import EmergencyModal from '@/components/modals/EmergencyModal';
+import PassportLogsModal from '@/components/modals/PassportLogsModal';
 import { formatDate, getInitials } from '@/utils';
 import { PlayerSkin, MinecraftHead } from '@/components/common';
 
 const Passports: React.FC = () => {
+  const { user } = useAuthStore();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
-  const [emergencyFilter, setEmergencyFilter] = useState('');
   const [selectedPassport, setSelectedPassport] = useState<Passport | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -37,6 +39,8 @@ const Passports: React.FC = () => {
   const [passportForEmergency, setPassportForEmergency] = useState<Passport | null>(null);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
+  const [isPassportLogsModalOpen, setIsPassportLogsModalOpen] = useState(false);
+  const [passportForLogs, setPassportForLogs] = useState<Passport | null>(null);
 
   const {
     data: passports,
@@ -59,18 +63,21 @@ const Passports: React.FC = () => {
 
   useEffect(() => {
     loadPassports();
-  }, [selectedCity, emergencyFilter]);
+  }, []);
 
   const loadPassports = () => {
-    const emergency_only = emergencyFilter === 'true' ? true : emergencyFilter === 'false' ? false : undefined;
-    fetchPassports(0, 100, undefined, selectedCity || undefined, emergency_only);
+    fetchPassports(0, 100, undefined, undefined, undefined);
   };
 
   const filteredPassports = passports?.filter(passport => {
     // Поиск
-    const matchesSearch = passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (passport.nickname && passport.nickname.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    const searchLower = searchTerm.toLowerCase();
+    const fullName = `${passport.first_name} ${passport.last_name}`.toLowerCase();
+    const matchesSearch = 
+      passport.first_name.toLowerCase().includes(searchLower) ||
+      passport.last_name.toLowerCase().includes(searchLower) ||
+      fullName.includes(searchLower) ||
+      (passport.nickname && passport.nickname.toLowerCase().includes(searchLower)) ||
       passport.discord_id.includes(searchTerm);
 
     // Дополнительные фильтры из модального окна
@@ -115,6 +122,11 @@ const Passports: React.FC = () => {
     setIsEmergencyModalOpen(true);
   };
 
+  const handleShowPassportLogs = (passport: Passport) => {
+    setPassportForLogs(passport);
+    setIsPassportLogsModalOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (passportToDelete) {
       await deletePassport(passportToDelete.id);
@@ -137,19 +149,6 @@ const Passports: React.FC = () => {
     setAppliedFilters({});
   };
 
-  // Уникальные города из данных
-  const uniqueCities = [...new Set(passports?.map(p => p.city) || [])].sort();
-
-  const cityOptions = [
-    { value: '', label: 'Все города' },
-    ...uniqueCities.map(city => ({ value: city, label: city }))
-  ];
-
-  const emergencyOptions = [
-    { value: '', label: 'Все статусы' },
-    { value: 'true', label: 'Только в ЧС' },
-    { value: 'false', label: 'Только не в ЧС' },
-  ];
 
   const columns = [
     {
@@ -245,7 +244,7 @@ const Passports: React.FC = () => {
     {
       key: 'actions',
       label: 'Действия',
-      width: '180px',
+      width: '220px',
       render: (_: any, passport: Passport) => (
         <div className="flex items-center space-x-2">
           <Button
@@ -270,6 +269,17 @@ const Passports: React.FC = () => {
           >
             {passport.is_emergency ? <Shield className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
           </Button>
+          {user?.role === 'admin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => handleShowPassportLogs(passport)}
+              className="!p-2 text-secondary-400 hover:text-secondary-300"
+              title="Показать логи паспорта"
+            >
+              <ScrollText className="h-4 w-4" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -316,35 +326,21 @@ const Passports: React.FC = () => {
     <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
       <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
         <Input
-          placeholder="Поиск..."
+          placeholder="Поиск по имени, фамилии, нику или Discord ID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           leftIcon={<Search className="h-4 w-4" />}
           className="w-full sm:w-64 minecraft-input"
         />
-        <div className="flex space-x-2">
-          <Select
-            options={cityOptions}
-            value={selectedCity}
-            onChange={setSelectedCity}
-            className="flex-1 sm:w-32"
-          />
-          <Select
-            options={emergencyOptions}
-            value={emergencyFilter}
-            onChange={setEmergencyFilter}
-            className="flex-1 sm:w-32"
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Filter className="h-4 w-4" />}
-            onClick={() => setIsFilterModalOpen(true)}
-            className="flex-shrink-0"
-          >
-            <span className="sr-only sm:not-sr-only">Фильтры</span>
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          leftIcon={<Filter className="h-4 w-4" />}
+          onClick={() => setIsFilterModalOpen(true)}
+          className="flex-shrink-0"
+        >
+          <span className="sr-only sm:not-sr-only">Фильтры</span>
+        </Button>
       </div>
       <div className="flex items-center space-x-2">
         <Button
@@ -394,7 +390,7 @@ const Passports: React.FC = () => {
             data={filteredPassports}
             isLoading={isLoading}
             emptyMessage={
-              searchTerm || selectedCity || emergencyFilter
+              searchTerm
                 ? 'Паспорта не найдены по заданным критериям'
                 : 'Паспортов пока нет. Создайте первый паспорт.'
             }
@@ -464,6 +460,13 @@ const Passports: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Passport Logs Modal */}
+      <PassportLogsModal
+        isOpen={isPassportLogsModalOpen}
+        onClose={() => setIsPassportLogsModalOpen(false)}
+        passport={passportForLogs}
+      />
     </Layout>
   );
 };

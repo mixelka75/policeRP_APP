@@ -20,6 +20,7 @@ import {
 import { Passport, Fine, User, Log } from '@/types';
 import { Card } from '@/components/ui';
 import { formatMoney } from '@/utils';
+import { EXCLUDED_LOG_ACTIONS } from '@/constants/logs';
 
 interface StatisticsProps {
   passports?: Passport[];
@@ -168,9 +169,11 @@ const Statistics: React.FC<StatisticsProps> = ({
   // Статистика активности пользователей
   const userActivityStatistics = useMemo(() => {
     const activityData = users.map(user => {
-      const userLogs = logs.filter(log => log.user_id === user.id);
+      const userLogs = logs.filter(log => 
+        log.user_id === user.id && !EXCLUDED_LOG_ACTIONS.includes(log.action as any)
+      );
       return {
-        username: user.username,
+        username: user.discord_username,
         actions: userLogs.length,
         role: user.role,
       };

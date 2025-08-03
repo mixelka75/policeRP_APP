@@ -31,9 +31,9 @@ import { Layout } from '@/components/layout';
 import { Button, Input, StatCard, Card } from '@/components/ui';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, formatRelativeTime } from '@/utils';
-
-// Константы для исключенных событий
-const EXCLUDED_ACTIONS = ['GET_SKIN', 'GET_SKIN_BY_DISCORD', 'GET_AVATAR_BY_NICKNAME'];
+import LogDetailsModal from '@/components/modals/LogDetailsModal';
+import { UserAvatar } from '@/components/common';
+import { EXCLUDED_LOG_ACTIONS } from '@/constants/logs';
 
 const Logs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +41,9 @@ const Logs: React.FC = () => {
   const [usersMap, setUsersMap] = useState<Map<number, UserType>>(new Map());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
 
   const { execute: fetchUsers } = useApi(apiService.getUsers);
 
@@ -87,8 +90,8 @@ const Logs: React.FC = () => {
   const filteredLogs = logs?.filter(log => {
     const user = usersMap.get(log.user_id);
 
-    // Фильтрация скин-событий
-    if (EXCLUDED_ACTIONS.includes(log.action)) {
+    // Фильтрация исключенных событий
+    if (EXCLUDED_LOG_ACTIONS.includes(log.action as any)) {
       return false;
     }
 
@@ -130,6 +133,58 @@ const Logs: React.FC = () => {
 
   const handleResetFilters = () => {
     setAppliedFilters({});
+  };
+
+  const handleShowDetails = (log: Log) => {
+    console.group('=== LOG DETAILS BUTTON CLICKED ===');
+    console.log('Log object:', log);
+    console.log('Log ID:', log.id);
+    console.log('Log action:', log.action);
+    console.log('Log entity_type:', log.entity_type);
+    console.log('Log entity_id:', log.entity_id);
+    console.log('Log details:', log.details);
+    console.log('Log created_at:', log.created_at);
+    console.log('Log user_id:', log.user_id);
+    console.log('User from map:', usersMap.get(log.user_id));
+    console.log('Current selected log:', selectedLog);
+    console.log('Current modal state:', isDetailsModalOpen);
+    
+    try {
+      if (!log) {
+        console.error('No log data provided to handleShowDetails');
+        console.groupEnd();
+        return;
+      }
+      
+      if (!log.action) {
+        console.error('Log missing action, cannot show details:', log);
+        console.groupEnd();
+        return;
+      }
+      
+      if (!log.id) {
+        console.warn('Log missing ID, but attempting to show details anyway:', log);
+      }
+      
+      console.log('Setting selected log...');
+      setSelectedLog(log);
+      console.log('Opening details modal...');
+      setIsDetailsModalOpen(true);
+      console.log('Modal operations completed');
+      
+    } catch (error) {
+      console.error('Error in handleShowDetails:', error);
+    }
+    
+    console.groupEnd();
+  };
+
+  const handleCloseDetails = () => {
+    setIsDetailsModalOpen(false);
+    // Delay clearing the selected log to allow modal to close smoothly
+    setTimeout(() => {
+      setSelectedLog(null);
+    }, 150);
   };
 
   const getActionIcon = (action: string) => {
@@ -179,6 +234,57 @@ const Logs: React.FC = () => {
         return 'text-blue-400';
       default:
         return 'text-gray-300';
+    }
+  };
+
+  const getTargetInfo = (log: Log) => {
+    if (!log.details) return null;
+
+    switch (log.entity_type) {
+      case 'passport':
+        if (log.details.first_name && log.details.last_name) {
+          return {
+            title: `${log.details.first_name} ${log.details.last_name}`,
+            subtitle: log.details.nickname || `Discord: ${log.details.discord_id}`,
+            type: 'Паспорт'
+          };
+        }
+        return { title: 'Паспорт', subtitle: `ID: ${log.entity_id}`, type: 'Паспорт' };
+      
+      case 'fine':
+        if (log.details.passport_info) {
+          return {
+            title: `${log.details.passport_info.first_name} ${log.details.passport_info.last_name}`,
+            subtitle: `${log.details.article} - ${log.details.amount} АР`,
+            type: 'Штраф'
+          };
+        }
+        return { 
+          title: log.details.article || 'Штраф', 
+          subtitle: log.details.amount ? `${log.details.amount} АР` : `ID: ${log.entity_id}`,
+          type: 'Штраф'
+        };
+      
+      case 'payment':
+        return {
+          title: log.details.payer_nickname || 'Платеж',
+          subtitle: log.details.total_amount ? `${log.details.total_amount} АР` : `ID: ${log.entity_id}`,
+          type: 'Платеж'
+        };
+      
+      case 'user':
+        return {
+          title: log.details.discord_username || 'Пользователь',
+          subtitle: log.details.role || `ID: ${log.entity_id}`,
+          type: 'Пользователь'
+        };
+      
+      default:
+        return {
+          title: log.entity_type,
+          subtitle: `ID: ${log.entity_id}`,
+          type: log.entity_type
+        };
     }
   };
 
@@ -273,35 +379,36 @@ const Logs: React.FC = () => {
     {
       key: 'user_id',
       label: 'Пользователь',
+      width: '180px',
       render: (userId: number) => {
         const user = usersMap.get(userId);
         if (!user || !user.discord_username) return <span className="text-gray-500">Неизвестен</span>;
 
         return (
-          <div className="flex items-center space-x-2">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-              user.role === 'admin' 
-                ? 'bg-red-500/20 text-red-400'
-                : 'bg-primary-500/20 text-primary-400' // ✨ НОВЫЙ цвет
-            }`}>
-              {user.discord_username.charAt(0).toUpperCase()}
+          <div className="flex items-center space-x-3">
+            <UserAvatar user={user} size={28} showStatus />
+            <div className="min-w-0">
+              <p className="text-sm text-white truncate">{user.discord_username}</p>
+              <p className="text-xs text-gray-400">
+                {user.role === 'admin' ? 'Администратор' : user.role === 'police' ? 'Полицейский' : 'Житель'}
+              </p>
             </div>
-            <span className="text-sm text-white">{user.discord_username}</span>
           </div>
         );
       },
     },
     {
-      key: 'details',
-      label: 'Детали',
-      render: (details: any) => {
-        if (!details) return <span className="text-gray-500">—</span>;
+      key: 'target_info',
+      label: 'Целевой элемент',
+      width: '200px',
+      render: (_: any, log: Log) => {
+        const targetInfo = getTargetInfo(log);
+        if (!targetInfo) return <span className="text-gray-500">—</span>;
 
         return (
-          <div className="max-w-xs">
-            <p className="text-sm text-gray-300 truncate">
-              {details.username || details.nickname || details.article || details.reason || 'Детали доступны'}
-            </p>
+          <div className="min-w-0">
+            <p className="text-sm text-white truncate">{targetInfo.title}</p>
+            <p className="text-xs text-gray-400 truncate">{targetInfo.subtitle}</p>
           </div>
         );
       },
@@ -327,6 +434,40 @@ const Logs: React.FC = () => {
         </div>
       ),
     },
+    {
+      key: 'actions',
+      label: 'Действия',
+      width: '100px',
+      render: (_: any, log: Log) => {
+        // Не показываем кнопку для просмотра списков и других нежелательных действий
+        const hideButtonActions = ['VIEW_LIST', 'VIEW_EMERGENCY_LIST', 'VIEW_STATISTICS'];
+        
+        if (hideButtonActions.includes(log.action)) {
+          return <span className="text-gray-500 text-xs">—</span>;
+        }
+        
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              try {
+                e.preventDefault();
+                e.stopPropagation();
+                handleShowDetails(log);
+              } catch (error) {
+                console.error('Error in button onClick:', error);
+              }
+            }}
+            leftIcon={<Eye className="h-3 w-3" />}
+            className="text-xs hover:bg-primary-500/10"
+            type="button"
+          >
+            Подробнее
+          </Button>
+        );
+      },
+    },
   ];
 
   // Обновленный список фильтров действий
@@ -343,8 +484,8 @@ const Logs: React.FC = () => {
     { value: 'TOKEN_CHECK', label: 'Проверка токена' },
   ];
 
-  // Исключаем скин-события из статистики
-  const validLogs = logs?.filter(log => !EXCLUDED_ACTIONS.includes(log.action)) || [];
+  // Исключаем нежелательные события из статистики
+  const validLogs = logs?.filter(log => !EXCLUDED_LOG_ACTIONS.includes(log.action as any)) || [];
   
   const uniqueActions = [...new Set(validLogs.map(log => log.action))];
   const totalLogs = validLogs.length;
@@ -555,11 +696,12 @@ const Logs: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.02 }}
                         className="hover:bg-primary-500/5 transition-colors duration-200"
+                        style={{ pointerEvents: 'auto' }}
                       >
                         {columns.map((column) => (
                           <td key={column.key} className="px-4 py-4">
                             {column.render ? 
-                              column.render(log[column.key as keyof Log]) : 
+                              column.render(log[column.key as keyof Log], log) : 
                               log[column.key as keyof Log]
                             }
                           </td>
@@ -599,6 +741,14 @@ const Logs: React.FC = () => {
         onReset={handleResetFilters}
         type="logs"
         currentFilters={appliedFilters}
+      />
+
+      {/* Log Details Modal */}
+      <LogDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={handleCloseDetails}
+        log={selectedLog}
+        user={selectedLog ? usersMap.get(selectedLog.user_id) || null : null}
       />
     </Layout>
   );

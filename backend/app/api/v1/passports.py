@@ -120,7 +120,7 @@ def read_emergency_passports(
         db: Session = Depends(get_db),
         skip: int = 0,
         limit: int = 100,
-        current_user: User = Depends(get_current_active_admin),
+        current_user: User = Depends(get_current_police_or_admin),
 ):
     """
     Получить список паспортов в ЧС

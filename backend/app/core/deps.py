@@ -123,6 +123,58 @@ def verify_discord_user(
     return current_user
 
 
+def get_current_user_for_refresh(
+        db: Session = Depends(get_db),
+        credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> User:
+    """
+    Получение текущего пользователя для обновления токена (разрешаем истекшие токены)
+    """
+    print(f"DEBUG get_current_user_for_refresh: Received token: {credentials.credentials[:20]}...")
+    
+    # Разрешаем истекшие токены для обновления
+    payload = verify_token(credentials.credentials, allow_expired=True)
+    print(f"DEBUG get_current_user_for_refresh: Token payload: {payload}")
+    discord_id = payload.get("sub")
+
+    if not discord_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Не удалось подтвердить учетные данные",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = user_crud.get_by_discord_id(db, discord_id=discord_id)
+    print(f"DEBUG get_current_user_for_refresh: Found user: {user.discord_username if user else 'None'}")
+    if not user:
+        print(f"DEBUG get_current_user_for_refresh: User not found for discord_id: {discord_id}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Пользователь не найден",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    print(f"DEBUG get_current_user_for_refresh: User {user.discord_username} is_active: {user.is_active}")
+    if not user.is_active:
+        print(f"DEBUG get_current_user_for_refresh: User {user.discord_username} is BLOCKED (is_active=False)")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Пользователь заблокирован"
+        )
+
+    # Проверяем, что у пользователя есть валидная роль
+    print(f"DEBUG deps.py: User {user.discord_username} has role: '{user.role}', is_active: {user.is_active}")
+    
+    if user.role not in ["admin", "police", "citizen"]:
+        print(f"DEBUG deps.py: Invalid role '{user.role}', expected 'admin', 'police' or 'citizen'")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"У вас нет необходимых ролей для доступа к системе. Текущая роль: {user.role}"
+        )
+
+    return user
+
+
 async def get_current_user_by_token(token: Optional[str], db: Session) -> User:
     """
     Получение текущего пользователя по JWT токену (для SSE)

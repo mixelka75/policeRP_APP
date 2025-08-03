@@ -82,6 +82,57 @@ const Button: React.FC<ButtonProps> = ({
     }
   };
 
+  // Use regular button for ghost variant to avoid motion conflicts
+  const shouldUseMotion = variant !== 'ghost';
+  
+  if (!shouldUseMotion) {
+    return (
+      <button
+        className={cn(baseClasses, variantClasses, glowClasses, className)}
+        disabled={disabled || loading}
+        onClick={handleClick}
+        type={props.type || "button"}
+        {...props}
+      >
+        {/* Glow effect */}
+        {glow && (
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-500/50 to-secondary-500/50 blur-lg opacity-50 -z-10" />
+        )}
+
+        {/* Loading spinner */}
+        {loading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </motion.div>
+        )}
+
+        {/* Content */}
+        <div className={cn(
+          'relative z-10 flex items-center gap-2 transition-opacity duration-200',
+          loading && 'opacity-0'
+        )}>
+          {!loading && leftIcon && (
+            <span className="flex-shrink-0">
+              {leftIcon}
+            </span>
+          )}
+
+          <span className="font-medium">{children}</span>
+
+          {!loading && rightIcon && (
+            <span className="flex-shrink-0">
+              {rightIcon}
+            </span>
+          )}
+        </div>
+      </button>
+    );
+  }
+
   return (
     <motion.button
       whileHover={{
@@ -100,7 +151,8 @@ const Button: React.FC<ButtonProps> = ({
       className={cn(baseClasses, variantClasses, glowClasses, className)}
       disabled={disabled || loading}
       onClick={handleClick}
-      {...props}
+      type={props.type || "button"}
+      {...(props as any)}
     >
       {/* Background gradient overlay */}
       {(variant === 'primary' || variant === 'minecraft') && (

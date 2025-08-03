@@ -1,7 +1,8 @@
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic import ConfigDict, field_validator
 from typing import Optional, List
 import os
+import json
 
 
 class Settings(BaseSettings):
@@ -59,6 +60,18 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8000"
     ]
+    
+    @field_validator('ALLOWED_ORIGINS', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        if isinstance(v, str):
+            try:
+                # Пытаемся распарсить как JSON
+                return json.loads(v)
+            except json.JSONDecodeError:
+                # Если не JSON, разделяем по запятым
+                return [origin.strip() for origin in v.split(',') if origin.strip()]
+        return v
 
     # Конфигурация модели - игнорируем лишние переменные окружения
     model_config = ConfigDict(

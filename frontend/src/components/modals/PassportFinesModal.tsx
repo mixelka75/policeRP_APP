@@ -15,7 +15,7 @@ import { Modal, Button, Badge } from '@/components/ui';
 import { Fine, Passport } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
-import { formatDate, formatCurrency } from '@/utils';
+import { formatDate, formatMoney } from '@/utils';
 
 interface PassportFinesModalProps {
   isOpen: boolean;
@@ -106,7 +106,7 @@ const PassportFinesModal: React.FC<PassportFinesModalProps> = ({
             </div>
             <p className="text-xl font-bold text-green-400 mt-1">{paidFines.length}</p>
             <p className="text-xs text-gray-500 mt-1">
-              {formatCurrency(paidAmount)}
+              {formatMoney(paidAmount)}
             </p>
           </div>
           <div className="bg-dark-700/30 rounded-lg p-4">
@@ -116,7 +116,7 @@ const PassportFinesModal: React.FC<PassportFinesModalProps> = ({
             </div>
             <p className="text-xl font-bold text-red-400 mt-1">{unpaidFines.length}</p>
             <p className="text-xs text-gray-500 mt-1">
-              {formatCurrency(unpaidAmount)}
+              {formatMoney(unpaidAmount)}
             </p>
           </div>
           <div className="bg-dark-700/30 rounded-lg p-4">
@@ -125,7 +125,7 @@ const PassportFinesModal: React.FC<PassportFinesModalProps> = ({
               <span className="text-sm text-gray-400">Общая сумма</span>
             </div>
             <p className="text-xl font-bold text-white mt-1">
-              {formatCurrency(totalAmount)}
+              {formatMoney(totalAmount)}
             </p>
           </div>
         </div>
@@ -177,7 +177,7 @@ const PassportFinesModal: React.FC<PassportFinesModalProps> = ({
                           {fine.article}
                         </span>
                         <span className="text-accent-400 font-bold">
-                          {formatCurrency(fine.amount)}
+                          {formatMoney(fine.amount)}
                         </span>
                       </div>
                       

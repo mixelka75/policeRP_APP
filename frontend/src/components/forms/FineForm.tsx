@@ -1,9 +1,9 @@
 // src/components/forms/FineForm.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, DollarSign, MessageSquare, User } from 'lucide-react';
-import { Fine, FineCreate, FineUpdate, Passport } from '@/types';
-import { Button, Input, Select, Modal } from '@/components/ui';
+import { FileText, DollarSign } from 'lucide-react';
+import { Fine, FineCreate, FineUpdate } from '@/types';
+import { Button, Input, Modal, PassportSearchSelect } from '@/components/ui';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { validateForm, formatMoney } from '@/utils';
@@ -31,7 +31,6 @@ const FineForm: React.FC<FineFormProps> = ({
     description: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [passportOptions, setPassportOptions] = useState<{ value: string; label: string }[]>([]);
 
   const { execute: createFine, isLoading: isCreating } = useApi(
     apiService.createFine,
@@ -57,15 +56,7 @@ const FineForm: React.FC<FineFormProps> = ({
     }
   );
 
-  const { execute: fetchPassports } = useApi(apiService.getPassports);
-
   const isLoading = isCreating || isUpdating;
-
-  useEffect(() => {
-    if (isOpen) {
-      loadPassports();
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     if (fine) {
@@ -86,18 +77,6 @@ const FineForm: React.FC<FineFormProps> = ({
     setErrors({});
   }, [fine, selectedPassportId, isOpen]);
 
-  const loadPassports = async () => {
-    try {
-      const passports = await fetchPassports();
-      const options = passports.map((passport: Passport) => ({
-        value: passport.id.toString(),
-        label: `${passport.first_name} ${passport.last_name} (${passport.nickname})`,
-      }));
-      setPassportOptions(options);
-    } catch (error) {
-      console.error('Failed to load passports:', error);
-    }
-  };
 
   const handleChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -163,13 +142,12 @@ const FineForm: React.FC<FineFormProps> = ({
       size="md"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Select
+        <PassportSearchSelect
           label="Гражданин"
-          options={passportOptions}
           value={formData.passport_id}
           onChange={(value) => handleChange('passport_id', value)}
           error={errors.passport_id}
-          placeholder="Выберите гражданина"
+          placeholder="Поиск по имени, фамилии или никнейму..."
           disabled={isLoading || isEditing}
           fullWidth
         />

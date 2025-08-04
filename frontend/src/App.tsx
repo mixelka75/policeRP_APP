@@ -116,7 +116,7 @@ const App: React.FC = () => {
             }
           />
 
-          {/* Citizen routes */}
+          {/* My fines route - available for all authenticated users */}
           <Route
             path="/my-fines"
             element={

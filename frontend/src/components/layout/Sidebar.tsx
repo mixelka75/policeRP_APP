@@ -83,6 +83,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         current: location.pathname === '/fines',
       },
       {
+        name: 'Мои штрафы',
+        href: '/my-fines',
+        icon: AlertTriangle,
+        current: location.pathname === '/my-fines',
+      },
+      {
         name: 'Список ЧС',
         href: '/emergency',
         icon: ShieldAlert,

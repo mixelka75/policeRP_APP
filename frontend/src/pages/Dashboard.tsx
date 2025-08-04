@@ -74,18 +74,33 @@ const Dashboard: React.FC = () => {
     showErrorToast: false,
   });
 
-  useEffect(() => {
-    if (user?.role === 'citizen') {
-      return;
-    }
+  const {
+    data: myPassport,
+    isLoading: myPassportLoading,
+    execute: fetchMyPassport,
+    error: myPassportError,
+  } = useApi(apiService.getMyPassport, {
+    showErrorToast: false,
+  });
 
+  useEffect(() => {
     const loadData = async () => {
       try {
-        await Promise.all([
+        if (user?.role === 'citizen') {
+          return;
+        }
+
+        // Загружаем данные для админов и полицейских
+        const promises = [
           fetchPassports(),
           fetchFines(),
-          fetchEmergencyPassports()
-        ]);
+          fetchEmergencyPassports(),
+        ];
+
+        // Также пытаемся загрузить свой паспорт (если есть)
+        promises.push(fetchMyPassport());
+
+        await Promise.all(promises);
       } catch (error) {
         console.error('Error loading dashboard data:', error);
         if (error && typeof error === 'object' && 'code' in error && error.code === 'SESSION_EXPIRED') {
@@ -362,6 +377,17 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </Card>
+          </motion.div>
+        )}
+
+        {/* User Passport Card для админов и полицейских */}
+        {user?.role !== 'citizen' && myPassport && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <UserPassportCard />
           </motion.div>
         )}
 

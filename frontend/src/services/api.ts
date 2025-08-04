@@ -455,15 +455,30 @@ class ApiService {
   }
 
   async getPassports(
-    skip: number = 0,
+    skipOrParams: number | { skip?: number; limit?: number; search?: string; city?: string; emergency_only?: boolean } = 0,
     limit: number = 100,
     search?: string,
     city?: string,
     emergency_only?: boolean
   ): Promise<Passport[]> {
     try {
+      let params: any;
+      
+      // Поддерживаем и старый формат (параметры по отдельности), и новый (объект)
+      if (typeof skipOrParams === 'object') {
+        params = {
+          skip: skipOrParams.skip || 0,
+          limit: skipOrParams.limit || 100,
+          search: skipOrParams.search,
+          city: skipOrParams.city,
+          emergency_only: skipOrParams.emergency_only,
+        };
+      } else {
+        params = { skip: skipOrParams, limit, search, city, emergency_only };
+      }
+
       const response = await this.axiosInstance.get<Passport[]>('/passports/', {
-        params: { skip, limit, search, city, emergency_only },
+        params,
       });
       return response.data;
     } catch (error) {

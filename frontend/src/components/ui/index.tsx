@@ -8,3 +8,4 @@ export { default as Loading } from './Loading';
 export { default as Modal } from './Modal';
 export { default as StatCard } from './StatCard';
 export { default as Table } from './Table';
+export { default as PassportSearchSelect } from './PassportSearchSelect';

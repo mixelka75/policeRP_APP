@@ -10,7 +10,10 @@ import {
   AlertTriangle,
   DollarSign,
   FileText,
-  TrendingUp
+  TrendingUp,
+  CheckCircle,
+  XCircle,
+  User
 } from 'lucide-react';
 import { Fine, Passport } from '@/types';
 import { apiService } from '@/services/api';
@@ -77,19 +80,46 @@ const Fines: React.FC = () => {
     const matchesSearch = fine.article.toLowerCase().includes(searchTerm.toLowerCase()) ||
       passport?.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       passport?.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      passport?.nickname.toLowerCase().includes(searchTerm.toLowerCase());
+      passport?.nickname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (fine.issuer_info?.discord_username && fine.issuer_info.discord_username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (fine.issuer_info?.minecraft_username && fine.issuer_info.minecraft_username.toLowerCase().includes(searchTerm.toLowerCase()));
 
     // Фильтры
     let matchesFilters = true;
 
+    // Amount range filter
     if (appliedFilters.amount?.min && fine.amount < appliedFilters.amount.min) {
       matchesFilters = false;
     }
-
     if (appliedFilters.amount?.max && fine.amount > appliedFilters.amount.max) {
       matchesFilters = false;
     }
 
+    // Payment status filter
+    if (appliedFilters.isPaid) {
+      const isPaidFilter = appliedFilters.isPaid === 'true';
+      if (fine.is_paid !== isPaidFilter) {
+        matchesFilters = false;
+      }
+    }
+
+    // Article filter
+    if (appliedFilters.article && !fine.article.toLowerCase().includes(appliedFilters.article.toLowerCase())) {
+      matchesFilters = false;
+    }
+
+    // Issuer filter
+    if (appliedFilters.issuer) {
+      const issuerLower = appliedFilters.issuer.toLowerCase();
+      const matchesIssuer = 
+        (fine.issuer_info?.discord_username && fine.issuer_info.discord_username.toLowerCase().includes(issuerLower)) ||
+        (fine.issuer_info?.minecraft_username && fine.issuer_info.minecraft_username.toLowerCase().includes(issuerLower));
+      if (!matchesIssuer) {
+        matchesFilters = false;
+      }
+    }
+
+    // Date range filter
     if (appliedFilters.dateRange?.start) {
       const fineDate = new Date(fine.created_at);
       const startDate = new Date(appliedFilters.dateRange.start);
@@ -176,10 +206,63 @@ const Fines: React.FC = () => {
       key: 'amount',
       label: 'Сумма',
       width: '120px',
-      render: (amount: number) => (
-        <span className="text-red-400 font-bold text-lg">
-          {formatMoney(amount)}
-        </span>
+      render: (amount: number, fine: Fine) => (
+        <div className="flex items-center space-x-2">
+          <span className="text-red-400 font-bold text-lg">
+            {formatMoney(amount)}
+          </span>
+          {fine.is_paid ? (
+            <CheckCircle className="h-4 w-4 text-green-400" />
+          ) : (
+            <XCircle className="h-4 w-4 text-red-400" />
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Статус',
+      width: '100px',
+      render: (_: any, fine: Fine) => (
+        <div className="flex items-center justify-center">
+          {fine.is_paid ? (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900/20 text-green-400 border border-green-500/30">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Оплачено
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900/20 text-red-400 border border-red-500/30">
+              <XCircle className="h-3 w-3 mr-1" />
+              Не оплачено
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'issuer',
+      label: 'Выписал',
+      width: '150px',
+      render: (_: any, fine: Fine) => (
+        <div className="flex items-center space-x-2">
+          <User className="h-4 w-4 text-gray-400" />
+          <div className="min-w-0">
+            {fine.issuer_info ? (
+              <>
+                <p className="text-sm font-medium text-white truncate">
+                  {fine.issuer_info.minecraft_username || fine.issuer_info.discord_username}
+                </p>
+                {fine.issuer_info.minecraft_username && (
+                  <p className="text-xs text-gray-400 truncate">
+                    {fine.issuer_info.discord_username}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">Неизвестен</p>
+            )}
+          </div>
+        </div>
       ),
     },
     {
@@ -218,26 +301,31 @@ const Fines: React.FC = () => {
   ];
 
   const totalAmount = fines?.reduce((sum, fine) => sum + fine.amount, 0) || 0;
-  const avgAmount = fines?.length ? Math.round(totalAmount / fines.length) : 0;
+  const paidFines = fines?.filter(fine => fine.is_paid) || [];
+  const unpaidFines = fines?.filter(fine => !fine.is_paid) || [];
+  const paidAmount = paidFines.reduce((sum, fine) => sum + fine.amount, 0);
+  const unpaidAmount = unpaidFines.reduce((sum, fine) => sum + fine.amount, 0);
 
   const stats = [
     {
       title: 'Всего штрафов',
       value: fines?.length || 0,
       icon: FileText,
-      color: 'primary' as const, // ✨ НОВЫЙ цвет
+      color: 'primary' as const,
     },
     {
-      title: 'Общая сумма',
-      value: formatMoney(totalAmount),
-      icon: DollarSign,
+      title: 'Оплачено',
+      value: paidFines.length,
+      subtitle: formatMoney(paidAmount),
+      icon: CheckCircle,
+      color: 'success' as const,
+    },
+    {
+      title: 'Не оплачено',
+      value: unpaidFines.length,
+      subtitle: formatMoney(unpaidAmount),
+      icon: XCircle,
       color: 'danger' as const,
-    },
-    {
-      title: 'Средний штраф',
-      value: formatMoney(avgAmount),
-      icon: TrendingUp,
-      color: 'accent' as const, // ✨ НОВЫЙ цвет
     },
     {
       title: 'За сегодня',
@@ -247,7 +335,7 @@ const Fines: React.FC = () => {
         return fineDate.toDateString() === today.toDateString();
       }).length || 0,
       icon: AlertTriangle,
-      color: 'secondary' as const, // ✨ НОВЫЙ цвет
+      color: 'secondary' as const,
     },
   ];
 

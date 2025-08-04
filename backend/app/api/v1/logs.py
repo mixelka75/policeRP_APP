@@ -23,38 +23,77 @@ async def read_logs(
         action: Optional[str] = Query(None, description="Фильтр по типу действия"),
         entity_type: Optional[str] = Query(None, description="Фильтр по типу сущности"),
         entity_id: Optional[int] = Query(None, description="Фильтр по ID сущности"),
+        user_role: Optional[str] = Query(None, description="Фильтр по роли пользователя"),
+        ip_address: Optional[str] = Query(None, description="Фильтр по IP адресу"),
+        date_from: Optional[str] = Query(None, description="Дата с (YYYY-MM-DD)"),
+        date_to: Optional[str] = Query(None, description="Дата до (YYYY-MM-DD)"),
         days: Optional[int] = Query(7, description="Количество дней назад (по умолчанию 7)"),
         current_user: User = Depends(get_current_active_admin),
 ):
     """
-    Получить список логов с пагинацией (только для администраторов)
+    Получить список логов с пагинацией и расширенными фильтрами (только для администраторов)
     """
+    from sqlalchemy import and_, or_
+    from app.models.log import Log as LogModel
+    from app.models.user import User as UserModel
+    
     # Вычисляем skip на основе page и page_size
     skip = page * page_size
     limit = page_size
     
-    # Фильтр по дате
-    start_date = datetime.now() - timedelta(days=days) if days else None
-
+    # Базовый запрос с джойном на пользователя для фильтрации по роли
+    query = db.query(LogModel).join(UserModel, LogModel.user_id == UserModel.id, isouter=True)
+    count_query = db.query(LogModel).join(UserModel, LogModel.user_id == UserModel.id, isouter=True)
+    
+    # Список фильтров
+    filters = []
+    
+    # Фильтр по дате (days или date_from/date_to)
+    if date_from or date_to:
+        if date_from:
+            try:
+                start_date = datetime.strptime(date_from, "%Y-%m-%d")
+                filters.append(LogModel.created_at >= start_date)
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                end_date = datetime.strptime(date_to, "%Y-%m-%d")
+                filters.append(LogModel.created_at <= end_date)
+            except ValueError:
+                pass
+    elif days:
+        start_date = datetime.now() - timedelta(days=days)
+        filters.append(LogModel.created_at >= start_date)
+    
+    # Остальные фильтры
     if user_id:
-        logs = log_crud.get_by_user_id(db, user_id=user_id, skip=skip, limit=limit)
-        total_count = log_crud.count_by_user_id(db, user_id=user_id)
-    elif action:
-        logs = log_crud.get_by_action(db, action=action, skip=skip, limit=limit)
-        total_count = log_crud.count_by_action(db, action=action)
-    elif entity_type:
-        if entity_id:
-            logs = log_crud.get_by_entity(db, entity_type=entity_type, entity_id=entity_id)
-            total_count = len(logs)
-        else:
-            logs = log_crud.get_by_entity_type(db, entity_type=entity_type, skip=skip, limit=limit)
-            total_count = log_crud.count_by_entity_type(db, entity_type=entity_type)
-    elif start_date:
-        logs = log_crud.get_by_date_range(db, start_date=start_date, skip=skip, limit=limit)
-        total_count = log_crud.count_by_date_range(db, start_date=start_date)
-    else:
-        logs = log_crud.get_multi(db, skip=skip, limit=limit)
-        total_count = log_crud.count_all(db)
+        filters.append(LogModel.user_id == user_id)
+    
+    if action:
+        filters.append(LogModel.action == action)
+    
+    if entity_type:
+        filters.append(LogModel.entity_type == entity_type)
+    
+    if entity_id:
+        filters.append(LogModel.entity_id == entity_id)
+    
+    if user_role:
+        filters.append(UserModel.role == user_role)
+    
+    if ip_address:
+        filters.append(LogModel.ip_address.ilike(f"%{ip_address}%"))
+    
+    # Применяем все фильтры
+    if filters:
+        query = query.filter(and_(*filters))
+        count_query = count_query.filter(and_(*filters))
+    
+    # Применяем пагинацию
+    logs = query.offset(skip).limit(limit).all()
+    total_count = count_query.count()
 
     # Преобразуем SQLAlchemy модели в Pydantic схемы
     log_schemas = [Log.model_validate(log) for log in logs]

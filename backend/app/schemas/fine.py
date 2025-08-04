@@ -29,6 +29,15 @@ class FineUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=1000)
 
 
+class IssuerInfo(BaseModel):
+    """
+    Информация о выписавшем штраф сотруднике
+    """
+    user_id: int
+    discord_username: str
+    minecraft_username: Optional[str] = None
+
+
 class Fine(FineBase):
     """
     Схема штрафа для ответа
@@ -38,6 +47,21 @@ class Fine(FineBase):
     is_paid: bool = Field(default=False, description="Статус оплаты штрафа")
     created_at: datetime
     updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+
+class FineWithDetails(FineBase):
+    """
+    Схема штрафа с подробной информацией о выписавшем
+    """
+    id: int
+    created_by_user_id: int
+    is_paid: bool = Field(default=False, description="Статус оплаты штрафа")
+    created_at: datetime
+    updated_at: datetime
+    issuer_info: Optional[IssuerInfo] = None
     
     class Config:
         from_attributes = True

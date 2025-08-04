@@ -7,8 +7,9 @@ import { cn } from '@/utils';
 interface StatCardProps {
   title: string;
   value: string | number;
+  subtitle?: string;
   icon: LucideIcon;
-  color?: 'primary' | 'secondary' | 'accent' | 'final' | 'green' | 'red' | 'yellow' | 'purple' | 'blue';
+  color?: 'primary' | 'secondary' | 'accent' | 'final' | 'green' | 'red' | 'yellow' | 'purple' | 'blue' | 'success' | 'danger';
   trend?: {
     value: number;
     isPositive: boolean;
@@ -20,6 +21,7 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
+  subtitle,
   icon: Icon,
   color = 'primary',
   trend,
@@ -34,8 +36,8 @@ const StatCard: React.FC<StatCardProps> = ({
     'bg-final-500/10 text-final-400 border-final-500/20': color === 'final',
 
     // Функциональные цвета (остаются без изменений)
-    'bg-green-500/10 text-green-400 border-green-500/20': color === 'green',
-    'bg-red-500/10 text-red-400 border-red-500/20': color === 'red',
+    'bg-green-500/10 text-green-400 border-green-500/20': color === 'green' || color === 'success',
+    'bg-red-500/10 text-red-400 border-red-500/20': color === 'red' || color === 'danger',
     'bg-yellow-500/10 text-yellow-400 border-yellow-500/20': color === 'yellow',
   });
 
@@ -47,8 +49,8 @@ const StatCard: React.FC<StatCardProps> = ({
     'bg-final-500/20': color === 'final',
 
     // Функциональные фоны
-    'bg-green-500/20': color === 'green',
-    'bg-red-500/20': color === 'red',
+    'bg-green-500/20': color === 'green' || color === 'success',
+    'bg-red-500/20': color === 'red' || color === 'danger',
     'bg-yellow-500/20': color === 'yellow',
   });
 
@@ -78,9 +80,14 @@ const StatCard: React.FC<StatCardProps> = ({
           <p className="text-sm font-medium text-dark-400 mb-1">
             {title}
           </p>
-          <p className="text-2xl font-bold text-dark-100 mb-2">
+          <p className="text-2xl font-bold text-dark-100 mb-1">
             {value}
           </p>
+          {subtitle && (
+            <p className="text-sm text-dark-300 mb-2">
+              {subtitle}
+            </p>
+          )}
           {trend && (
             <div className="flex items-center space-x-1">
               <span

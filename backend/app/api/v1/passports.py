@@ -33,30 +33,84 @@ async def read_passports(
         search: Optional[str] = Query(None, description="Поиск по имени, фамилии, никнейму или Discord ID"),
         city: Optional[str] = Query(None, description="Фильтр по городу"),
         emergency_only: Optional[bool] = Query(None, description="Показать только ЧС"),
+        gender: Optional[str] = Query(None, description="Фильтр по полу"),
+        min_age: Optional[int] = Query(None, description="Минимальный возраст"),
+        max_age: Optional[int] = Query(None, description="Максимальный возраст"),
+        min_violations: Optional[int] = Query(None, description="Минимальное количество нарушений"),
+        max_violations: Optional[int] = Query(None, description="Максимальное количество нарушений"),
+        date_from: Optional[str] = Query(None, description="Дата создания с (YYYY-MM-DD)"),
+        date_to: Optional[str] = Query(None, description="Дата создания до (YYYY-MM-DD)"),
         current_user: User = Depends(get_current_police_or_admin),
 ):
     """
-    Получить список паспортов с возможностью поиска
+    Получить список паспортов с возможностью поиска и фильтрации
     """
-    if emergency_only:
-        passports = passport_crud.get_emergency_passports(db, skip=skip, limit=limit)
-    elif city:
-        passports = passport_crud.get_by_city(db, city=city)
-    elif search:
-        # Простой поиск по всем текстовым полям
-        from sqlalchemy import or_
-        from app.models.passport import Passport as PassportModel
-        passports = db.query(PassportModel).filter(
-            or_(
-                PassportModel.first_name.ilike(f"%{search}%"),
-                PassportModel.last_name.ilike(f"%{search}%"),
-                PassportModel.nickname.ilike(f"%{search}%"),
-                PassportModel.discord_id.ilike(f"%{search}%"),
-                PassportModel.city.ilike(f"%{search}%")
-            )
-        ).offset(skip).limit(limit).all()
-    else:
-        passports = passport_crud.get_multi(db, skip=skip, limit=limit)
+    from sqlalchemy import or_, and_
+    from app.models.passport import Passport as PassportModel
+    from datetime import datetime
+    
+    # Базовый запрос
+    query = db.query(PassportModel)
+    
+    # Применяем фильтры
+    filters = []
+    
+    # Emergency status filter
+    if emergency_only is not None:
+        filters.append(PassportModel.is_emergency == emergency_only)
+    
+    # City filter
+    if city:
+        filters.append(PassportModel.city.ilike(f"%{city}%"))
+    
+    # Gender filter
+    if gender:
+        filters.append(PassportModel.gender == gender)
+    
+    # Age filters
+    if min_age is not None:
+        filters.append(PassportModel.age >= min_age)
+    if max_age is not None:
+        filters.append(PassportModel.age <= max_age)
+    
+    # Violations filters
+    if min_violations is not None:
+        filters.append(PassportModel.violations_count >= min_violations)
+    if max_violations is not None:
+        filters.append(PassportModel.violations_count <= max_violations)
+    
+    # Date filters
+    if date_from:
+        try:
+            start_date = datetime.strptime(date_from, "%Y-%m-%d")
+            filters.append(PassportModel.created_at >= start_date)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            end_date = datetime.strptime(date_to, "%Y-%m-%d")
+            filters.append(PassportModel.created_at <= end_date)
+        except ValueError:
+            pass
+    
+    # Search filter
+    if search:
+        search_filter = or_(
+            PassportModel.first_name.ilike(f"%{search}%"),
+            PassportModel.last_name.ilike(f"%{search}%"),
+            PassportModel.nickname.ilike(f"%{search}%"),
+            PassportModel.discord_id.ilike(f"%{search}%"),
+            PassportModel.city.ilike(f"%{search}%")
+        )
+        filters.append(search_filter)
+    
+    # Применяем все фильтры
+    if filters:
+        query = query.filter(and_(*filters))
+    
+    # Применяем пагинацию
+    passports = query.offset(skip).limit(limit).all()
 
     # Логируем просмотр списка паспортов
     ActionLogger.log_action(

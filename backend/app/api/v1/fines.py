@@ -7,14 +7,14 @@ from app.core.deps import get_current_police_or_admin, get_current_user
 from app.core.decorators import with_role_check
 from app.crud.fine import fine_crud
 from app.crud.passport import passport_crud
-from app.schemas.fine import Fine, FineCreate, FineUpdate
+from app.schemas.fine import Fine, FineCreate, FineUpdate, FineWithDetails, IssuerInfo
 from app.models.user import User
 from app.utils.logger import ActionLogger
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[Fine])
+@router.get("/", response_model=List[FineWithDetails])
 @with_role_check("view_fines")
 async def read_fines(
         request: Request,
@@ -25,21 +25,92 @@ async def read_fines(
         article: Optional[str] = Query(None, description="Фильтр по статье"),
         min_amount: Optional[int] = Query(None, description="Минимальная сумма штрафа"),
         max_amount: Optional[int] = Query(None, description="Максимальная сумма штрафа"),
+        is_paid: Optional[bool] = Query(None, description="Фильтр по статусу оплаты"),
+        issuer_search: Optional[str] = Query(None, description="Поиск по выписавшему сотруднику"),
+        date_from: Optional[str] = Query(None, description="Дата создания с (YYYY-MM-DD)"),
+        date_to: Optional[str] = Query(None, description="Дата создания до (YYYY-MM-DD)"),
         current_user: User = Depends(get_current_police_or_admin),
 ):
     """
-    Получить список штрафов с фильтрами
+    Получить список штрафов с фильтрами и информацией о выписавшем
     """
+    from app.models.user import User as UserModel
+    from datetime import datetime
+    from sqlalchemy import and_, or_
+    
+    # Базовый запрос с джойном на пользователя
+    query = db.query(fine_crud.model, UserModel.discord_username, UserModel.minecraft_username).join(
+        UserModel, fine_crud.model.created_by_user_id == UserModel.id
+    )
+    
+    # Список фильтров
+    filters = []
+    
+    # Применяем фильтры
     if passport_id:
-        fines = fine_crud.get_by_passport_id(db, passport_id=passport_id, skip=skip, limit=limit)
-    elif article:
-        fines = fine_crud.get_by_article(db, article=article, skip=skip, limit=limit)
-    elif min_amount is not None or max_amount is not None:
-        fines = fine_crud.get_by_amount_range(db, min_amount=min_amount, max_amount=max_amount)
-        # Применяем пагинацию для фильтра по сумме
-        fines = fines[skip:skip + limit]
-    else:
-        fines = fine_crud.get_multi(db, skip=skip, limit=limit)
+        filters.append(fine_crud.model.passport_id == passport_id)
+    
+    if article:
+        filters.append(fine_crud.model.article.ilike(f"%{article}%"))
+    
+    if min_amount is not None:
+        filters.append(fine_crud.model.amount >= min_amount)
+    
+    if max_amount is not None:
+        filters.append(fine_crud.model.amount <= max_amount)
+    
+    if is_paid is not None:
+        filters.append(fine_crud.model.is_paid == is_paid)
+    
+    if issuer_search:
+        issuer_filter = or_(
+            UserModel.discord_username.ilike(f"%{issuer_search}%"),
+            UserModel.minecraft_username.ilike(f"%{issuer_search}%")
+        )
+        filters.append(issuer_filter)
+    
+    # Date filters
+    if date_from:
+        try:
+            start_date = datetime.strptime(date_from, "%Y-%m-%d")
+            filters.append(fine_crud.model.created_at >= start_date)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            end_date = datetime.strptime(date_to, "%Y-%m-%d")
+            filters.append(fine_crud.model.created_at <= end_date)
+        except ValueError:
+            pass
+    
+    # Применяем все фильтры
+    if filters:
+        query = query.filter(and_(*filters))
+    
+    # Применяем пагинацию и получаем результаты
+    results = query.offset(skip).limit(limit).all()
+    
+    # Формируем ответ с информацией о выписавшем
+    fines_with_details = []
+    for fine, discord_username, minecraft_username in results:
+        fine_dict = {
+            "id": fine.id,
+            "passport_id": fine.passport_id,
+            "article": fine.article,
+            "amount": fine.amount,
+            "description": fine.description,
+            "created_by_user_id": fine.created_by_user_id,
+            "is_paid": fine.is_paid,
+            "created_at": fine.created_at,
+            "updated_at": fine.updated_at,
+            "issuer_info": {
+                "user_id": fine.created_by_user_id,
+                "discord_username": discord_username,
+                "minecraft_username": minecraft_username
+            }
+        }
+        fines_with_details.append(fine_dict)
 
     # Логируем просмотр списка штрафов
     ActionLogger.log_action(
@@ -48,7 +119,7 @@ async def read_fines(
         action="VIEW_LIST",
         entity_type="fine",
         details={
-            "count": len(fines),
+            "count": len(fines_with_details),
             "skip": skip,
             "limit": limit,
             "passport_id_filter": passport_id,
@@ -59,7 +130,7 @@ async def read_fines(
         request=request
     )
 
-    return fines
+    return fines_with_details
 
 
 @router.get("/my", response_model=List[Fine])

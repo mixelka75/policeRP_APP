@@ -48,18 +48,61 @@ async def read_users(
         skip: int = 0,
         limit: int = 100,
         role: str = Query(None, description="Фильтр по роли (admin/police)"),
-        active_only: bool = Query(True, description="Только активные пользователи"),
+        is_active: Optional[bool] = Query(None, description="Фильтр по статусу активности"),
+        date_from: Optional[str] = Query(None, description="Дата регистрации с (YYYY-MM-DD)"),
+        date_to: Optional[str] = Query(None, description="Дата регистрации до (YYYY-MM-DD)"),
+        search: Optional[str] = Query(None, description="Поиск по имени пользователя"),
         current_user: UserModel = Depends(get_current_active_admin),
 ):
     """
-    Получить список всех пользователей (только для администраторов)
+    Получить список всех пользователей с расширенными фильтрами (только для администраторов)
     """
+    from sqlalchemy import and_, or_
+    from datetime import datetime
+    
+    # Базовый запрос
+    query = db.query(UserModel)
+    
+    # Список фильтров
+    filters = []
+    
+    # Role filter
     if role:
-        users = user_crud.get_users_by_role(db, role=role)
-    elif active_only:
-        users = user_crud.get_active_users(db, skip=skip, limit=limit)
-    else:
-        users = user_crud.get_multi(db, skip=skip, limit=limit)
+        filters.append(UserModel.role == role)
+    
+    # Active status filter
+    if is_active is not None:
+        filters.append(UserModel.is_active == is_active)
+    
+    # Date filters
+    if date_from:
+        try:
+            start_date = datetime.strptime(date_from, "%Y-%m-%d")
+            filters.append(UserModel.created_at >= start_date)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            end_date = datetime.strptime(date_to, "%Y-%m-%d")
+            filters.append(UserModel.created_at <= end_date)
+        except ValueError:
+            pass
+    
+    # Search filter
+    if search:
+        search_filter = or_(
+            UserModel.discord_username.ilike(f"%{search}%"),
+            UserModel.minecraft_username.ilike(f"%{search}%")
+        )
+        filters.append(search_filter)
+    
+    # Применяем все фильтры
+    if filters:
+        query = query.filter(and_(*filters))
+    
+    # Применяем пагинацию
+    users = query.offset(skip).limit(limit).all()
 
     # Логируем просмотр списка пользователей
     ActionLogger.log_action(

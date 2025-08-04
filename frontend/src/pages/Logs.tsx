@@ -99,14 +99,37 @@ const Logs: React.FC = () => {
     const matchesSearch = !searchTerm ||
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user?.discord_username && user.discord_username.toLowerCase().includes(searchTerm.toLowerCase()));
+      (user?.discord_username && user.discord_username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user?.minecraft_username && user.minecraft_username.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (log.ip_address && log.ip_address.includes(searchTerm));
 
-    // Фильтр по действию
+    // Фильтр по действию (из выпадающего списка на странице)
     const matchesAction = !selectedAction || log.action === selectedAction;
 
-    // Фильтры
+    // Фильтры из модального окна
     let matchesFilters = true;
 
+    // Action filter (from modal)
+    if (appliedFilters.action && log.action !== appliedFilters.action) {
+      matchesFilters = false;
+    }
+
+    // Entity type filter
+    if (appliedFilters.entityType && log.entity_type !== appliedFilters.entityType) {
+      matchesFilters = false;
+    }
+
+    // User role filter
+    if (appliedFilters.userRole && user && user.role !== appliedFilters.userRole) {
+      matchesFilters = false;
+    }
+
+    // IP address filter
+    if (appliedFilters.ipAddress && (!log.ip_address || !log.ip_address.includes(appliedFilters.ipAddress))) {
+      matchesFilters = false;
+    }
+
+    // Date range filter
     if (appliedFilters.dateRange?.start) {
       const logDate = new Date(log.created_at);
       const startDate = new Date(appliedFilters.dateRange.start);
@@ -117,11 +140,6 @@ const Logs: React.FC = () => {
       const logDate = new Date(log.created_at);
       const endDate = new Date(appliedFilters.dateRange.end);
       if (logDate > endDate) matchesFilters = false;
-    }
-
-    // Фильтрация по роли пользователя
-    if (appliedFilters.role && user && user.role !== appliedFilters.role) {
-      matchesFilters = false;
     }
 
     return matchesSearch && matchesAction && matchesFilters;

@@ -25,6 +25,7 @@ import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Modal, Card, Badge } from '@/components/ui';
+import { FilterModal, FilterOptions } from '@/components/modals';
 import UserAvatar from '@/components/common/UserAvatar';
 import {
   getDisplayName,
@@ -43,6 +44,8 @@ const Users: React.FC = () => {
   const [isRoleCheckModalOpen, setIsRoleCheckModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [userToManage, setUserToManage] = useState<User | null>(null);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
 
   const {
     data: users,
@@ -117,17 +120,53 @@ const Users: React.FC = () => {
   const filteredUsers = users?.filter(user => {
     const searchLower = searchTerm.toLowerCase();
 
+    // Search logic
+    let matchesSearch = false;
     switch (searchType) {
       case 'discord':
-        return user.discord_username.toLowerCase().includes(searchLower);
+        matchesSearch = user.discord_username.toLowerCase().includes(searchLower);
+        break;
       case 'minecraft':
-        return user.minecraft_username?.toLowerCase().includes(searchLower) || false;
+        matchesSearch = user.minecraft_username?.toLowerCase().includes(searchLower) || false;
+        break;
       default:
-        return (
+        matchesSearch = (
           user.discord_username.toLowerCase().includes(searchLower) ||
           (user.minecraft_username?.toLowerCase().includes(searchLower) || false)
         );
+        break;
     }
+
+    // Filter logic
+    let matchesFilters = true;
+
+    // Role filter
+    if (appliedFilters.role && user.role !== appliedFilters.role) {
+      matchesFilters = false;
+    }
+
+    // Active status filter
+    if (appliedFilters.isActive) {
+      const isActiveFilter = appliedFilters.isActive === 'true';
+      if (user.is_active !== isActiveFilter) {
+        matchesFilters = false;
+      }
+    }
+
+    // Date range filter (registration date)
+    if (appliedFilters.dateRange?.start) {
+      const userDate = new Date(user.created_at);
+      const startDate = new Date(appliedFilters.dateRange.start);
+      if (userDate < startDate) matchesFilters = false;
+    }
+
+    if (appliedFilters.dateRange?.end) {
+      const userDate = new Date(user.created_at);
+      const endDate = new Date(appliedFilters.dateRange.end);
+      if (userDate > endDate) matchesFilters = false;
+    }
+
+    return matchesSearch && matchesFilters;
   }) || [];
 
   const handleCheckRoles = (user: User) => {
@@ -154,6 +193,14 @@ const Users: React.FC = () => {
         await activateUser(userToManage.id);
       }
     }
+  };
+
+  const handleApplyFilters = (filters: FilterOptions) => {
+    setAppliedFilters(filters);
+  };
+
+  const handleResetFilters = () => {
+    setAppliedFilters({});
   };
 
   const getRoleColor = (role: string) => {
@@ -336,6 +383,7 @@ const Users: React.FC = () => {
             variant="outline"
             size="sm"
             leftIcon={<Filter className="h-4 w-4" />}
+            onClick={() => setIsFilterModalOpen(true)}
             className="flex-shrink-0"
           >
             <span className="sr-only sm:not-sr-only">Фильтры</span>
@@ -488,6 +536,16 @@ const Users: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Filter Modal */}
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApply={handleApplyFilters}
+        onReset={handleResetFilters}
+        type="users"
+        currentFilters={appliedFilters}
+      />
 
       {/* Status Change Modal */}
       <Modal

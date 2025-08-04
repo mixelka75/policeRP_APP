@@ -162,12 +162,30 @@ class CRUDFine(CRUDBase[Fine, FineCreate, FineUpdate]):
         """
         Получить список штрафов с подробной информацией
         """
+        from sqlalchemy.orm import joinedload
         return (
             db.query(Fine)
             .options(
-                db.joinedload(Fine.passport),
-                db.joinedload(Fine.created_by)
+                joinedload(Fine.passport),
+                joinedload(Fine.created_by)
             )
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+    
+    def get_multi_with_issuer_info(
+            self, db: Session, *, skip: int = 0, limit: int = 100
+    ) -> List[tuple]:
+        """
+        Получить список штрафов с информацией о выписавшем сотруднике
+        """
+        from app.models.user import User
+        from sqlalchemy.orm import joinedload
+        
+        return (
+            db.query(Fine, User.discord_username, User.minecraft_username)
+            .join(User, Fine.created_by_user_id == User.id)
             .offset(skip)
             .limit(limit)
             .all()

@@ -169,6 +169,12 @@ export interface PassportEmergencyResponse {
   message: string;
 }
 
+export interface IssuerInfo {
+  user_id: number;
+  discord_username: string;
+  minecraft_username?: string;
+}
+
 export interface Fine {
   id: number;
   passport_id: number;
@@ -179,6 +185,7 @@ export interface Fine {
   is_paid: boolean;
   created_at: string;
   updated_at: string;
+  issuer_info?: IssuerInfo;
 }
 
 export interface FineCreate {

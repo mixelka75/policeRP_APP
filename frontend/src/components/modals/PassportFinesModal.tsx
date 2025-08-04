@@ -8,10 +8,9 @@ import {
   Calendar,
   DollarSign,
   User,
-  Loader2,
-  Eye
+  Loader2
 } from 'lucide-react';
-import { Modal, Button, Badge } from '@/components/ui';
+import { Modal, Badge } from '@/components/ui';
 import { Fine, Passport } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
@@ -190,10 +189,18 @@ const PassportFinesModal: React.FC<PassportFinesModalProps> = ({
                           <Calendar className="h-3 w-3" />
                           <span>Выписан: {formatDate(fine.created_at, 'dd.MM.yyyy HH:mm')}</span>
                         </div>
-                        {fine.paid_at && (
+                        {fine.issuer_info && (
+                          <div className="flex items-center space-x-1">
+                            <User className="h-3 w-3" />
+                            <span>
+                              Сотрудник: {fine.issuer_info.minecraft_username || fine.issuer_info.discord_username}
+                            </span>
+                          </div>
+                        )}
+                        {fine.is_paid && (
                           <div className="flex items-center space-x-1">
                             <CheckCircle className="h-3 w-3 text-green-400" />
-                            <span>Оплачен: {formatDate(fine.paid_at, 'dd.MM.yyyy HH:mm')}</span>
+                            <span>Статус: Оплачен</span>
                           </div>
                         )}
                       </div>

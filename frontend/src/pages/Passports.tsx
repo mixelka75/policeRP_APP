@@ -87,10 +87,41 @@ const Passports: React.FC = () => {
     // Дополнительные фильтры из модального окна
     let matchesFilters = true;
 
+    // Gender filter
     if (appliedFilters.gender && passport.gender !== appliedFilters.gender) {
       matchesFilters = false;
     }
 
+    // City filter
+    if (appliedFilters.city && !passport.city.toLowerCase().includes(appliedFilters.city.toLowerCase())) {
+      matchesFilters = false;
+    }
+
+    // Age range filter
+    if (appliedFilters.age?.min && passport.age < appliedFilters.age.min) {
+      matchesFilters = false;
+    }
+    if (appliedFilters.age?.max && passport.age > appliedFilters.age.max) {
+      matchesFilters = false;
+    }
+
+    // Emergency status filter
+    if (appliedFilters.isEmergency) {
+      const isEmergencyFilter = appliedFilters.isEmergency === 'true';
+      if (passport.is_emergency !== isEmergencyFilter) {
+        matchesFilters = false;
+      }
+    }
+
+    // Violations count filter
+    if (appliedFilters.violationsCount?.min && passport.violations_count < appliedFilters.violationsCount.min) {
+      matchesFilters = false;
+    }
+    if (appliedFilters.violationsCount?.max && passport.violations_count > appliedFilters.violationsCount.max) {
+      matchesFilters = false;
+    }
+
+    // Date range filter
     if (appliedFilters.dateRange?.start) {
       const passportDate = new Date(passport.created_at);
       const startDate = new Date(appliedFilters.dateRange.start);

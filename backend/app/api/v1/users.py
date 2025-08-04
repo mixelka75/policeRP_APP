@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from sqlalchemy.orm import Session
 
@@ -115,7 +115,7 @@ async def read_users(
             "skip": skip,
             "limit": limit,
             "role_filter": role,
-            "active_only": active_only
+            "is_active_filter": is_active
         },
         request=request
     )

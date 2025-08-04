@@ -1,6 +1,5 @@
 // src/components/layout/Sidebar.tsx
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import {
   Home,
@@ -139,23 +138,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     <>
       {/* Overlay for mobile */}
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+        <div
           onClick={onClose}
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
         />
       )}
 
       {/* ✨ ОБНОВЛЕННЫЙ Sidebar с новой цветовой схемой */}
-      <motion.div
-        initial={false}
-        animate={{ 
-          x: isLargeScreen ? 0 : (isOpen ? 0 : -300)
-        }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed top-0 left-0 z-50 h-full w-64 bg-minecraft-dark border-r border-primary-500/30 shadow-2xl lg:translate-x-0 lg:h-screen"
+      <div
+        className={cn(
+          "fixed top-0 left-0 z-50 h-full w-64 bg-minecraft-dark border-r border-primary-500/30 shadow-2xl lg:translate-x-0 lg:h-screen transition-transform duration-200",
+          isLargeScreen ? "translate-x-0" : (isOpen ? "translate-x-0" : "-translate-x-full")
+        )}
       >
         <div className="flex flex-col h-full">
           {/* ✨ ОБНОВЛЕННЫЙ Header */}
@@ -313,7 +307,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </>
   );
 };

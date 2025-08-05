@@ -274,6 +274,7 @@ const Users: React.FC = () => {
       key: 'last_role_check',
       label: 'Последняя проверка',
       width: '160px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (date: string) => (
         <div className="text-sm">
           <p className="text-gray-300">{formatDate(date, 'dd.MM.yyyy')}</p>
@@ -285,6 +286,7 @@ const Users: React.FC = () => {
       key: 'created_at',
       label: 'Дата создания',
       width: '150px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (date: string) => (
         <span className="text-gray-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),

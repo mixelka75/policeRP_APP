@@ -243,6 +243,7 @@ const Fines: React.FC = () => {
       key: 'issuer',
       label: 'Выписал',
       width: '150px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (_: any, fine: Fine) => (
         <div className="flex items-center space-x-2">
           <User className="h-4 w-4 text-gray-400" />
@@ -269,6 +270,7 @@ const Fines: React.FC = () => {
       key: 'created_at',
       label: 'Дата выписки',
       width: '150px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (date: string) => (
         <span className="text-gray-400">{formatDate(date)}</span>
       ),

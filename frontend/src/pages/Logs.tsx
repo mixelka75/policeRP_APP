@@ -382,6 +382,7 @@ const Logs: React.FC = () => {
       key: 'entity_type',
       label: 'Объект',
       width: '120px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (entityType: string) => {
         const Icon = getEntityIcon(entityType);
         return (
@@ -435,6 +436,7 @@ const Logs: React.FC = () => {
       key: 'ip_address',
       label: 'IP адрес',
       width: '140px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (ipAddress: string) => (
         <span className="text-sm text-gray-400 font-mono">
           {ipAddress || '—'}
@@ -445,6 +447,7 @@ const Logs: React.FC = () => {
       key: 'created_at',
       label: 'Время',
       width: '160px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (date: string) => (
         <div className="text-sm">
           <p className="text-gray-300">{formatDate(date, 'dd.MM.yyyy')}</p>

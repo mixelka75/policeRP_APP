@@ -246,6 +246,7 @@ const Passports: React.FC = () => {
       key: 'age',
       label: 'Возраст',
       width: '100px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (age: number) => (
         <span className="text-secondary-400 font-medium">{age} лет</span>
       ),
@@ -254,6 +255,7 @@ const Passports: React.FC = () => {
       key: 'gender',
       label: 'Пол',
       width: '100px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (gender: string) => (
         <span className="text-gray-300">
           {gender === 'male' ? 'Мужской' : 'Женский'}
@@ -277,6 +279,7 @@ const Passports: React.FC = () => {
       key: 'entry_date',
       label: 'Въезд в город',
       width: '130px',
+      mobileHidden: true, // Скрываем на мобильных
       render: (date: string) => (
         <span className="text-gray-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),

@@ -349,17 +349,16 @@ const Fines: React.FC = () => {
           leftIcon={<Search className="h-4 w-4" />}
           className="w-full sm:w-64 minecraft-input"
         />
-        <div className="flex space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            leftIcon={<Filter className="h-4 w-4" />}
-            onClick={() => setIsFilterModalOpen(true)}
-            className="flex-1 sm:flex-none"
-          >
-            <span className="sm:inline">Фильтры</span>
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          leftIcon={<Filter className="h-4 w-4" />}
+          onClick={() => setIsFilterModalOpen(true)}
+          className="w-full sm:w-auto"
+        >
+          <span className="sm:hidden">Фильтры</span>
+          <span className="hidden sm:inline">Фильтры</span>
+        </Button>
       </div>
       <div className="flex items-center space-x-2">
         <Button

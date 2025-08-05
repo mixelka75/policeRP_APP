@@ -567,9 +567,10 @@ const Logs: React.FC = () => {
             size="sm"
             leftIcon={<Filter className="h-4 w-4" />}
             onClick={() => setIsFilterModalOpen(true)}
-            className="flex-shrink-0"
+            className="w-full sm:w-auto"
           >
-            <span className="sr-only sm:not-sr-only">Фильтры</span>
+            <span className="sm:hidden">Фильтры</span>
+            <span className="hidden sm:inline">Фильтры</span>
           </Button>
         </div>
       </div>

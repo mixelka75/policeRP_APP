@@ -108,20 +108,20 @@ const MyFines: React.FC = () => {
     >
       <div className="space-y-6">
         {/* Статистика */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card variant="minecraft" className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-warning-500/20 rounded-xl">
-                  <AlertTriangle className="h-8 w-8 text-warning-400" />
+            <Card variant="minecraft" className="p-4 sm:p-6">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-warning-500/20 rounded-xl">
+                  <AlertTriangle className="h-6 w-6 sm:h-8 sm:w-8 text-warning-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Всего штрафов</p>
-                  <p className="text-3xl font-bold text-white">
+                  <p className="text-gray-400 text-xs sm:text-sm">Всего штрафов</p>
+                  <p className="text-xl sm:text-3xl font-bold text-white">
                     {fines?.length || 0}
                   </p>
                 </div>
@@ -134,14 +134,14 @@ const MyFines: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card variant="minecraft" className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-danger-500/20 rounded-xl">
-                  <X className="h-8 w-8 text-danger-400" />
+            <Card variant="minecraft" className="p-4 sm:p-6">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-danger-500/20 rounded-xl">
+                  <X className="h-6 w-6 sm:h-8 sm:w-8 text-danger-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Неоплачено</p>
-                  <p className="text-3xl font-bold text-danger-400">
+                  <p className="text-gray-400 text-xs sm:text-sm">Неоплачено</p>
+                  <p className="text-xl sm:text-3xl font-bold text-danger-400">
                     {unpaidFines.length}
                   </p>
                 </div>
@@ -154,14 +154,14 @@ const MyFines: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <Card variant="minecraft" className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-success-500/20 rounded-xl">
-                  <Check className="h-8 w-8 text-success-400" />
+            <Card variant="minecraft" className="p-4 sm:p-6">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-success-500/20 rounded-xl">
+                  <Check className="h-6 w-6 sm:h-8 sm:w-8 text-success-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">Оплачено</p>
-                  <p className="text-3xl font-bold text-success-400">
+                  <p className="text-gray-400 text-xs sm:text-sm">Оплачено</p>
+                  <p className="text-xl sm:text-3xl font-bold text-success-400">
                     {(fines?.length || 0) - unpaidFines.length}
                   </p>
                 </div>
@@ -174,14 +174,14 @@ const MyFines: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card variant="minecraft" className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-primary-500/20 rounded-xl">
-                  <DollarSign className="h-8 w-8 text-primary-400" />
+            <Card variant="minecraft" className="p-4 sm:p-6">
+              <div className="flex items-center space-x-2 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-primary-500/20 rounded-xl">
+                  <DollarSign className="h-6 w-6 sm:h-8 sm:w-8 text-primary-400" />
                 </div>
                 <div>
-                  <p className="text-gray-400 text-sm">К доплате</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-gray-400 text-xs sm:text-sm">К доплате</p>
+                  <p className="text-lg sm:text-2xl font-bold text-white">
                     {formatMoney(unpaidAmount)}
                   </p>
                 </div>
@@ -192,17 +192,17 @@ const MyFines: React.FC = () => {
 
         {/* Панель оплаты штрафов */}
         {unpaidFines.length > 0 && (
-          <Card variant="minecraft" className="p-6 border-orange-500/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-orange-500/20 rounded-xl">
-                  <CreditCard className="h-8 w-8 text-orange-400" />
+          <Card variant="minecraft" className="p-4 sm:p-6 border-orange-500/30">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="p-2 sm:p-3 bg-orange-500/20 rounded-xl flex-shrink-0">
+                  <CreditCard className="h-6 w-6 sm:h-8 sm:w-8 text-orange-400" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-1">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-white mb-1">
                     Оплата штрафов
                   </h3>
-                  <div className="flex items-center space-x-4 text-sm text-gray-400">
+                  <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-400">
                     <span>Выбрано: {selectedFines.length} штрафов</span>
                     {selectedFines.length > 0 && (
                       <span className="text-orange-400 font-medium">
@@ -212,14 +212,16 @@ const MyFines: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleSelectAll}
                   disabled={paymentLoading}
+                  className="w-full sm:w-auto"
                 >
-                  {selectedFines.length === unpaidFines.length ? 'Снять все' : 'Выбрать все'}
+                  <span className="sm:hidden">{selectedFines.length === unpaidFines.length ? 'Снять' : 'Выбрать'}</span>
+                  <span className="hidden sm:inline">{selectedFines.length === unpaidFines.length ? 'Снять все' : 'Выбрать все'}</span>
                 </Button>
                 <Button
                   variant="primary"
@@ -228,8 +230,10 @@ const MyFines: React.FC = () => {
                   onClick={() => handlePayment(selectedFines)}
                   disabled={selectedFines.length === 0 || paymentLoading}
                   loading={paymentLoading}
+                  className="w-full sm:w-auto"
                 >
-                  Оплатить выбранные
+                  <span className="sm:hidden">Оплатить</span>
+                  <span className="hidden sm:inline">Оплатить выбранные</span>
                 </Button>
               </div>
             </div>
@@ -237,25 +241,27 @@ const MyFines: React.FC = () => {
         )}
 
         {/* Поиск и фильтры */}
-        <Card variant="minecraft" className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">
+        <Card variant="minecraft" className="p-4 sm:p-6">
+          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 mb-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-white">
               История нарушений
             </h2>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
               <Input
                 placeholder="Поиск по статье или описанию..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 leftIcon={<Search className="h-4 w-4" />}
-                className="w-64"
+                className="w-full sm:w-64"
               />
               <Button
                 variant="outline"
                 size="sm"
                 leftIcon={<Filter className="h-4 w-4" />}
+                className="w-full sm:w-auto"
               >
-                Фильтры
+                <span className="sm:hidden">Фильтры</span>
+                <span className="hidden sm:inline">Фильтры</span>
               </Button>
             </div>
           </div>
@@ -303,12 +309,12 @@ const MyFines: React.FC = () => {
                   <Card 
                     variant="glass" 
                     hover 
-                    className={`p-6 ${fine.is_paid ? 'opacity-60' : ''} ${
+                    className={`p-4 sm:p-6 ${fine.is_paid ? 'opacity-60' : ''} ${
                       !fine.is_paid && selectedFines.includes(fine.id) ? 'ring-2 ring-primary-500' : ''
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4 flex-1">
+                    <div className="flex flex-col space-y-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+                      <div className="flex items-start space-x-3 sm:space-x-4 flex-1">
                         {/* Чекбокс для неоплаченных штрафов */}
                         {!fine.is_paid && (
                           <div className="pt-1">
@@ -345,7 +351,7 @@ const MyFines: React.FC = () => {
                             </div>
                           </div>
 
-                          <h3 className="text-lg font-semibold text-white mb-2">
+                          <h3 className="text-base sm:text-lg font-semibold text-white mb-2">
                             {fine.article}
                           </h3>
 
@@ -364,20 +370,22 @@ const MyFines: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="text-right ml-6">
-                        <div className={`text-2xl font-bold mb-1 ${
-                          fine.is_paid ? 'text-success-400' : 'text-danger-400'
-                        }`}>
-                          {formatMoney(fine.amount)}
-                        </div>
-                        <div className="text-gray-400 text-sm">
-                          {formatDate(fine.updated_at, 'HH:mm')}
+                      <div className="flex flex-row items-center justify-between sm:flex-col sm:text-right sm:ml-6 sm:items-end">
+                        <div>
+                          <div className={`text-xl sm:text-2xl font-bold mb-1 ${
+                            fine.is_paid ? 'text-success-400' : 'text-danger-400'
+                          }`}>
+                            {formatMoney(fine.amount)}
+                          </div>
+                          <div className="text-gray-400 text-sm">
+                            {formatDate(fine.updated_at, 'HH:mm')}
+                          </div>
                         </div>
                         {!fine.is_paid && (
                           <Button
                             variant="primary"
                             size="sm"
-                            className="mt-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
+                            className="mt-0 sm:mt-3 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-200"
                             leftIcon={<CreditCard className="h-4 w-4" />}
                             onClick={() => handlePayment([fine.id])}
                             disabled={paymentLoading}
@@ -396,7 +404,7 @@ const MyFines: React.FC = () => {
 
           {/* Пагинация (если понадобится) */}
           {filteredFines.length > 0 && (
-            <div className="flex justify-between items-center mt-6 pt-6 border-t border-primary-500/30">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:justify-between sm:items-center sm:space-y-0 mt-6 pt-6 border-t border-primary-500/30">
               <p className="text-gray-400 text-sm">
                 Показано {filteredFines.length} из {fines?.length || 0} штрафов
               </p>
@@ -405,6 +413,7 @@ const MyFines: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => setSearchTerm('')}
+                  className="w-full sm:w-auto"
                 >
                   Сбросить поиск
                 </Button>

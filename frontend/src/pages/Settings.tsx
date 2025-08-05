@@ -127,22 +127,22 @@ const Settings: React.FC = () => {
       subtitle="Управление настройками системы"
     >
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
           {/* Sidebar */}
           <div className="lg:w-64">
-            <Card className="p-4">
-              <nav className="space-y-2">
+            <Card className="p-3 sm:p-4">
+              <nav className="space-y-1 sm:space-y-2">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-colors ${
+                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-2 sm:px-3 py-2 rounded-lg transition-colors text-sm sm:text-base ${
                       activeTab === tab.id
                         ? 'bg-primary-500/10 text-primary-400 border border-primary-500/20'
                         : 'text-dark-300 hover:bg-dark-700 hover:text-white'
                     }`}
                   >
-                    <tab.icon className="h-5 w-5" />
+                    <tab.icon className="h-4 w-4 sm:h-5 sm:w-5" />
                     <span className="font-medium">{tab.label}</span>
                   </button>
                 ))}
@@ -160,14 +160,14 @@ const Settings: React.FC = () => {
             >
               {activeTab === 'profile' && (
                 <Card>
-                  <div className="p-6">
-                    <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-                      <User className="h-6 w-6 mr-3" />
+                  <div className="p-4 sm:p-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 sm:mb-6 flex items-center">
+                      <User className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                       Профиль пользователя
                     </h2>
 
-                    <form onSubmit={handleProfileSubmit} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <form onSubmit={handleProfileSubmit} className="space-y-4 sm:space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div>
                           <Input
                             label="Имя пользователя"
@@ -185,9 +185,9 @@ const Settings: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="border-t border-dark-600 pt-6">
-                        <h3 className="text-lg font-medium text-white mb-4">Смена пароля</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="border-t border-dark-600 pt-4 sm:pt-6">
+                        <h3 className="text-base sm:text-lg font-medium text-white mb-3 sm:mb-4">Смена пароля</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                           <Input
                             label="Текущий пароль"
                             type="password"
@@ -224,8 +224,10 @@ const Settings: React.FC = () => {
                           variant="primary"
                           loading={isUpdatingProfile}
                           leftIcon={<Save className="h-4 w-4" />}
+                          className="w-full sm:w-auto"
                         >
-                          Сохранить изменения
+                          <span className="sm:hidden">Сохранить</span>
+                          <span className="hidden sm:inline">Сохранить изменения</span>
                         </Button>
                       </div>
                     </form>
@@ -235,14 +237,14 @@ const Settings: React.FC = () => {
 
               {activeTab === 'security' && (
                 <Card>
-                  <div className="p-6">
-                    <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-                      <Shield className="h-6 w-6 mr-3" />
+                  <div className="p-4 sm:p-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 sm:mb-6 flex items-center">
+                      <Shield className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                       Безопасность
                     </h2>
 
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div>
                           <label className="block text-sm font-medium text-dark-200 mb-2">
                             Время жизни токена (минуты)
@@ -288,14 +290,14 @@ const Settings: React.FC = () => {
 
               {activeTab === 'system' && (
                 <Card>
-                  <div className="p-6">
-                    <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-                      <SettingsIcon className="h-6 w-6 mr-3" />
+                  <div className="p-4 sm:p-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 sm:mb-6 flex items-center">
+                      <SettingsIcon className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                       Системные настройки
                     </h2>
 
-                    <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <Input
                           label="Название проекта"
                           value={systemData.project_name}
@@ -315,7 +317,7 @@ const Settings: React.FC = () => {
                         />
                       </div>
 
-                      <div className="space-y-4">
+                      <div className="space-y-3 sm:space-y-4">
                         <label className="flex items-center space-x-2">
                           <input
                             type="checkbox"
@@ -341,8 +343,10 @@ const Settings: React.FC = () => {
                           onClick={handleSystemSave}
                           variant="primary"
                           leftIcon={<Save className="h-4 w-4" />}
+                          className="w-full sm:w-auto"
                         >
-                          Сохранить настройки
+                          <span className="sm:hidden">Сохранить</span>
+                          <span className="hidden sm:inline">Сохранить настройки</span>
                         </Button>
                       </div>
                     </div>
@@ -352,26 +356,26 @@ const Settings: React.FC = () => {
 
               {activeTab === 'about' && (
                 <Card>
-                  <div className="p-6">
-                    <h2 className="text-xl font-semibold text-white mb-6 flex items-center">
-                      <Info className="h-6 w-6 mr-3" />
+                  <div className="p-4 sm:p-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-white mb-4 sm:mb-6 flex items-center">
+                      <Info className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                       О программе
                     </h2>
 
-                    <div className="space-y-6">
-                      <div className="text-center py-8">
-                        <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <Shield className="h-10 w-10 text-white" />
+                    <div className="space-y-4 sm:space-y-6">
+                      <div className="text-center py-6 sm:py-8">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                          <Shield className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">PR Police</h3>
-                        <p className="text-dark-400 mb-4">Система управления паспортами и штрафами</p>
+                        <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">PR Police</h3>
+                        <p className="text-dark-400 mb-3 sm:mb-4 text-sm sm:text-base">Система управления паспортами и штрафами</p>
                         <Badge variant="primary">Версия 1.0.0</Badge>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                         <div>
-                          <h4 className="text-lg font-semibold text-white mb-3">Информация о системе</h4>
-                          <div className="space-y-2 text-sm">
+                          <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Информация о системе</h4>
+                          <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                             <div className="flex justify-between">
                               <span className="text-dark-400">Статус системы:</span>
                               <div className="flex items-center space-x-2">
@@ -395,8 +399,8 @@ const Settings: React.FC = () => {
                         </div>
 
                         <div>
-                          <h4 className="text-lg font-semibold text-white mb-3">Технологии</h4>
-                          <div className="space-y-2 text-sm">
+                          <h4 className="text-base sm:text-lg font-semibold text-white mb-2 sm:mb-3">Технологии</h4>
+                          <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm">
                             <div className="flex justify-between">
                               <span className="text-dark-400">Frontend:</span>
                               <span className="text-dark-200">React + TypeScript</span>
@@ -413,9 +417,9 @@ const Settings: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="bg-dark-700/50 rounded-lg p-4">
-                        <h4 className="text-lg font-semibold text-white mb-2">Лицензия</h4>
-                        <p className="text-sm text-dark-300">
+                      <div className="bg-dark-700/50 rounded-lg p-3 sm:p-4">
+                        <h4 className="text-base sm:text-lg font-semibold text-white mb-2">Лицензия</h4>
+                        <p className="text-xs sm:text-sm text-dark-300">
                           Эта программа распространяется под лицензией MIT.
                           Подробнее о лицензии и условиях использования можно
                           узнать в документации проекта.

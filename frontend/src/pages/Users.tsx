@@ -384,13 +384,14 @@ const Users: React.FC = () => {
             size="sm"
             leftIcon={<Filter className="h-4 w-4" />}
             onClick={() => setIsFilterModalOpen(true)}
-            className="flex-shrink-0"
+            className="w-full sm:w-auto"
           >
-            <span className="sr-only sm:not-sr-only">Фильтры</span>
+            <span className="sm:hidden">Фильтры</span>
+            <span className="hidden sm:inline">Фильтры</span>
           </Button>
         </div>
       </div>
-      <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+      <div className="flex items-center space-x-2">
         <Button
           variant="outline"
           size="sm"

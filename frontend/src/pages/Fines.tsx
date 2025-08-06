@@ -19,7 +19,7 @@ import { Fine, Passport } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, ActionsDropdown, ActionItem } from '@/components/ui';
 import { FineForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, formatMoney, getInitials } from '@/utils';
@@ -278,27 +278,27 @@ const Fines: React.FC = () => {
     {
       key: 'actions',
       label: 'Действия',
-      width: '150px',
-      render: (_: any, fine: Fine) => (
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEditFine(fine)}
-            className="!p-2 text-primary-400 hover:text-primary-300"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeleteFine(fine)}
-            className="!p-2 text-red-400 hover:text-red-300"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+      width: '80px',
+      render: (_: any, fine: Fine) => {
+        const actions: ActionItem[] = [
+          {
+            key: 'edit',
+            label: 'Редактировать',
+            icon: Edit,
+            onClick: () => handleEditFine(fine),
+            color: 'primary'
+          },
+          {
+            key: 'delete',
+            label: 'Удалить',
+            icon: Trash2,
+            onClick: () => handleDeleteFine(fine),
+            color: 'danger'
+          }
+        ];
+
+        return <ActionsDropdown actions={actions} />;
+      },
     },
   ];
 

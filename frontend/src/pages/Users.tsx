@@ -24,7 +24,7 @@ import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal, Card, Badge } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, Card, Badge, ActionsDropdown, ActionItem } from '@/components/ui';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import UserAvatar from '@/components/common/UserAvatar';
 import {
@@ -294,43 +294,35 @@ const Users: React.FC = () => {
     {
       key: 'actions',
       label: 'Действия',
-      width: '200px',
-      render: (_: any, user: User) => (
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleCheckRoles(user)}
-            className="!p-2 text-primary-400 hover:text-primary-300"
-            title="Проверить роли"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleStatusChange(user)}
-            className={`!p-2 ${
-              user.is_active 
-                ? 'text-red-400 hover:text-red-300' 
-                : 'text-green-400 hover:text-green-300'
-            }`}
-            title={user.is_active ? 'Деактивировать' : 'Активировать'}
-            disabled={user.id === currentUser?.id}
-          >
-            {user.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-          </Button>
-          <a
-            href={`https://discord.com/users/${user.discord_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center p-2 text-gray-400 hover:text-gray-100 transition-colors"
-            title="Открыть профиль в Discord"
-          >
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        </div>
-      ),
+      width: '80px',
+      render: (_: any, user: User) => {
+        const actions: ActionItem[] = [
+          {
+            key: 'checkRoles',
+            label: 'Проверить роли',
+            icon: RefreshCw,
+            onClick: () => handleCheckRoles(user),
+            color: 'primary'
+          },
+          {
+            key: 'toggleStatus',
+            label: user.is_active ? 'Деактивировать' : 'Активировать',
+            icon: user.is_active ? UserX : UserCheck,
+            onClick: () => handleStatusChange(user),
+            color: user.is_active ? 'danger' : 'success',
+            disabled: user.id === currentUser?.id
+          },
+          {
+            key: 'discord',
+            label: 'Открыть в Discord',
+            icon: ExternalLink,
+            onClick: () => window.open(`https://discord.com/users/${user.discord_id}`, '_blank'),
+            color: 'secondary'
+          }
+        ];
+
+        return <ActionsDropdown actions={actions} />;
+      },
     },
   ];
 

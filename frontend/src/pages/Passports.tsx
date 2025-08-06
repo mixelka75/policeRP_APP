@@ -21,7 +21,7 @@ import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal, Badge } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, Badge, ActionsDropdown, ActionItem } from '@/components/ui';
 import { PassportForm } from '@/components/forms';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import EmergencyModal from '@/components/modals/EmergencyModal';
@@ -287,62 +287,49 @@ const Passports: React.FC = () => {
     {
       key: 'actions',
       label: 'Действия',
-      width: '260px',
-      render: (_: any, passport: Passport) => (
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEditPassport(passport)}
-            className="!p-2 text-primary-400 hover:text-primary-300"
-            title="Редактировать"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEmergencyAction(passport)}
-            className={`!p-2 ${
-              passport.is_emergency 
-                ? 'text-green-400 hover:text-green-300' 
-                : 'text-red-400 hover:text-red-300'
-            }`}
-            title={passport.is_emergency ? 'Убрать из ЧС' : 'Добавить в ЧС'}
-          >
-            {passport.is_emergency ? <Shield className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleShowPassportFines(passport)}
-            className="!p-2 text-accent-400 hover:text-accent-300"
-            title="Показать штрафы паспорта"
-          >
-            <Receipt className="h-4 w-4" />
-          </Button>
-          {user?.role === 'admin' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleShowPassportLogs(passport)}
-              className="!p-2 text-secondary-400 hover:text-secondary-300"
-              title="Показать логи паспорта"
-            >
-              <ScrollText className="h-4 w-4" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeletePassport(passport)}
-            className="!p-2 text-red-400 hover:text-red-300"
-            title="Удалить"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+      width: '80px',
+      render: (_: any, passport: Passport) => {
+        const actions: ActionItem[] = [
+          {
+            key: 'edit',
+            label: 'Редактировать',
+            icon: Edit,
+            onClick: () => handleEditPassport(passport),
+            color: 'primary'
+          },
+          {
+            key: 'emergency',
+            label: passport.is_emergency ? 'Убрать из ЧС' : 'Добавить в ЧС',
+            icon: passport.is_emergency ? Shield : ShieldAlert,
+            onClick: () => handleEmergencyAction(passport),
+            color: passport.is_emergency ? 'success' : 'warning'
+          },
+          {
+            key: 'fines',
+            label: 'Показать штрафы',
+            icon: Receipt,
+            onClick: () => handleShowPassportFines(passport),
+            color: 'accent'
+          },
+          {
+            key: 'logs',
+            label: 'Показать логи',
+            icon: ScrollText,
+            onClick: () => handleShowPassportLogs(passport),
+            color: 'secondary',
+            hidden: user?.role !== 'admin'
+          },
+          {
+            key: 'delete',
+            label: 'Удалить',
+            icon: Trash2,
+            onClick: () => handleDeletePassport(passport),
+            color: 'danger'
+          }
+        ];
+
+        return <ActionsDropdown actions={actions} />;
+      },
     },
   ];
 

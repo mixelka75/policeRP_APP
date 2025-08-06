@@ -168,11 +168,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <div className="bg-black/20 backdrop-blur-sm rounded-xl p-4 border border-primary-500/20">
                   <div className="flex items-center space-x-3">
                     <div className="relative">
-                      {/* ✨ Minecraft/Discord аватар пользователя */}
+                      {/* ✨ Discord аватар пользователя */}
                       <UserAvatar
                         user={user}
                         size={48}
                         showStatus={true}
+                        preferDiscord={true}
                         className="shadow-lg"
                       />
                     </div>

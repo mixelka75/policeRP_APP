@@ -9,18 +9,41 @@ interface UserAvatarProps {
   size?: number;
   className?: string;
   showStatus?: boolean;
+  preferDiscord?: boolean;
 }
 
 const UserAvatar: React.FC<UserAvatarProps> = ({
   user,
   size = 40,
   className = '',
-  showStatus = false
+  showStatus = false,
+  preferDiscord = false
 }) => {
   const [minecraftFailed, setMinecraftFailed] = useState(false);
+  const [discordFailed, setDiscordFailed] = useState(false);
+
+  // If preferDiscord is true, try Discord avatar first
+  if (preferDiscord && !discordFailed) {
+    return (
+      <div className={`relative ${className}`} style={{ width: size, height: size }}>
+        <img
+          src={getDiscordAvatarUrl(user, size)}
+          alt={`${getDisplayName(user)} avatar`}
+          className="rounded-full"
+          style={{ width: size, height: size }}
+          onError={() => setDiscordFailed(true)}
+        />
+        {showStatus && (
+          <div className={`absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-dark-800 ${
+            user.is_active ? 'bg-green-500' : 'bg-red-500'
+          }`} style={{ width: size * 0.3, height: size * 0.3 }} />
+        )}
+      </div>
+    );
+  }
 
   // If user has minecraft_username and minecraft hasn't failed, try Minecraft avatar
-  if (user.minecraft_username && user.minecraft_username.trim() && !minecraftFailed) {
+  if (!preferDiscord && user.minecraft_username && user.minecraft_username.trim() && !minecraftFailed) {
     return (
       <div className={`relative ${className}`} style={{ width: size, height: size }}>
         <MinecraftAvatar
@@ -48,9 +71,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     );
   }
 
-  // Fallback to Discord avatar or initials
-  const [discordFailed, setDiscordFailed] = useState(false);
-
+  // Fallback to Discord avatar or initials  
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
       {!discordFailed && (

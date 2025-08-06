@@ -214,6 +214,7 @@ const Dashboard: React.FC = () => {
                         user={user}
                         size={48}
                         showStatus={true}
+                        preferDiscord={true}
                         className="sm:w-16 sm:h-16"
                       />
                     </div>
@@ -327,6 +328,7 @@ const Dashboard: React.FC = () => {
                       user={user}
                       size={48}
                       showStatus={true}
+                      preferDiscord={true}
                       className="sm:w-16 sm:h-16"
                     />
                   </div>

@@ -68,63 +68,63 @@ const UserPassportCard: React.FC = () => {
       transition={{ delay: 0.1 }}
     >
       <Card variant="minecraft" className="overflow-hidden">
-        <div className="bg-gradient-to-r from-primary-500/20 to-secondary-500/20 p-6 border-b border-primary-500/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
+        <div className="bg-gradient-to-r from-primary-500/20 to-secondary-500/20 p-4 sm:p-6 border-b border-primary-500/30">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center space-x-3 sm:space-x-4 mb-3 sm:mb-0">
+              <div className="relative flex-shrink-0">
                 {passport.nickname ? (
                   <MinecraftAvatar
                     nickname={passport.nickname}
-                    size={80}
-                    className="shadow-primary-glow"
+                    size={64}
+                    className="shadow-primary-glow sm:w-20 sm:h-20"
                   />
                 ) : (
-                  <div className="w-20 h-20 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center">
-                    <User className="w-10 h-10 text-white" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center">
+                    <User className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                   </div>
                 )}
                 {passport.is_emergency && (
-                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                    <AlertTriangle className="w-4 h-4 text-white" />
+                  <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-5 h-5 sm:w-6 sm:h-6 bg-red-500 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                   </div>
                 )}
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-white">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg sm:text-2xl font-bold text-white truncate">
                   {passport.first_name} {passport.last_name}
                 </h2>
                 {passport.nickname && (
                   <div className="flex items-center space-x-2 mt-1">
-                    <Gamepad2 className="h-4 w-4 text-accent-400" />
-                    <p className="text-accent-400 font-medium">
+                    <Gamepad2 className="h-3 w-3 sm:h-4 sm:w-4 text-accent-400" />
+                    <p className="text-accent-400 font-medium text-sm sm:text-base truncate">
                       {passport.nickname}
                     </p>
                   </div>
                 )}
                 <div className="flex items-center space-x-2 mt-1">
-                  <MessageCircle className="h-4 w-4 text-secondary-400" />
-                  <p className="text-gray-300 text-sm">
+                  <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 text-secondary-400" />
+                  <p className="text-gray-300 text-xs sm:text-sm truncate">
                     ID: {passport.discord_id}
                   </p>
                 </div>
               </div>
             </div>
-            <div className="text-right">
+            <div className="flex flex-row sm:flex-col items-center sm:items-end space-x-3 sm:space-x-0 sm:space-y-2">
               {passport.is_emergency && (
-                <Badge variant="danger" className="mb-2">
+                <Badge variant="danger" size="sm">
                   В СПИСКЕ ЧС
                 </Badge>
               )}
-              <div className="text-primary-300 text-sm">
+              <div className="text-primary-300 text-xs sm:text-sm whitespace-nowrap">
                 Паспорт №{passport.id}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Основная информация */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-white mb-3">
                 Личные данные
@@ -174,8 +174,8 @@ const UserPassportCard: React.FC = () => {
           </div>
 
           {/* Дополнительная информация */}
-          <div className="border-t border-primary-500/30 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="border-t border-primary-500/30 pt-4 sm:pt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
               <div>
                 <span className="text-gray-400">Дата въезда:</span>
                 <span className="text-white ml-2">{formatDate(passport.entry_date)}</span>

@@ -1,7 +1,7 @@
 // src/components/ui/ActionsDropdown.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MoreVertical } from 'lucide-react';
+import { ChevronDown, Settings } from 'lucide-react';
 
 export interface ActionItem {
   key: string;
@@ -21,6 +21,9 @@ interface ActionsDropdownProps {
   dropdownClassName?: string;
   size?: 'sm' | 'md' | 'lg';
   align?: 'left' | 'right';
+  label?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  variant?: 'icon' | 'button';
 }
 
 export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
@@ -29,7 +32,10 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   buttonClassName = '',
   dropdownClassName = '',
   size = 'sm',
-  align = 'right'
+  align = 'right',
+  label = 'Действия',
+  icon: IconComponent = Settings,
+  variant = 'button'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -99,10 +105,24 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className={`p-2 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800 ${buttonClassName}`}
-        title="Действия"
+        className={`
+          ${variant === 'icon' 
+            ? 'p-2 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800'
+            : 'px-3 py-1.5 text-sm bg-dark-700 hover:bg-dark-600 text-gray-300 hover:text-white border border-dark-600 rounded-lg transition-colors flex items-center space-x-2'
+          }
+          ${buttonClassName}
+        `}
+        title={label}
       >
-        <MoreVertical className="h-4 w-4" />
+        {variant === 'icon' ? (
+          <IconComponent className="h-4 w-4" />
+        ) : (
+          <>
+            <IconComponent className="h-4 w-4" />
+            <span>{label}</span>
+            <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          </>
+        )}
       </button>
 
       <AnimatePresence>
@@ -111,7 +131,10 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
             ref={dropdownRef}
             className={`absolute z-50 mt-2 ${
               align === 'right' ? 'right-0' : 'left-0'
-            } bg-dark-800 border border-dark-600 rounded-lg shadow-lg min-w-48 ${dropdownClassName}`}
+            } bg-dark-800 border border-dark-600 rounded-lg shadow-xl min-w-48 max-h-64 overflow-y-auto ${dropdownClassName}`}
+            style={{
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2)'
+            }}
             {...dropdownAnimation}
             transition={{ duration: 0.15 }}
           >

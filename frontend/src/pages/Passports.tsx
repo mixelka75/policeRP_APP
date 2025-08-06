@@ -287,7 +287,7 @@ const Passports: React.FC = () => {
     {
       key: 'actions',
       label: 'Действия',
-      width: '80px',
+      width: '120px',
       render: (_: any, passport: Passport) => {
         const actions: ActionItem[] = [
           {
@@ -328,7 +328,7 @@ const Passports: React.FC = () => {
           }
         ];
 
-        return <ActionsDropdown actions={actions} />;
+        return <ActionsDropdown actions={actions} variant="button" />;
       },
     },
   ];

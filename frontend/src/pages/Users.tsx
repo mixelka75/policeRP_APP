@@ -294,7 +294,7 @@ const Users: React.FC = () => {
     {
       key: 'actions',
       label: 'Действия',
-      width: '80px',
+      width: '120px',
       render: (_: any, user: User) => {
         const actions: ActionItem[] = [
           {
@@ -321,7 +321,7 @@ const Users: React.FC = () => {
           }
         ];
 
-        return <ActionsDropdown actions={actions} />;
+        return <ActionsDropdown actions={actions} variant="button" />;
       },
     },
   ];

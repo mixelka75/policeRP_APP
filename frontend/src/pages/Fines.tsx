@@ -278,7 +278,7 @@ const Fines: React.FC = () => {
     {
       key: 'actions',
       label: 'Действия',
-      width: '80px',
+      width: '120px',
       render: (_: any, fine: Fine) => {
         const actions: ActionItem[] = [
           {
@@ -297,7 +297,7 @@ const Fines: React.FC = () => {
           }
         ];
 
-        return <ActionsDropdown actions={actions} />;
+        return <ActionsDropdown actions={actions} variant="button" />;
       },
     },
   ];

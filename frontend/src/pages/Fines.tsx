@@ -204,7 +204,7 @@ const Fines: React.FC = () => {
     {
       key: 'article',
       label: 'Статья',
-      priority: 'high' as const,
+      priority: 'medium' as const,
       tabletHidden: true,
       render: (article: string) => (
         <div className="max-w-xs">
@@ -258,6 +258,7 @@ const Fines: React.FC = () => {
       label: 'Выписал',
       width: '150px',
       priority: 'low' as const,
+      intermediateHidden: true,
       tabletHidden: true,
       mobileHidden: true,
       render: (_: any, fine: Fine) => (
@@ -287,6 +288,7 @@ const Fines: React.FC = () => {
       label: 'Дата выписки',
       width: '150px',
       priority: 'low' as const,
+      intermediateHidden: true,
       tabletHidden: true,
       mobileHidden: true,
       render: (date: string) => (

@@ -11,6 +11,7 @@ interface TableColumn {
   width?: string;
   mobileHidden?: boolean; // ✨ НОВОЕ: скрыть на мобильных
   tabletHidden?: boolean; // ✨ НОВОЕ: скрыть на планшетах
+  intermediateHidden?: boolean; // ✨ НОВОЕ: скрыть на промежуточных экранах (1024-1280px)
   priority?: 'high' | 'medium' | 'low'; // ✨ НОВОЕ: приоритет отображения
 }
 
@@ -76,15 +77,25 @@ const Table: React.FC<TableProps> = ({
   const tabletColumns = columns.filter(col => !col.tabletHidden && !col.mobileHidden);
   const mobileColumns = columns.filter(col => !col.mobileHidden || col.key === 'actions');
   
+  // ✨ Промежуточные экраны (1024-1280px) - скрываем низкоприоритетные
+  const intermediateColumns = columns.filter(col => 
+    !col.intermediateHidden && !col.tabletHidden && !col.mobileHidden
+  );
+  
   // ✨ Высокоприоритетные колонки для планшетов (максимум 3)
   const highPriorityTabletColumns = tabletColumns.filter(col => 
     col.priority === 'high' || col.key === 'actions'
   ).slice(0, 3);
+  
+  // ✨ Высокоприоритетные и средние колонки для промежуточных экранов
+  const priorityIntermediateColumns = intermediateColumns.filter(col => 
+    col.priority === 'high' || col.priority === 'medium' || col.key === 'actions'
+  );
 
   return (
     <div className={cn('bg-dark-800/50 backdrop-blur-sm border border-primary-500/30 rounded-lg overflow-hidden', className)}>
-      {/* ✨ Desktop Table - адаптивные колонки без прокрутки */}
-      <div className="hidden lg:block">
+      {/* ✨ Large Desktop Table - все колонки */}
+      <div className="hidden xl:block">
         {/* Header */}
         <div className="bg-black/20 backdrop-blur-sm border-b border-primary-500/30 px-6 py-4">
           <div className="grid gap-2" style={{ gridTemplateColumns: columns.map(col => col.width || '1fr').join(' ') }}>
@@ -137,6 +148,74 @@ const Table: React.FC<TableProps> = ({
                     </div>
                   </div>
                 ))}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* ✨ НОВЫЙ: Intermediate Table (lg screens 1024-1280px) */}
+      <div className="hidden lg:block xl:hidden">
+        <div className="divide-y divide-primary-500/30">
+          {data.map((row, rowIndex) => (
+            <motion.div
+              key={rowIndex}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: rowIndex * 0.05 }}
+              className={cn(
+                'p-4 transition-all duration-150',
+                {
+                  'hover:bg-primary-500/5 hover:border-primary-500/40 cursor-pointer': onRowClick,
+                }
+              )}
+              onClick={() => onRowClick?.(row)}
+            >
+              {/* Основная информация - высокие и средние приоритеты */}
+              <div className="grid grid-cols-2 gap-4">
+                {priorityIntermediateColumns.filter(col => col.key !== 'actions').map((column) => {
+                  const value = column.render
+                    ? column.render(row[column.key], row)
+                    : row[column.key];
+
+                  if (!value && value !== 0) return null;
+
+                  return (
+                    <div key={column.key} className="flex flex-col space-y-1">
+                      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        {column.label}
+                      </span>
+                      <div className="text-sm text-dark-100">
+                        {value}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Действия и кнопка "Подробнее" для скрытых полей */}
+              <div className="mt-4 pt-3 border-t border-primary-500/30 flex justify-between items-center">
+                {/* Кнопка "Подробнее" если есть скрытые низкоприоритетные поля */}
+                {columns.filter(col => col.priority === 'low').length > 0 && onViewDetails && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewDetails(row);
+                    }}
+                    className="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium"
+                  >
+                    Подробнее
+                  </button>
+                )}
+                
+                {/* Actions */}
+                {columns.find(col => col.key === 'actions') && (
+                  <div className="flex justify-end overflow-visible">
+                    <div className="flex-shrink-0">
+                      {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}

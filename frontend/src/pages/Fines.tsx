@@ -21,7 +21,7 @@ import { useApi } from '@/hooks/useApi';
 import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Modal, ActionsDropdown, ActionItem } from '@/components/ui';
 import { FineForm } from '@/components/forms';
-import { FilterModal, FilterOptions } from '@/components/modals';
+import { FilterModal, FilterOptions, FineDetailsModal } from '@/components/modals';
 import { formatDate, formatMoney, getInitials } from '@/utils';
 import MinecraftAvatar from '@/components/common/MinecraftAvatar';
 
@@ -34,6 +34,8 @@ const Fines: React.FC = () => {
   const [passportMap, setPassportMap] = useState<Map<number, Passport>>(new Map());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
+  const [selectedFineForDetails, setSelectedFineForDetails] = useState<Fine | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const {
     data: fines,
@@ -168,10 +170,16 @@ const Fines: React.FC = () => {
     setAppliedFilters({});
   };
 
+  const handleViewDetails = (fine: Fine) => {
+    setSelectedFineForDetails(fine);
+    setIsDetailsModalOpen(true);
+  };
+
   const columns = [
     {
       key: 'citizen',
       label: 'Гражданин',
+      priority: 'high' as const,
       render: (_: any, fine: Fine) => {
         const passport = passportMap.get(fine.passport_id);
         if (!passport) return <span className="text-gray-500">Неизвестен</span>;
@@ -196,6 +204,8 @@ const Fines: React.FC = () => {
     {
       key: 'article',
       label: 'Статья',
+      priority: 'high' as const,
+      tabletHidden: true,
       render: (article: string) => (
         <div className="max-w-xs">
           <p className="font-medium text-white truncate">{article}</p>
@@ -206,6 +216,7 @@ const Fines: React.FC = () => {
       key: 'amount',
       label: 'Сумма',
       width: '120px',
+      priority: 'high' as const,
       render: (amount: number, fine: Fine) => (
         <div className="flex items-center space-x-2">
           <span className="text-red-400 font-bold text-lg">
@@ -223,6 +234,9 @@ const Fines: React.FC = () => {
       key: 'status',
       label: 'Статус',
       width: '100px',
+      priority: 'medium' as const,
+      tabletHidden: true,
+      mobileHidden: true,
       render: (_: any, fine: Fine) => (
         <div className="flex items-center justify-center">
           {fine.is_paid ? (
@@ -243,7 +257,9 @@ const Fines: React.FC = () => {
       key: 'issuer',
       label: 'Выписал',
       width: '150px',
-      mobileHidden: true, // Скрываем на мобильных
+      priority: 'low' as const,
+      tabletHidden: true,
+      mobileHidden: true,
       render: (_: any, fine: Fine) => (
         <div className="flex items-center space-x-2">
           <User className="h-4 w-4 text-gray-400" />
@@ -270,7 +286,9 @@ const Fines: React.FC = () => {
       key: 'created_at',
       label: 'Дата выписки',
       width: '150px',
-      mobileHidden: true, // Скрываем на мобильных
+      priority: 'low' as const,
+      tabletHidden: true,
+      mobileHidden: true,
       render: (date: string) => (
         <span className="text-gray-400">{formatDate(date)}</span>
       ),
@@ -409,6 +427,7 @@ const Fines: React.FC = () => {
             columns={columns}
             data={filteredFines}
             isLoading={isLoading}
+            onViewDetails={handleViewDetails}
             emptyMessage={
               searchTerm
                 ? `Штрафы не найдены по запросу "${searchTerm}"`
@@ -422,7 +441,7 @@ const Fines: React.FC = () => {
       <FineForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        fine={selectedFine}
+        fine={selectedFine || undefined}
         onSuccess={handleFormSuccess}
       />
 
@@ -434,6 +453,14 @@ const Fines: React.FC = () => {
         onReset={handleResetFilters}
         type="fines"
         currentFilters={appliedFilters}
+      />
+
+      {/* Fine Details Modal */}
+      <FineDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        fine={selectedFineForDetails}
+        passport={selectedFineForDetails ? passportMap.get(selectedFineForDetails.passport_id) || null : null}
       />
 
       {/* Delete Confirmation Modal */}

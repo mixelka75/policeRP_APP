@@ -10,6 +10,8 @@ interface TableColumn {
   render?: (value: any, row: any) => React.ReactNode;
   width?: string;
   mobileHidden?: boolean; // ✨ НОВОЕ: скрыть на мобильных
+  tabletHidden?: boolean; // ✨ НОВОЕ: скрыть на планшетах
+  priority?: 'high' | 'medium' | 'low'; // ✨ НОВОЕ: приоритет отображения
 }
 
 interface TableProps {
@@ -19,6 +21,7 @@ interface TableProps {
   emptyMessage?: string;
   className?: string;
   onRowClick?: (row: any) => void;
+  onViewDetails?: (row: any) => void; // ✨ НОВОЕ: для кнопки "Подробнее"
 }
 
 const Table: React.FC<TableProps> = ({
@@ -28,6 +31,7 @@ const Table: React.FC<TableProps> = ({
   emptyMessage = 'Нет данных',
   className,
   onRowClick,
+  onViewDetails,
 }) => {
   if (isLoading) {
     return (
@@ -68,9 +72,14 @@ const Table: React.FC<TableProps> = ({
     );
   }
 
-  // ✨ Фильтруем колонки для мобильных устройств
-  const visibleColumns = columns.filter(col => !col.mobileHidden);
+  // ✨ Фильтруем колонки для разных устройств
+  const tabletColumns = columns.filter(col => !col.tabletHidden && !col.mobileHidden);
   const mobileColumns = columns.filter(col => !col.mobileHidden || col.key === 'actions');
+  
+  // ✨ Высокоприоритетные колонки для планшетов (максимум 3)
+  const highPriorityTabletColumns = tabletColumns.filter(col => 
+    col.priority === 'high' || col.key === 'actions'
+  ).slice(0, 3);
 
   return (
     <div className={cn('bg-dark-800/50 backdrop-blur-sm border border-primary-500/30 rounded-lg overflow-hidden', className)}>
@@ -151,8 +160,9 @@ const Table: React.FC<TableProps> = ({
               )}
               onClick={() => onRowClick?.(row)}
             >
-              <div className="grid grid-cols-2 gap-4">
-                {visibleColumns.slice(0, 4).map((column) => {
+              {/* Основная информация - только высокоприоритетные поля */}
+              <div className="grid grid-cols-1 gap-3">
+                {highPriorityTabletColumns.filter(col => col.key !== 'actions').map((column) => {
                   const value = column.render
                     ? column.render(row[column.key], row)
                     : row[column.key];
@@ -160,11 +170,11 @@ const Table: React.FC<TableProps> = ({
                   if (!value && value !== 0) return null;
 
                   return (
-                    <div key={column.key} className="flex flex-col space-y-1">
-                      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <div key={column.key} className="flex justify-between items-start">
+                      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider min-w-0 mr-3 flex-shrink-0">
                         {column.label}
                       </span>
-                      <div className="text-sm text-dark-100">
+                      <div className="text-sm text-dark-100 text-right min-w-0 flex-1">
                         {value}
                       </div>
                     </div>
@@ -172,16 +182,30 @@ const Table: React.FC<TableProps> = ({
                 })}
               </div>
 
-              {/* Actions для планшетов с overflow защитой */}
-              {columns.find(col => col.key === 'actions') && (
-                <div className="mt-4 pt-4 border-t border-primary-500/30">
+              {/* Действия и кнопка "Подробнее" */}
+              <div className="mt-4 pt-3 border-t border-primary-500/30 flex justify-between items-center">
+                {/* Кнопка "Подробнее" для скрытых полей */}
+                {tabletColumns.length > highPriorityTabletColumns.length && onViewDetails && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewDetails(row);
+                    }}
+                    className="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium"
+                  >
+                    Подробнее
+                  </button>
+                )}
+                
+                {/* Actions */}
+                {columns.find(col => col.key === 'actions') && (
                   <div className="flex justify-end overflow-visible">
                     <div className="flex-shrink-0">
                       {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </motion.div>
           ))}
         </div>
@@ -258,16 +282,30 @@ const Table: React.FC<TableProps> = ({
                   </div>
                 )}
 
-                {/* ✨ Mobile Actions в отдельном блоке с overflow защитой */}
-                {columns.find(col => col.key === 'actions') && (
-                  <div className="pt-3 border-t border-primary-500/30">
+                {/* ✨ Действия и кнопка "Подробнее" для мобильных */}
+                <div className="pt-3 border-t border-primary-500/30 flex justify-between items-center">
+                  {/* Кнопка "Подробнее" для скрытых полей на мобильных */}
+                  {columns.filter(col => col.mobileHidden).length > 0 && onViewDetails && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewDetails(row);
+                      }}
+                      className="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium"
+                    >
+                      Подробнее
+                    </button>
+                  )}
+                  
+                  {/* Actions */}
+                  {columns.find(col => col.key === 'actions') && (
                     <div className="flex justify-end overflow-visible">
                       <div className="flex-shrink-0">
                         {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}

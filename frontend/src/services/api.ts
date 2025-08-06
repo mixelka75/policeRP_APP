@@ -612,7 +612,7 @@ class ApiService {
         params.search = searchTerm.trim();
       }
       
-      if (selectedAction && selectedAction.trim()) {
+      if (selectedAction && selectedAction.trim() && selectedAction !== '') {
         params.action = selectedAction;
       }
 

@@ -99,17 +99,6 @@ const MinecraftAvatar: React.FC<MinecraftAvatarProps> = ({
 
   return (
     <div className={`relative overflow-hidden ${roundedClass} ${className}`} style={{ width: size, height: size }}>
-      {isLoading && (
-        <div 
-          className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-600 to-gray-700 ${roundedClass} animate-pulse z-10`}
-          style={{ width: size, height: size }}
-        >
-          <UserIcon 
-            className="text-white opacity-50" 
-            size={size * 0.6} 
-          />
-        </div>
-      )}
       {avatarUrl && (
         <img
           src={avatarUrl}
@@ -120,6 +109,17 @@ const MinecraftAvatar: React.FC<MinecraftAvatarProps> = ({
           onError={handleImageError}
           crossOrigin="anonymous"
         />
+      )}
+      {isLoading && (
+        <div 
+          className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-600 to-gray-700 ${roundedClass} animate-pulse`}
+          style={{ width: size, height: size }}
+        >
+          <UserIcon 
+            className="text-white opacity-50" 
+            size={size * 0.6} 
+          />
+        </div>
       )}
     </div>
   );

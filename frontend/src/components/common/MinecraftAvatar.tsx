@@ -69,6 +69,7 @@ const MinecraftAvatar: React.FC<MinecraftAvatarProps> = ({
   };
 
   const handleImageLoad = () => {
+    console.log('MinecraftAvatar: Image loaded successfully for:', nickname);
     setIsLoading(false);
   };
 
@@ -98,13 +99,12 @@ const MinecraftAvatar: React.FC<MinecraftAvatarProps> = ({
   }
 
   return (
-    <div className={`relative overflow-hidden ${roundedClass} ${className}`} style={{ width: size, height: size }}>
-      {avatarUrl && (
+    <div className={`relative ${roundedClass} ${className}`} style={{ width: size, height: size }}>
+      {avatarUrl && !isLoading && (
         <img
           src={avatarUrl}
           alt={`${nickname} Minecraft avatar`}
-          className={`${roundedClass} object-cover`}
-          style={{ width: size, height: size }}
+          className={`${roundedClass} object-cover w-full h-full`}
           onLoad={handleImageLoad}
           onError={handleImageError}
           crossOrigin="anonymous"
@@ -112,8 +112,7 @@ const MinecraftAvatar: React.FC<MinecraftAvatarProps> = ({
       )}
       {isLoading && (
         <div 
-          className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-600 to-gray-700 ${roundedClass} animate-pulse`}
-          style={{ width: size, height: size }}
+          className={`flex items-center justify-center bg-gradient-to-br from-gray-600 to-gray-700 ${roundedClass} animate-pulse w-full h-full`}
         >
           <UserIcon 
             className="text-white opacity-50" 

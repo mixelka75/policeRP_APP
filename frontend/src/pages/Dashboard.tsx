@@ -214,7 +214,7 @@ const Dashboard: React.FC = () => {
                         user={user}
                         size={48}
                         showStatus={true}
-                        className="shadow-primary-glow animate-glow sm:w-16 sm:h-16"
+                        className="sm:w-16 sm:h-16"
                       />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -327,7 +327,7 @@ const Dashboard: React.FC = () => {
                       user={user}
                       size={48}
                       showStatus={true}
-                      className="shadow-primary-glow animate-glow sm:w-16 sm:h-16"
+                      className="sm:w-16 sm:h-16"
                     />
                   </div>
                   <div className="min-w-0 flex-1">

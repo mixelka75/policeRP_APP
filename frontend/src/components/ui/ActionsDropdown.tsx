@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Settings } from 'lucide-react';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import { ActionsMobileModal } from './ActionsMobileModal';
 
 export interface ActionItem {
   key: string;
@@ -39,8 +41,10 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   variant = 'button'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const isMobile = useIsMobile();
 
   // Фильтруем скрытые действия
   const visibleActions = actions.filter(action => !action.hidden);
@@ -105,7 +109,13 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
     <div className={`relative ${className}`}>
       <button
         ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (isMobile) {
+            setIsMobileModalOpen(true);
+          } else {
+            setIsOpen(!isOpen);
+          }
+        }}
         className={`
           ${variant === 'icon' 
             ? 'p-2 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800'
@@ -172,6 +182,14 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         </AnimatePresence>,
         document.body
       )}
+
+      {/* Mobile Modal */}
+      <ActionsMobileModal
+        isOpen={isMobileModalOpen}
+        onClose={() => setIsMobileModalOpen(false)}
+        actions={visibleActions}
+        title={label}
+      />
     </div>
   );
 };

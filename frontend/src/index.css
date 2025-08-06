@@ -5,6 +5,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safe area для iOS устройств */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* CSS переменные для новой цветовой схемы */
 :root {
   --color-primary: #d946ef;

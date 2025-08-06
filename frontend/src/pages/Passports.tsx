@@ -21,7 +21,7 @@ import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal, Badge, ActionsDropdown, ActionItem } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, Badge, ActionsDropdown, ActionItem, PassportMobileCard } from '@/components/ui';
 import { PassportForm } from '@/components/forms';
 import { FilterModal, FilterOptions, PassportDetails } from '@/components/modals';
 import EmergencyModal from '@/components/modals/EmergencyModal';
@@ -439,11 +439,12 @@ const Passports: React.FC = () => {
           ))}
         </div>
 
-        {/* Table */}
+        {/* Desktop/Tablet Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className="hidden md:block"
         >
           <Table
             columns={columns}
@@ -457,13 +458,64 @@ const Passports: React.FC = () => {
             }
           />
         </motion.div>
+
+        {/* Mobile Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="md:hidden"
+        >
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-dark-800/50 rounded-3xl p-6 h-80">
+                    <div className="flex justify-center mb-4">
+                      <div className="w-20 h-20 bg-primary-500/20 rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-6 bg-primary-500/20 rounded mx-auto w-3/4" />
+                      <div className="h-4 bg-secondary-500/20 rounded mx-auto w-1/2" />
+                      <div className="h-4 bg-secondary-500/20 rounded mx-auto w-2/3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredPassports.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400 text-lg">
+                {searchTerm
+                  ? 'Паспорта не найдены по заданным критериям'
+                  : 'Паспортов пока нет. Создайте первый паспорт.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredPassports.map((passport, index) => (
+                <motion.div
+                  key={passport.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <PassportMobileCard
+                    passport={passport}
+                    onViewDetails={handleViewDetails}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </motion.div>
       </div>
 
       {/* Passport Form Modal */}
       <PassportForm
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        passport={selectedPassport}
+        passport={selectedPassport || undefined}
         onSuccess={handleFormSuccess}
       />
 

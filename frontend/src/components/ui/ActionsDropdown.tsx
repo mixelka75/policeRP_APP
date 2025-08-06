@@ -120,12 +120,12 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         }}
         className={`
           ${variant === 'icon' 
-            ? 'p-2 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800 flex-shrink-0'
+            ? 'p-2 text-gray-400 hover:text-gray-100 transition-all duration-200 rounded-lg hover:bg-dark-700/50 flex-shrink-0 hover:scale-105'
             : variant === 'compact'
-            ? 'p-1.5 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800/50 border border-gray-700/50 flex-shrink-0'
+            ? 'p-2 text-gray-400 hover:text-gray-100 transition-all duration-200 rounded-lg hover:bg-dark-700/50 border border-dark-600/50 hover:border-dark-500 flex-shrink-0 hover:scale-105'
             : variant === 'auto'
-            ? 'p-3 sm:p-2 md:p-2.5 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800/50 border border-gray-700/50 flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center'
-            : 'px-3 py-1.5 text-sm bg-dark-700 hover:bg-dark-600 text-gray-300 hover:text-white border border-dark-600 rounded-lg transition-colors flex items-center space-x-2 flex-shrink-0'
+            ? 'p-3 sm:p-2.5 md:p-3 text-gray-400 hover:text-gray-100 transition-all duration-200 rounded-lg hover:bg-dark-700/50 border border-dark-600/50 hover:border-dark-500 flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center hover:scale-105 active:scale-95'
+            : 'px-3 py-2 text-sm bg-dark-700/50 hover:bg-dark-600 text-gray-300 hover:text-white border border-dark-600/50 hover:border-dark-500 rounded-lg transition-all duration-200 flex items-center space-x-2 flex-shrink-0 hover:scale-105'
           }
           ${buttonClassName}
         `}
@@ -150,7 +150,7 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         <AnimatePresence>
           <motion.div
             ref={dropdownRef}
-            className={`fixed z-[9999] bg-dark-800 border border-dark-600 rounded-lg shadow-xl min-w-48 max-h-64 overflow-y-auto ${dropdownClassName}`}
+            className={`fixed z-[9999] bg-dark-800/95 backdrop-blur-sm border border-dark-600/70 rounded-lg shadow-2xl min-w-48 max-h-64 overflow-y-auto ${dropdownClassName}`}
             style={{
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
               top: buttonRef.current ? buttonRef.current.getBoundingClientRect().bottom + 8 : 0,
@@ -173,13 +173,12 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
                     disabled={action.disabled}
                     title={action.title || action.label}
                     className={`
-                      w-full px-4 py-2 text-left flex items-center space-x-3 text-sm
-                      transition-colors duration-150
+                      w-full px-4 py-3 text-left flex items-center space-x-3 text-sm
+                      transition-all duration-200 rounded-md mx-1 my-0.5
                       ${action.disabled 
-                        ? 'text-gray-500 cursor-not-allowed' 
-                        : getColorClasses(action.color)
+                        ? 'text-gray-500 cursor-not-allowed opacity-50' 
+                        : getColorClasses(action.color) + ' hover:scale-[1.02] active:scale-[0.98]'
                       }
-                      disabled:opacity-50
                     `}
                   >
                     <IconComponent className="h-4 w-4 flex-shrink-0" />

@@ -69,43 +69,52 @@ const StatCard: React.FC<StatCardProps> = ({
       whileHover={{ scale: 1.02, y: -2 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
       className={cn(
-        'bg-dark-800 border border-dark-600 rounded-xl p-6 shadow-lg',
+        'bg-dark-800 border border-dark-600 rounded-xl shadow-lg',
         'hover:shadow-xl hover:border-dark-500 transition-all duration-200',
+        'h-[120px] sm:h-[130px] md:h-[140px] flex flex-col justify-between',
+        'p-4 sm:p-5 md:p-6',
         hoverClasses,
         className
       )}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-dark-400 mb-1">
-            {title}
-          </p>
-          <p className="text-2xl font-bold text-dark-100 mb-1">
-            {value}
-          </p>
-          {subtitle && (
-            <p className="text-sm text-dark-300 mb-2">
-              {subtitle}
+      <div className="flex items-start justify-between h-full">
+        <div className="flex-1 flex flex-col justify-between h-full min-w-0">
+          <div>
+            <p className="text-xs sm:text-sm font-medium text-dark-400 mb-1 truncate">
+              {title}
             </p>
-          )}
-          {trend && (
-            <div className="flex items-center space-x-1">
-              <span
-                className={cn(
-                  'text-xs font-medium',
-                  trend.isPositive ? 'text-green-400' : 'text-red-400'
-                )}
-              >
-                {trend.isPositive ? '+' : ''}{trend.value}%
-              </span>
-              <span className="text-xs text-dark-400">
-                {trend.text}
-              </span>
-            </div>
-          )}
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-dark-100 mb-1 truncate">
+              {value}
+            </p>
+          </div>
+          <div className="flex-1 flex flex-col justify-end">
+            {subtitle && (
+              <p className="text-xs sm:text-sm text-dark-300 mb-1 truncate">
+                {subtitle}
+              </p>
+            )}
+            {trend && (
+              <div className="flex items-center space-x-1">
+                <span
+                  className={cn(
+                    'text-xs font-medium',
+                    trend.isPositive ? 'text-green-400' : 'text-red-400'
+                  )}
+                >
+                  {trend.isPositive ? '+' : ''}{trend.value}%
+                </span>
+                <span className="text-xs text-dark-400 truncate">
+                  {trend.text}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
-        <div className={cn('p-3 rounded-lg', iconBgClasses)}>
-          <Icon className={cn('h-6 w-6', colorClasses)} />
+        <div className={cn(
+          'p-2 sm:p-2.5 md:p-3 rounded-lg flex-shrink-0 ml-2 sm:ml-3',
+          iconBgClasses
+        )}>
+          <Icon className={cn('h-5 w-5 sm:h-6 sm:w-6', colorClasses)} />
         </div>
       </div>
     </motion.div>

@@ -164,7 +164,8 @@ const Table: React.FC<TableProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: rowIndex * 0.05 }}
               className={cn(
-                'p-4 transition-all duration-150',
+                'p-4 sm:p-5 md:p-6 transition-all duration-150',
+                'border-b border-primary-500/30 last:border-b-0',
                 {
                   'hover:bg-primary-500/5 hover:border-primary-500/40 cursor-pointer': onRowClick,
                 }
@@ -181,11 +182,11 @@ const Table: React.FC<TableProps> = ({
                   if (!value && value !== 0) return null;
 
                   return (
-                    <div key={column.key} className="flex flex-col space-y-1">
-                      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <div key={column.key} className="flex flex-col space-y-1 min-w-0">
+                      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider truncate">
                         {column.label}
                       </span>
-                      <div className="text-sm text-dark-100">
+                      <div className="text-sm text-dark-100 min-w-0">
                         {value}
                       </div>
                     </div>
@@ -232,7 +233,8 @@ const Table: React.FC<TableProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: rowIndex * 0.05 }}
               className={cn(
-                'p-4 transition-all duration-150',
+                'p-4 sm:p-5 transition-all duration-150',
+                'border-b border-primary-500/30 last:border-b-0',
                 {
                   'hover:bg-primary-500/5 hover:border-primary-500/40 cursor-pointer': onRowClick,
                 }
@@ -249,8 +251,8 @@ const Table: React.FC<TableProps> = ({
                   if (!value && value !== 0) return null;
 
                   return (
-                    <div key={column.key} className="flex justify-between items-start">
-                      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider min-w-0 mr-3 flex-shrink-0">
+                    <div key={column.key} className="flex justify-between items-start py-1">
+                      <span className="text-xs font-medium text-gray-400 uppercase tracking-wider min-w-0 mr-4 flex-shrink-0">
                         {column.label}
                       </span>
                       <div className="text-sm text-dark-100 text-right min-w-0 flex-1">
@@ -300,17 +302,18 @@ const Table: React.FC<TableProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: rowIndex * 0.05 }}
               className={cn(
-                'p-4 transition-all duration-150',
+                'p-4 sm:p-5 transition-all duration-150',
+                'border-b border-primary-500/30 last:border-b-0',
                 {
                   'hover:bg-primary-500/5 hover:border-primary-500/40 cursor-pointer': onRowClick,
-                  'active:bg-primary-500/10': onRowClick, // Улучшенный тач-фидбек
+                  'active:bg-primary-500/10': onRowClick,
                 }
               )}
               onClick={() => onRowClick?.(row)}
             >
               <div className="space-y-3">
                 {/* ✨ Основная информация вверху (первые 4 колонки) */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {mobileColumns.slice(0, 4).map((column) => {
                     if (column.key === 'actions') return null;
 
@@ -322,10 +325,10 @@ const Table: React.FC<TableProps> = ({
 
                     return (
                       <div key={column.key} className="flex justify-between items-start">
-                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider min-w-0 mr-3 flex-shrink-0">
+                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider min-w-0 mr-4 flex-shrink-0 leading-tight">
                           {column.label}
                         </span>
-                        <div className="text-sm text-dark-100 text-right min-w-0 flex-1">
+                        <div className="text-sm text-dark-100 text-right min-w-0 flex-1 leading-tight">
                           {value}
                         </div>
                       </div>

@@ -83,10 +83,11 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
         onClose={onClose}
         title="Детали паспорта"
         size="lg"
+        className="overflow-hidden"
       >
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-x-hidden">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex items-center space-x-4">
               <div className={`rounded-lg ${
                 passport.is_emergency 
@@ -100,9 +101,9 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                   fallbackText={getInitials(passport.first_name, passport.last_name)}
                 />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center space-x-3">
-                  <h2 className="text-2xl font-bold text-white">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white truncate">
                     {passport.first_name} {passport.last_name}
                   </h2>
                   {passport.is_emergency && (
@@ -111,15 +112,16 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                     </Badge>
                   )}
                 </div>
-                <p className="text-dark-400">{passport.nickname}</p>
+                <p className="text-dark-400 truncate">{passport.nickname}</p>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onEdit?.(passport)}
                 leftIcon={<Edit className="h-4 w-4" />}
+                className="w-full sm:w-auto"
               >
                 Редактировать
               </Button>
@@ -128,6 +130,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                 size="sm"
                 onClick={handleEmergencyAction}
                 leftIcon={passport.is_emergency ? <Shield className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
+                className="w-full sm:w-auto whitespace-nowrap"
               >
                 {passport.is_emergency ? 'Убрать из ЧС' : 'Добавить в ЧС'}
               </Button>
@@ -136,6 +139,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                 size="sm"
                 onClick={handleCreateFine}
                 leftIcon={<Plus className="h-4 w-4" />}
+                className="w-full sm:w-auto"
               >
                 Выписать штраф
               </Button>
@@ -143,7 +147,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
           </div>
 
           {/* Основная информация */}
-          <Card className="grid grid-cols-2 gap-6">
+          <Card className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <User className="h-5 w-5 text-secondary-400" />
@@ -298,7 +302,7 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
               <FileText className="h-5 w-5 mr-2 text-primary-400" />
               Дополнительная информация
             </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-dark-400">Время в системе:</p>
                 <p className="text-dark-200">

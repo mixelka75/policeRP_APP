@@ -309,9 +309,9 @@ const Table: React.FC<TableProps> = ({
               onClick={() => onRowClick?.(row)}
             >
               <div className="space-y-3">
-                {/* ✨ Основная информация вверху (первые 2-3 колонки) */}
+                {/* ✨ Основная информация вверху (первые 4 колонки) */}
                 <div className="space-y-2">
-                  {mobileColumns.slice(0, 3).map((column) => {
+                  {mobileColumns.slice(0, 4).map((column) => {
                     if (column.key === 'actions') return null;
 
                     const value = column.render
@@ -334,10 +334,10 @@ const Table: React.FC<TableProps> = ({
                 </div>
 
                 {/* ✨ Дополнительная информация (остальные колонки) */}
-                {mobileColumns.length > 3 && (
+                {mobileColumns.length > 4 && (
                   <div className="pt-2 border-t border-primary-500/30">
                     <div className="grid grid-cols-2 gap-2">
-                      {mobileColumns.slice(3).map((column) => {
+                      {mobileColumns.slice(4).map((column) => {
                         if (column.key === 'actions') return null;
 
                         const value = column.render

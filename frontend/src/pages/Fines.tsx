@@ -236,7 +236,6 @@ const Fines: React.FC = () => {
       width: '100px',
       priority: 'medium' as const,
       tabletHidden: true,
-      mobileHidden: true,
       render: (_: any, fine: Fine) => (
         <div className="flex items-center justify-center">
           {fine.is_paid ? (

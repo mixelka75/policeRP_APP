@@ -72,7 +72,7 @@ const Passports: React.FC = () => {
   }, []);
 
   const loadPassports = () => {
-    fetchPassports(0, 100, undefined, undefined, undefined);
+    fetchPassports();
   };
 
   const filteredPassports = passports?.filter(passport => {

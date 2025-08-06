@@ -52,7 +52,7 @@ const Emergency: React.FC = () => {
   const filteredEmergencyPassports = emergencyPassports?.filter(passport =>
     passport.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     passport.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    passport.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (passport.nickname && passport.nickname.toLowerCase().includes(searchTerm.toLowerCase())) ||
     passport.city.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { User as UserIcon, Shield, Crown, CheckCircle, AlertTriangle, RefreshCw, UserX, UserCheck, ExternalLink, MoreHorizontal } from 'lucide-react';
 import { User } from '@/types';
 import { Badge, ActionsDropdown, ActionItem } from '@/components/ui';
-// import { getDiscordAvatarUrl } from '@/utils';
+import UserAvatar from '@/components/common/UserAvatar';
 import { cn } from '@/utils';
 
 interface UsersMobileCardProps {
@@ -57,9 +57,6 @@ const UsersMobileCard: React.FC<UsersMobileCardProps> = ({
   };
 
   const RoleIcon = getRoleIcon(user.role);
-  const avatarUrl = user.discord_avatar 
-    ? `https://cdn.discordapp.com/avatars/${user.discord_id}/${user.discord_avatar}.png`
-    : null;
 
   return (
     <motion.div
@@ -88,23 +85,13 @@ const UsersMobileCard: React.FC<UsersMobileCardProps> = ({
               <AlertTriangle className="h-5 w-5 text-red-500" />
             </div>
           )}
-          <div className="w-20 h-20 rounded-xl overflow-hidden bg-dark-700 flex items-center justify-center">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={user.discord_username}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                }}
-              />
-            ) : null}
-            <UserIcon className={cn(
-              'h-8 w-8 text-gray-400',
-              avatarUrl && 'hidden'
-            )} />
-          </div>
+          <UserAvatar
+            user={user}
+            size={80}
+            showStatus={false}
+            preferDiscord={true}
+            className="rounded-xl"
+          />
         </div>
       </div>
 

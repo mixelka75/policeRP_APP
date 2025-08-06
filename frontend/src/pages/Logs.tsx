@@ -357,7 +357,7 @@ const Logs: React.FC = () => {
 
         return (
           <div className="flex items-center space-x-3">
-            <UserAvatar user={user} size={28} showStatus />
+            <UserAvatar user={user} size={28} showStatus preferDiscord={true} />
             <div className="min-w-0">
               <p className="text-sm text-white truncate">{user.discord_username}</p>
               <p className="text-xs text-gray-400">

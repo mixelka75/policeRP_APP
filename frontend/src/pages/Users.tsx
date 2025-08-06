@@ -226,6 +226,7 @@ const Users: React.FC = () => {
           user={user}
           size={40}
           showStatus={true}
+          preferDiscord={true}
         />
       ),
     },
@@ -548,6 +549,7 @@ const Users: React.FC = () => {
               <UserAvatar
                 user={userToManage}
                 size={40}
+                preferDiscord={true}
               />
             )}
             <div>
@@ -616,6 +618,7 @@ const Users: React.FC = () => {
               <UserAvatar
                 user={userToManage}
                 size={40}
+                preferDiscord={true}
               />
             )}
             <div>

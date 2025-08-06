@@ -1,5 +1,6 @@
 // src/components/ui/ActionsDropdown.tsx
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Settings } from 'lucide-react';
 
@@ -38,23 +39,11 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   variant = 'button'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, right: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Фильтруем скрытые действия
   const visibleActions = actions.filter(action => !action.hidden);
-
-  const updatePosition = () => {
-    if (buttonRef.current && isOpen) {
-      const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + 8,
-        left: align === 'left' ? rect.left : 0,
-        right: align === 'right' ? window.innerWidth - rect.right : 0
-      });
-    }
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -68,31 +57,14 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
       }
     };
 
-    const handleScroll = () => {
-      if (isOpen) {
-        updatePosition();
-      }
-    };
-
-    const handleResize = () => {
-      if (isOpen) {
-        updatePosition();
-      }
-    };
-
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      window.addEventListener('scroll', handleScroll, true);
-      window.addEventListener('resize', handleResize);
-      updatePosition();
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll, true);
-      window.removeEventListener('resize', handleResize);
     };
-  }, [isOpen, align]);
+  }, [isOpen]);
 
   const handleActionClick = (action: ActionItem) => {
     if (!action.disabled) {
@@ -154,18 +126,17 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         )}
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
+      {isOpen && createPortal(
+        <AnimatePresence>
           <motion.div
             ref={dropdownRef}
             className={`fixed z-[9999] bg-dark-800 border border-dark-600 rounded-lg shadow-xl min-w-48 max-h-64 overflow-y-auto ${dropdownClassName}`}
             style={{
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
-              top: dropdownPosition.top,
-              ...(align === 'right' 
-                ? { right: dropdownPosition.right }
-                : { left: dropdownPosition.left }
-              )
+              top: buttonRef.current ? buttonRef.current.getBoundingClientRect().bottom + 8 : 0,
+              [align === 'right' ? 'right' : 'left']: align === 'right'
+                ? window.innerWidth - (buttonRef.current?.getBoundingClientRect().right || 0)
+                : buttonRef.current?.getBoundingClientRect().left || 0
             }}
             {...dropdownAnimation}
             transition={{ duration: 0.15 }}
@@ -198,8 +169,9 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
               })}
             </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

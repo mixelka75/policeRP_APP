@@ -524,6 +524,9 @@ const Users: React.FC = () => {
                   <UsersMobileCard
                     user={user}
                     onViewDetails={handleViewDetails}
+                    onCheckRoles={handleCheckRoles}
+                    onStatusChange={handleStatusChange}
+                    currentUserId={currentUser?.id}
                   />
                 </motion.div>
               ))}

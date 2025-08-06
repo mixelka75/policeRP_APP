@@ -503,6 +503,12 @@ const Passports: React.FC = () => {
                   <PassportMobileCard
                     passport={passport}
                     onViewDetails={handleViewDetails}
+                    onEdit={handleEditPassport}
+                    onDelete={handleDeletePassport}
+                    onEmergencyAction={handleEmergencyAction}
+                    onShowFines={handleShowPassportFines}
+                    onShowLogs={handleShowPassportLogs}
+                    currentUserRole={user?.role}
                   />
                 </motion.div>
               ))}

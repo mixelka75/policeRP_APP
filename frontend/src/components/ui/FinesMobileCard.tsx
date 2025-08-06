@@ -1,20 +1,24 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Receipt, DollarSign, Calendar, CheckCircle, Clock } from 'lucide-react';
+import { Receipt, DollarSign, Calendar, CheckCircle, Clock, Edit, Trash2, MoreHorizontal } from 'lucide-react';
 import { Fine } from '@/types';
-import { Badge } from '@/components/ui';
+import { Badge, Button, ActionsDropdown, ActionItem } from '@/components/ui';
 import { formatDate, formatMoney } from '@/utils';
 import { cn } from '@/utils';
 
 interface FinesMobileCardProps {
   fine: Fine & { passport_info?: { first_name: string; last_name: string; nickname?: string } };
   onViewDetails: (fine: Fine) => void;
+  onEdit?: (fine: Fine) => void;
+  onDelete?: (fine: Fine) => void;
   className?: string;
 }
 
 const FinesMobileCard: React.FC<FinesMobileCardProps> = ({
   fine,
   onViewDetails,
+  onEdit,
+  onDelete,
   className,
 }) => {
   return (
@@ -104,20 +108,57 @@ const FinesMobileCard: React.FC<FinesMobileCardProps> = ({
         </div>
       </div>
 
-      {/* Details Button */}
-      <button
-        onClick={() => onViewDetails(fine)}
-        className={cn(
-          'w-full py-3 px-6 rounded-2xl font-semibold text-white',
-          'bg-gradient-to-r from-primary-600 to-secondary-600',
-          'hover:from-primary-500 hover:to-secondary-500',
-          'transition-all duration-200 transform hover:scale-105',
-          'shadow-lg hover:shadow-xl',
-          'active:scale-95'
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onViewDetails(fine)}
+          className={cn(
+            'flex-1 py-3 px-4 rounded-2xl font-semibold text-white',
+            'bg-gradient-to-r from-primary-600 to-secondary-600',
+            'hover:from-primary-500 hover:to-secondary-500',
+            'transition-all duration-200 transform hover:scale-105',
+            'shadow-lg hover:shadow-xl',
+            'active:scale-95'
+          )}
+        >
+          Подробнее
+        </button>
+        
+        {(onEdit || onDelete) && (
+          <div className="flex-shrink-0">
+            <ActionsDropdown
+              actions={[
+                ...(onEdit ? [{
+                  key: 'edit',
+                  label: 'Редактировать',
+                  icon: Edit,
+                  onClick: () => onEdit(fine),
+                  color: 'primary' as const
+                }] : []),
+                ...(onDelete ? [{
+                  key: 'delete',
+                  label: 'Удалить',
+                  icon: Trash2,
+                  onClick: () => onDelete(fine),
+                  color: 'danger' as const
+                }] : [])
+              ]}
+              variant="minimal"
+              trigger={
+                <button className={cn(
+                  'p-3 rounded-2xl',
+                  'bg-white/10 hover:bg-white/20',
+                  'border border-white/20',
+                  'transition-all duration-200',
+                  'text-white hover:text-primary-400'
+                )}>
+                  <MoreHorizontal className="h-5 w-5" />
+                </button>
+              }
+            />
+          </div>
         )}
-      >
-        Подробнее
-      </button>
+      </div>
     </motion.div>
   );
 };

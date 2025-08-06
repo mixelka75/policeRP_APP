@@ -494,6 +494,8 @@ const Fines: React.FC = () => {
                     <FinesMobileCard
                       fine={fineWithPassportInfo}
                       onViewDetails={handleViewDetails}
+                      onEdit={handleEditFine}
+                      onDelete={handleDeleteFine}
                     />
                   </motion.div>
                 );

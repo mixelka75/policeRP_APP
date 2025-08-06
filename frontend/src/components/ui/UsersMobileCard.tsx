@@ -1,20 +1,26 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { User as UserIcon, Shield, Crown, CheckCircle, AlertTriangle } from 'lucide-react';
+import { User as UserIcon, Shield, Crown, CheckCircle, AlertTriangle, RefreshCw, UserX, UserCheck, ExternalLink, MoreHorizontal } from 'lucide-react';
 import { User } from '@/types';
-import { Badge } from '@/components/ui';
+import { Badge, ActionsDropdown, ActionItem } from '@/components/ui';
 // import { getDiscordAvatarUrl } from '@/utils';
 import { cn } from '@/utils';
 
 interface UsersMobileCardProps {
   user: User;
   onViewDetails: (user: User) => void;
+  onCheckRoles?: (user: User) => void;
+  onStatusChange?: (user: User) => void;
+  currentUserId?: number;
   className?: string;
 }
 
 const UsersMobileCard: React.FC<UsersMobileCardProps> = ({
   user,
   onViewDetails,
+  onCheckRoles,
+  onStatusChange,
+  currentUserId,
   className,
 }) => {
   const getRoleIcon = (role: string) => {
@@ -161,20 +167,65 @@ const UsersMobileCard: React.FC<UsersMobileCardProps> = ({
         </div>
       </div>
 
-      {/* Details Button */}
-      <button
-        onClick={() => onViewDetails(user)}
-        className={cn(
-          'w-full py-3 px-6 rounded-2xl font-semibold text-white',
-          'bg-gradient-to-r from-primary-600 to-secondary-600',
-          'hover:from-primary-500 hover:to-secondary-500',
-          'transition-all duration-200 transform hover:scale-105',
-          'shadow-lg hover:shadow-xl',
-          'active:scale-95'
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onViewDetails(user)}
+          className={cn(
+            'flex-1 py-3 px-4 rounded-2xl font-semibold text-white',
+            'bg-gradient-to-r from-primary-600 to-secondary-600',
+            'hover:from-primary-500 hover:to-secondary-500',
+            'transition-all duration-200 transform hover:scale-105',
+            'shadow-lg hover:shadow-xl',
+            'active:scale-95'
+          )}
+        >
+          Подробнее
+        </button>
+        
+        {(onCheckRoles || onStatusChange) && (
+          <div className="flex-shrink-0">
+            <ActionsDropdown
+              actions={[
+                ...(onCheckRoles ? [{
+                  key: 'checkRoles',
+                  label: 'Проверить роли',
+                  icon: RefreshCw,
+                  onClick: () => onCheckRoles(user),
+                  color: 'primary' as const
+                }] : []),
+                ...(onStatusChange ? [{
+                  key: 'toggleStatus',
+                  label: user.is_active ? 'Деактивировать' : 'Активировать',
+                  icon: user.is_active ? UserX : UserCheck,
+                  onClick: () => onStatusChange(user),
+                  color: user.is_active ? 'danger' : 'success' as const,
+                  disabled: user.id === currentUserId
+                }] : []),
+                {
+                  key: 'discord',
+                  label: 'Открыть в Discord',
+                  icon: ExternalLink,
+                  onClick: () => window.open(`https://discord.com/users/${user.discord_id}`, '_blank'),
+                  color: 'secondary' as const
+                }
+              ]}
+              variant="minimal"
+              trigger={
+                <button className={cn(
+                  'p-3 rounded-2xl',
+                  'bg-white/10 hover:bg-white/20',
+                  'border border-white/20',
+                  'transition-all duration-200',
+                  'text-white hover:text-primary-400'
+                )}>
+                  <MoreHorizontal className="h-5 w-5" />
+                </button>
+              }
+            />
+          </div>
         )}
-      >
-        Подробнее
-      </button>
+      </div>
     </motion.div>
   );
 };

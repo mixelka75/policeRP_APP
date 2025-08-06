@@ -1,20 +1,32 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, AlertTriangle, Shield } from 'lucide-react';
+import { MapPin, AlertTriangle, Shield, Edit, Trash2, ShieldAlert, Receipt, ScrollText, MoreHorizontal } from 'lucide-react';
 import { Passport } from '@/types';
 import { MinecraftHead } from '@/components/common';
-import { Badge } from '@/components/ui';
+import { Badge, ActionsDropdown, ActionItem } from '@/components/ui';
 import { cn } from '@/utils';
 
 interface PassportMobileCardProps {
   passport: Passport;
   onViewDetails: (passport: Passport) => void;
+  onEdit?: (passport: Passport) => void;
+  onDelete?: (passport: Passport) => void;
+  onEmergencyAction?: (passport: Passport) => void;
+  onShowFines?: (passport: Passport) => void;
+  onShowLogs?: (passport: Passport) => void;
+  currentUserRole?: string;
   className?: string;
 }
 
 const PassportMobileCard: React.FC<PassportMobileCardProps> = ({
   passport,
   onViewDetails,
+  onEdit,
+  onDelete,
+  onEmergencyAction,
+  onShowFines,
+  onShowLogs,
+  currentUserRole,
   className,
 }) => {
   return (
@@ -111,20 +123,78 @@ const PassportMobileCard: React.FC<PassportMobileCardProps> = ({
         </div>
       </div>
 
-      {/* Details Button */}
-      <button
-        onClick={() => onViewDetails(passport)}
-        className={cn(
-          'w-full py-3 px-6 rounded-2xl font-semibold text-white',
-          'bg-gradient-to-r from-primary-600 to-secondary-600',
-          'hover:from-primary-500 hover:to-secondary-500',
-          'transition-all duration-200 transform hover:scale-105',
-          'shadow-lg hover:shadow-xl',
-          'active:scale-95'
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onViewDetails(passport)}
+          className={cn(
+            'flex-1 py-3 px-4 rounded-2xl font-semibold text-white',
+            'bg-gradient-to-r from-primary-600 to-secondary-600',
+            'hover:from-primary-500 hover:to-secondary-500',
+            'transition-all duration-200 transform hover:scale-105',
+            'shadow-lg hover:shadow-xl',
+            'active:scale-95'
+          )}
+        >
+          Подробнее
+        </button>
+        
+        {(onEdit || onDelete || onEmergencyAction || onShowFines || onShowLogs) && (
+          <div className="flex-shrink-0">
+            <ActionsDropdown
+              actions={[
+                ...(onEdit ? [{
+                  key: 'edit',
+                  label: 'Редактировать',
+                  icon: Edit,
+                  onClick: () => onEdit(passport),
+                  color: 'primary' as const
+                }] : []),
+                ...(onEmergencyAction ? [{
+                  key: 'emergency',
+                  label: passport.is_emergency ? 'Убрать из ЧС' : 'Добавить в ЧС',
+                  icon: passport.is_emergency ? Shield : ShieldAlert,
+                  onClick: () => onEmergencyAction(passport),
+                  color: passport.is_emergency ? 'success' : 'warning' as const
+                }] : []),
+                ...(onShowFines ? [{
+                  key: 'fines',
+                  label: 'Показать штрафы',
+                  icon: Receipt,
+                  onClick: () => onShowFines(passport),
+                  color: 'accent' as const
+                }] : []),
+                ...(onShowLogs && currentUserRole === 'admin' ? [{
+                  key: 'logs',
+                  label: 'Показать логи',
+                  icon: ScrollText,
+                  onClick: () => onShowLogs(passport),
+                  color: 'secondary' as const
+                }] : []),
+                ...(onDelete ? [{
+                  key: 'delete',
+                  label: 'Удалить',
+                  icon: Trash2,
+                  onClick: () => onDelete(passport),
+                  color: 'danger' as const
+                }] : [])
+              ]}
+              variant="minimal"
+              trigger={
+                <button className={cn(
+                  'p-3 rounded-2xl',
+                  'bg-white/10 hover:bg-white/20',
+                  'border border-white/20',
+                  'transition-all duration-200',
+                  'text-white hover:text-primary-400'
+                )}>
+                  <MoreHorizontal className="h-5 w-5" />
+                </button>
+              }
+            />
+          </div>
         )}
-      >
-        Подробнее
-      </button>
+      </div>
     </motion.div>
   );
 };

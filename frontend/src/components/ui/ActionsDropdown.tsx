@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Settings } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { ActionsMobileModal } from './ActionsMobileModal';
+import { ActionsModal } from './ActionsModal';
 
 export interface ActionItem {
   key: string;
@@ -110,7 +110,9 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
       <button
         ref={buttonRef}
         onClick={() => {
-          if (isMobile || variant === 'auto') {
+          if (variant === 'auto') {
+            setIsMobileModalOpen(true);
+          } else if (isMobile) {
             setIsMobileModalOpen(true);
           } else {
             setIsOpen(!isOpen);
@@ -122,7 +124,7 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
             : variant === 'compact'
             ? 'p-1.5 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800/50 border border-gray-700/50 flex-shrink-0'
             : variant === 'auto'
-            ? 'p-1.5 sm:p-2 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800/50 border border-gray-700/50 flex-shrink-0'
+            ? 'p-3 sm:p-2 md:p-2.5 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800/50 border border-gray-700/50 flex-shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center'
             : 'px-3 py-1.5 text-sm bg-dark-700 hover:bg-dark-600 text-gray-300 hover:text-white border border-dark-600 rounded-lg transition-colors flex items-center space-x-2 flex-shrink-0'
           }
           ${buttonClassName}
@@ -134,7 +136,7 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         ) : variant === 'compact' ? (
           <IconComponent className="h-3.5 w-3.5" />
         ) : variant === 'auto' ? (
-          <IconComponent className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <IconComponent className="h-5 w-5 sm:h-4 sm:w-4 md:h-5 md:w-5" />
         ) : (
           <>
             <IconComponent className="h-4 w-4" />
@@ -144,7 +146,7 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         )}
       </button>
 
-      {isOpen && createPortal(
+      {isOpen && !isMobile && variant !== 'auto' && createPortal(
         <AnimatePresence>
           <motion.div
             ref={dropdownRef}
@@ -191,8 +193,8 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         document.body
       )}
 
-      {/* Mobile Modal */}
-      <ActionsMobileModal
+      {/* Actions Modal */}
+      <ActionsModal
         isOpen={isMobileModalOpen}
         onClose={() => setIsMobileModalOpen(false)}
         actions={visibleActions}

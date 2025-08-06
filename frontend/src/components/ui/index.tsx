@@ -10,5 +10,5 @@ export { default as StatCard } from './StatCard';
 export { default as Table } from './Table';
 export { default as PassportSearchSelect } from './PassportSearchSelect';
 export { ActionsDropdown } from './ActionsDropdown';
-export { ActionsMobileModal } from './ActionsMobileModal';
+export { ActionsModal } from './ActionsModal';
 export type { ActionItem } from './ActionsDropdown';

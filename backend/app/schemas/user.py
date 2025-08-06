@@ -45,7 +45,7 @@ class User(BaseModel):
     Схема пользователя для ответа
     """
     id: int
-    discord_id: int
+    discord_id: str = Field(..., description="Discord ID в виде строки")
     discord_username: str
     discord_discriminator: Optional[str]
     discord_avatar: Optional[str]
@@ -53,12 +53,34 @@ class User(BaseModel):
     minecraft_uuid: Optional[str]
     role: str
     is_active: bool
+    discord_roles: Optional[List[str]] = Field(default_factory=list, description="Discord роли пользователя")
     last_role_check: Optional[datetime]
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+        
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        """Кастомная валидация для преобразования discord_id в строку и обработки discord_roles"""
+        # Создаем копию объекта для безопасного изменения
+        if hasattr(obj, '__dict__'):
+            # Если это объект SQLAlchemy, создаем словарь из его атрибутов
+            data = {}
+            for key in cls.model_fields.keys():
+                if hasattr(obj, key):
+                    value = getattr(obj, key)
+                    if key == 'discord_id' and value is not None:
+                        data[key] = str(value)  # Преобразуем в строку
+                    elif key == 'discord_roles':
+                        # Если discord_roles is None, устанавливаем пустой список
+                        data[key] = value if value is not None else []
+                    else:
+                        data[key] = value
+            return super().model_validate(data, **kwargs)
+        else:
+            return super().model_validate(obj, **kwargs)
 
 
 class UserPublic(BaseModel):

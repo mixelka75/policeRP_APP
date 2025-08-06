@@ -25,16 +25,23 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
 
   useEffect(() => {
     // Тестируем CDN Discord только один раз
-    if (!cdnTested && preferDiscord) {
+    if (!cdnTested && preferDiscord && user) {
+      console.log('UserAvatar: Testing Discord CDN for user:', user.discord_username, 'Avatar:', user.discord_avatar);
       testDiscordCDN().then((accessible) => {
         if (!accessible) {
           console.warn('UserAvatar: Discord CDN not accessible, falling back immediately');
           setDiscordFailed(true);
+        } else {
+          console.log('UserAvatar: Discord CDN is accessible');
         }
+        setCdnTested(true);
+      }).catch((error) => {
+        console.error('UserAvatar: CDN test error:', error);
+        setDiscordFailed(true);
         setCdnTested(true);
       });
     }
-  }, [preferDiscord, cdnTested]);
+  }, [preferDiscord, cdnTested, user]);
 
   // If preferDiscord is true, try Discord avatar first
   if (preferDiscord && !discordFailed) {
@@ -49,11 +56,18 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
           className="rounded-full"
           style={{ width: size, height: size }}
           onError={(e) => {
-            console.log('UserAvatar: Discord avatar failed to load for user:', user.discord_username, 'URL:', avatarUrl);
+            const target = e.target as HTMLImageElement;
+            console.error('UserAvatar: Discord avatar failed to load for user:', user.discord_username, 'URL:', avatarUrl);
+            console.error('UserAvatar: Error details:', {
+              naturalWidth: target.naturalWidth,
+              naturalHeight: target.naturalHeight,
+              complete: target.complete,
+              src: target.src
+            });
             setDiscordFailed(true);
           }}
           onLoad={() => {
-            console.log('UserAvatar: Discord avatar loaded successfully for user:', user.discord_username);
+            console.log('UserAvatar: Discord avatar loaded successfully for user:', user.discord_username, 'URL:', avatarUrl);
           }}
         />
         {showStatus && (
@@ -107,7 +121,14 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
           className="rounded-full"
           style={{ width: size, height: size }}
           onError={(e) => {
-            console.log('UserAvatar: Fallback Discord avatar failed for user:', user.discord_username, 'URL:', fallbackAvatarUrl);
+            const target = e.target as HTMLImageElement;
+            console.error('UserAvatar: Fallback Discord avatar failed for user:', user.discord_username, 'URL:', fallbackAvatarUrl);
+            console.error('UserAvatar: Fallback error details:', {
+              naturalWidth: target.naturalWidth,
+              naturalHeight: target.naturalHeight,
+              complete: target.complete,
+              src: target.src
+            });
             setDiscordFailed(true);
           }}
           onLoad={() => {

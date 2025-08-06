@@ -161,11 +161,29 @@ export function getDiscordAvatarUrl(user: User | null | undefined, size: number 
           console.error('getDiscordAvatarUrl: Error calculating default avatar with BigInt:', error);
           // Fallback к простому модулю
           defaultAvatarId = parseInt(user.discord_id.slice(-1)) % 6;
+          console.log('getDiscordAvatarUrl: Using fallback calculation, defaultAvatarId:', defaultAvatarId);
         }
       }
       
       const defaultUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarId}.png`;
       console.log('getDiscordAvatarUrl: Using default avatar:', defaultUrl);
+      return defaultUrl;
+    }
+
+    // Валидируем формат discord_avatar (должен содержать только разрешенные символы)
+    const avatarHashPattern = /^[a-f0-9]{32}$|^a_[a-f0-9]{31}$/;
+    if (!avatarHashPattern.test(user.discord_avatar)) {
+      console.warn('getDiscordAvatarUrl: Invalid avatar hash format:', user.discord_avatar);
+      // Возвращаем дефолтный аватар при неправильном формате
+      let defaultAvatarId = 0;
+      try {
+        const userId = BigInt(user.discord_id);
+        defaultAvatarId = Number((userId >> 22n) % 6n);
+      } catch (error) {
+        defaultAvatarId = parseInt(user.discord_id.slice(-1)) % 6;
+      }
+      const defaultUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarId}.png`;
+      console.log('getDiscordAvatarUrl: Using default avatar due to invalid hash:', defaultUrl);
       return defaultUrl;
     }
 

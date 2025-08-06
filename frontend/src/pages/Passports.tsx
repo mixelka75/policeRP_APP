@@ -23,7 +23,7 @@ import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
 import { Button, Input, Table, StatCard, Modal, Badge, ActionsDropdown, ActionItem } from '@/components/ui';
 import { PassportForm } from '@/components/forms';
-import { FilterModal, FilterOptions } from '@/components/modals';
+import { FilterModal, FilterOptions, PassportDetails } from '@/components/modals';
 import EmergencyModal from '@/components/modals/EmergencyModal';
 import PassportLogsModal from '@/components/modals/PassportLogsModal';
 import PassportFinesModal from '@/components/modals/PassportFinesModal';
@@ -45,6 +45,8 @@ const Passports: React.FC = () => {
   const [passportForLogs, setPassportForLogs] = useState<Passport | null>(null);
   const [isPassportFinesModalOpen, setIsPassportFinesModalOpen] = useState(false);
   const [passportForFines, setPassportForFines] = useState<Passport | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedPassportForDetails, setSelectedPassportForDetails] = useState<Passport | null>(null);
 
   const {
     data: passports,
@@ -189,12 +191,18 @@ const Passports: React.FC = () => {
     setAppliedFilters({});
   };
 
+  const handleViewDetails = (passport: Passport) => {
+    setSelectedPassportForDetails(passport);
+    setIsDetailsModalOpen(true);
+  };
+
 
   const columns = [
     {
       key: 'avatar',
       label: '',
       width: '60px',
+      priority: 'high' as const,
       render: (_: any, passport: Passport) => (
         <div className={`relative ${
           passport.is_emergency 
@@ -213,6 +221,7 @@ const Passports: React.FC = () => {
     {
       key: 'name',
       label: 'Имя',
+      priority: 'high' as const,
       render: (_: any, passport: Passport) => (
         <div>
           <div className="flex items-center space-x-2">
@@ -235,6 +244,7 @@ const Passports: React.FC = () => {
       key: 'city',
       label: 'Город',
       width: '120px',
+      priority: 'medium' as const,
       render: (city: string) => (
         <div className="flex items-center space-x-2">
           <MapPin className="h-4 w-4 text-primary-400" />
@@ -246,7 +256,10 @@ const Passports: React.FC = () => {
       key: 'age',
       label: 'Возраст',
       width: '100px',
-      mobileHidden: true, // Скрываем на мобильных
+      priority: 'low' as const,
+      intermediateHidden: true,
+      tabletHidden: true,
+      mobileHidden: true,
       render: (age: number) => (
         <span className="text-secondary-400 font-medium">{age} лет</span>
       ),
@@ -255,7 +268,10 @@ const Passports: React.FC = () => {
       key: 'gender',
       label: 'Пол',
       width: '100px',
-      mobileHidden: true, // Скрываем на мобильных
+      priority: 'low' as const,
+      intermediateHidden: true,
+      tabletHidden: true,
+      mobileHidden: true,
       render: (gender: string) => (
         <span className="text-gray-300">
           {gender === 'male' ? 'Мужской' : 'Женский'}
@@ -266,6 +282,7 @@ const Passports: React.FC = () => {
       key: 'violations_count',
       label: 'Нарушения',
       width: '100px',
+      priority: 'medium' as const,
       render: (count: number) => (
         <div className="flex items-center space-x-2">
           <AlertTriangle className={`h-4 w-4 ${count > 0 ? 'text-red-400' : 'text-green-400'}`} />
@@ -279,7 +296,10 @@ const Passports: React.FC = () => {
       key: 'entry_date',
       label: 'Въезд в город',
       width: '130px',
-      mobileHidden: true, // Скрываем на мобильных
+      priority: 'low' as const,
+      intermediateHidden: true,
+      tabletHidden: true,
+      mobileHidden: true,
       render: (date: string) => (
         <span className="text-gray-400 text-sm">{formatDate(date, 'dd.MM.yyyy')}</span>
       ),
@@ -429,6 +449,7 @@ const Passports: React.FC = () => {
             columns={columns}
             data={filteredPassports}
             isLoading={isLoading}
+            onViewDetails={handleViewDetails}
             emptyMessage={
               searchTerm
                 ? 'Паспорта не найдены по заданным критериям'
@@ -513,6 +534,13 @@ const Passports: React.FC = () => {
         isOpen={isPassportFinesModalOpen}
         onClose={() => setIsPassportFinesModalOpen(false)}
         passport={passportForFines}
+      />
+
+      {/* Passport Details Modal */}
+      <PassportDetails
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        passport={selectedPassportForDetails}
       />
     </Layout>
   );

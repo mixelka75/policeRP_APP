@@ -1,7 +1,7 @@
 // src/components/common/UserAvatar.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '@/types';
-import { getDiscordAvatarUrl, getDisplayName } from '@/utils';
+import { getDiscordAvatarUrl, getDisplayName, testDiscordCDN } from '@/utils';
 import MinecraftAvatar from './MinecraftAvatar';
 
 interface UserAvatarProps {
@@ -21,17 +21,40 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
 }) => {
   const [minecraftFailed, setMinecraftFailed] = useState(false);
   const [discordFailed, setDiscordFailed] = useState(false);
+  const [cdnTested, setCdnTested] = useState(false);
+
+  useEffect(() => {
+    // Тестируем CDN Discord только один раз
+    if (!cdnTested && preferDiscord) {
+      testDiscordCDN().then((accessible) => {
+        if (!accessible) {
+          console.warn('UserAvatar: Discord CDN not accessible, falling back immediately');
+          setDiscordFailed(true);
+        }
+        setCdnTested(true);
+      });
+    }
+  }, [preferDiscord, cdnTested]);
 
   // If preferDiscord is true, try Discord avatar first
   if (preferDiscord && !discordFailed) {
+    const avatarUrl = getDiscordAvatarUrl(user, size);
+    console.log('UserAvatar: Using Discord avatar for user:', user.discord_username, 'URL:', avatarUrl);
+    
     return (
       <div className={`relative ${className}`} style={{ width: size, height: size }}>
         <img
-          src={getDiscordAvatarUrl(user, size)}
+          src={avatarUrl}
           alt={`${getDisplayName(user)} avatar`}
           className="rounded-full"
           style={{ width: size, height: size }}
-          onError={() => setDiscordFailed(true)}
+          onError={(e) => {
+            console.log('UserAvatar: Discord avatar failed to load for user:', user.discord_username, 'URL:', avatarUrl);
+            setDiscordFailed(true);
+          }}
+          onLoad={() => {
+            console.log('UserAvatar: Discord avatar loaded successfully for user:', user.discord_username);
+          }}
         />
         {showStatus && (
           <div className={`absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-dark-800 ${
@@ -72,15 +95,24 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   }
 
   // Fallback to Discord avatar or initials  
+  const fallbackAvatarUrl = getDiscordAvatarUrl(user, size);
+  console.log('UserAvatar: Using fallback Discord avatar for user:', user.discord_username, 'URL:', fallbackAvatarUrl);
+  
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
       {!discordFailed && (
         <img
-          src={getDiscordAvatarUrl(user, size)}
+          src={fallbackAvatarUrl}
           alt={`${getDisplayName(user)} avatar`}
           className="rounded-full"
           style={{ width: size, height: size }}
-          onError={() => setDiscordFailed(true)}
+          onError={(e) => {
+            console.log('UserAvatar: Fallback Discord avatar failed for user:', user.discord_username, 'URL:', fallbackAvatarUrl);
+            setDiscordFailed(true);
+          }}
+          onLoad={() => {
+            console.log('UserAvatar: Fallback Discord avatar loaded successfully for user:', user.discord_username);
+          }}
         />
       )}
       {discordFailed && (

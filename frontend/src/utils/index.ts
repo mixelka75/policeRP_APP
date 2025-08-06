@@ -122,27 +122,62 @@ export function getInitials(firstName: string, lastName?: string) {
   }
 }
 
-// ✅ ИСПРАВЛЕНО: Улучшенная генерация Discord аватара
+// ✅ ИСПРАВЛЕНО: Правильная генерация Discord аватара согласно API
 export function getDiscordAvatarUrl(user: User | null | undefined, size: number = 128): string {
   try {
     if (!user || !user.discord_id) {
+      console.warn('getDiscordAvatarUrl: Invalid user or missing discord_id', user);
       return `https://cdn.discordapp.com/embed/avatars/0.png`;
     }
 
-    if (!user.discord_avatar) {
+    // Валидируем размер (должен быть степенью 2 от 16 до 4096)
+    const validSizes = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096];
+    const validSize = validSizes.includes(size) ? size : 128;
+
+    console.log('getDiscordAvatarUrl: Processing user:', {
+      discord_id: user.discord_id,
+      discord_username: user.discord_username,
+      discord_avatar: user.discord_avatar,
+      discord_discriminator: user.discord_discriminator,
+      size: validSize
+    });
+
+    if (!user.discord_avatar || user.discord_avatar === null || user.discord_avatar === 'undefined' || user.discord_avatar === '') {
       // Fallback к дефолтному аватару Discord
-      // Используем модуль от discord_id для определения дефолтного аватара
-      const defaultAvatarId = (parseInt(user.discord_id) % 5) || 0;
-      return `https://cdn.discordapp.com/embed/avatars/${defaultAvatarId}.png`;
+      // Определяем, какую формулу использовать для дефолтного аватара
+      let defaultAvatarId: number;
+      
+      if (user.discord_discriminator && user.discord_discriminator !== '0' && user.discord_discriminator !== 'undefined' && user.discord_discriminator !== null) {
+        // Старая система с дискриминатором
+        defaultAvatarId = parseInt(user.discord_discriminator) % 5;
+        console.log('getDiscordAvatarUrl: Using legacy discriminator system, defaultAvatarId:', defaultAvatarId);
+      } else {
+        // Новая система имён пользователей
+        try {
+          const userId = BigInt(user.discord_id);
+          defaultAvatarId = Number((userId >> 22n) % 6n);
+          console.log('getDiscordAvatarUrl: Using new username system, defaultAvatarId:', defaultAvatarId);
+        } catch (error) {
+          console.error('getDiscordAvatarUrl: Error calculating default avatar with BigInt:', error);
+          // Fallback к простому модулю
+          defaultAvatarId = parseInt(user.discord_id.slice(-1)) % 6;
+        }
+      }
+      
+      const defaultUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarId}.png`;
+      console.log('getDiscordAvatarUrl: Using default avatar:', defaultUrl);
+      return defaultUrl;
     }
 
-    // Проверяем, анимированный ли аватар
+    // Проверяем, анимированный ли аватар (начинается с 'a_')
     const isAnimated = user.discord_avatar.startsWith('a_');
     const extension = isAnimated ? 'gif' : 'png';
 
-    return `https://cdn.discordapp.com/avatars/${user.discord_id}/${user.discord_avatar}.${extension}?size=${size}`;
+    const customUrl = `https://cdn.discordapp.com/avatars/${user.discord_id}/${user.discord_avatar}.${extension}?size=${validSize}`;
+    console.log('getDiscordAvatarUrl: Using custom avatar:', customUrl, 'isAnimated:', isAnimated);
+    return customUrl;
   } catch (error) {
-    console.error('Discord avatar URL generation error:', error);
+    console.error('Discord avatar URL generation error:', error, 'User:', user);
     return `https://cdn.discordapp.com/embed/avatars/0.png`;
   }
 }
@@ -447,6 +482,33 @@ export function isTokenExpired(token: string): boolean {
     console.error('Token expiration check error:', error);
     return true;
   }
+}
+
+// ✅ Утилита для проверки доступности Discord CDN
+export function testDiscordCDN(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const testImage = new Image();
+    const testUrl = 'https://cdn.discordapp.com/embed/avatars/0.png';
+    
+    const timeout = setTimeout(() => {
+      console.warn('Discord CDN test timeout');
+      resolve(false);
+    }, 5000);
+
+    testImage.onload = () => {
+      clearTimeout(timeout);
+      console.log('Discord CDN is accessible');
+      resolve(true);
+    };
+
+    testImage.onerror = () => {
+      clearTimeout(timeout);
+      console.error('Discord CDN is not accessible');
+      resolve(false);
+    };
+
+    testImage.src = testUrl;
+  });
 }
 
 // Export avatar cache utilities

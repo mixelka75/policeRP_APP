@@ -4,8 +4,8 @@ export interface User {
   id: number;
   discord_id: string;
   discord_username: string;
-  discord_discriminator: string;
-  discord_avatar: string;
+  discord_discriminator?: string | null; // Может быть null для новой системы Discord
+  discord_avatar?: string | null; // Может быть null если у пользователя нет аватара
   minecraft_username?: string;
   minecraft_uuid?: string;
   role: 'admin' | 'police' | 'citizen';

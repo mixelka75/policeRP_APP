@@ -1,5 +1,5 @@
 // src/pages/Logs.tsx - Обновленная цветовая схема
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -16,7 +16,6 @@ import {
   Server,
   Calendar,
   Clock,
-  Shield,
   ShieldAlert,
   List,
   ShieldCheck,
@@ -27,17 +26,20 @@ import { Log, User as UserType } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { useDebounce } from '@/hooks/useDebounce';
 import { Layout } from '@/components/layout';
 import { Button, Input, StatCard, Card } from '@/components/ui';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import { formatDate, formatRelativeTime } from '@/utils';
 import LogDetailsModal from '@/components/modals/LogDetailsModal';
 import { UserAvatar } from '@/components/common';
-import { EXCLUDED_LOG_ACTIONS } from '@/constants/logs';
 
 const Logs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAction, setSelectedAction] = useState<string>('');
+  
+  // Дебаунс для поиска (500ms задержка)
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [usersMap, setUsersMap] = useState<Map<number, UserType>>(new Map());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions>({});
@@ -49,12 +51,12 @@ const Logs: React.FC = () => {
 
   // Функция для загрузки логов с пагинацией
   const fetchLogsData = useCallback(async (page: number, pageSize: number) => {
-    const result = await apiService.getLogs(page, pageSize, searchTerm, selectedAction);
+    const result = await apiService.getLogs(page, pageSize, debouncedSearchTerm, selectedAction);
     return {
       data: result.logs,
       pagination: result.pagination
     };
-  }, [searchTerm, selectedAction]);
+  }, [debouncedSearchTerm, selectedAction]);
 
   // Использование infinite scroll
   const {
@@ -74,10 +76,10 @@ const Logs: React.FC = () => {
     loadUsers();
   }, []);
 
-  // Перезагружаем данные при изменении поисковых параметров
+  // Перезагружаем данные при изменении поисковых параметров (с дебаунсом)
   useEffect(() => {
     refreshLogs();
-  }, [searchTerm, selectedAction]);
+  }, [debouncedSearchTerm, selectedAction]);
 
   const loadUsers = async () => {
     try {
@@ -92,11 +94,8 @@ const Logs: React.FC = () => {
     }
   };
 
-  // Теперь фильтрация происходит на бэкенде, поэтому просто исключаем нежелательные действия
-  const filteredLogs = logs?.filter(log => {
-    // Фильтрация исключенных событий (остается только это)
-    return !EXCLUDED_LOG_ACTIONS.includes(log.action as any);
-  }) || [];
+  // Используем данные напрямую с бэкенда, фильтрация происходит на сервере
+  const filteredLogs = logs || [];
 
   const handleApplyFilters = (filters: FilterOptions) => {
     setAppliedFilters(filters);
@@ -458,12 +457,10 @@ const Logs: React.FC = () => {
     { value: 'TOKEN_CHECK', label: 'Проверка токена' },
   ];
 
-  // Исключаем нежелательные события из статистики
-  const validLogs = logs?.filter(log => !EXCLUDED_LOG_ACTIONS.includes(log.action as any)) || [];
-  
-  const uniqueActions = [...new Set(validLogs.map(log => log.action))];
-  const totalLogs = validLogs.length;
-  const todayLogs = validLogs.filter(log => {
+  // Статистика теперь основана на отфильтрованных на бэкенде данных
+  const uniqueActions = [...new Set(filteredLogs.map(log => log.action))];
+  const totalLogs = totalCount || filteredLogs.length; // Используем totalCount с бэкенда
+  const todayLogs = filteredLogs.filter(log => {
     const today = new Date();
     const logDate = new Date(log.created_at);
     return logDate.toDateString() === today.toDateString();
@@ -567,7 +564,7 @@ const Logs: React.FC = () => {
         </div>
 
         {/* Recent Activity */}
-        {validLogs && validLogs.length > 0 && (
+        {filteredLogs && filteredLogs.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -579,7 +576,7 @@ const Logs: React.FC = () => {
                 Последние действия
               </h3>
               <div className="space-y-3">
-                {validLogs.slice(0, 5).map((log, index) => {
+                {filteredLogs.slice(0, 5).map((log, index) => {
                   const user = usersMap.get(log.user_id);
                   const Icon = getActionIcon(log.action);
                   return (

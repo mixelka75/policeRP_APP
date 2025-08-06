@@ -50,6 +50,13 @@ async def read_logs(
     # Список фильтров
     filters = []
     
+    # Исключаем нежелательные действия
+    excluded_actions = [
+        'GET_SKIN', 'GET_SKIN_BY_DISCORD', 'GET_AVATAR_BY_NICKNAME',
+        'TOKEN_REFRESH', 'VIEW_STATISTICS', 'VIEW_OWN_PASSPORT', 'VIEW_FINES_ON_ME'
+    ]
+    filters.append(~LogModel.action.in_(excluded_actions))
+    
     # Фильтр по дате (days или date_from/date_to)
     if date_from or date_to:
         if date_from:

@@ -294,7 +294,7 @@ const Table: React.FC<TableProps> = ({
 
       {/* ✨ УЛУЧШЕННАЯ Mobile Cards */}
       <div className="md:hidden">
-        <div className="divide-y divide-primary-500/30">
+        <div className="space-y-3">
           {data.map((row, rowIndex) => (
             <motion.div
               key={rowIndex}
@@ -302,92 +302,92 @@ const Table: React.FC<TableProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: rowIndex * 0.05 }}
               className={cn(
-                'p-4 sm:p-5 transition-all duration-150',
-                'border-b border-primary-500/30 last:border-b-0',
+                'bg-dark-800/60 backdrop-blur-sm border border-primary-500/40 rounded-xl p-4 transition-all duration-200',
                 {
-                  'hover:bg-primary-500/5 hover:border-primary-500/40 cursor-pointer': onRowClick,
-                  'active:bg-primary-500/10': onRowClick,
+                  'hover:bg-primary-500/5 hover:border-primary-500/60 cursor-pointer hover:shadow-lg hover:shadow-primary-500/10': onRowClick,
+                  'active:bg-primary-500/10 active:scale-[0.98]': onRowClick,
                 }
               )}
               onClick={() => onRowClick?.(row)}
             >
-              <div className="space-y-3">
-                {/* ✨ Основная информация вверху (первые 4 колонки) */}
-                <div className="space-y-3">
-                  {mobileColumns.slice(0, 4).map((column) => {
-                    if (column.key === 'actions') return null;
-
-                    const value = column.render
-                      ? column.render(row[column.key], row)
-                      : row[column.key];
-
-                    if (!value && value !== 0) return null;
-
-                    return (
-                      <div key={column.key} className="flex justify-between items-start">
-                        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider min-w-0 mr-4 flex-shrink-0 leading-tight">
-                          {column.label}
-                        </span>
-                        <div className="text-sm text-dark-100 text-right min-w-0 flex-1 leading-tight">
-                          {value}
-                        </div>
+              {/* Верхняя секция с гражданином и суммой */}
+              <div className="flex items-start justify-between mb-4">
+                {/* Информация о гражданине */}
+                <div className="flex-1 min-w-0">
+                  {mobileColumns.find(col => col.key === 'citizen') && (
+                    <div className="mb-2">
+                      <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                        ГРАЖДАНИН
                       </div>
-                    );
-                  })}
+                      <div className="text-sm text-dark-100">
+                        {mobileColumns.find(col => col.key === 'citizen')?.render?.(row['citizen'], row)}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* ✨ Дополнительная информация (остальные колонки) */}
-                {mobileColumns.length > 4 && (
-                  <div className="pt-2 border-t border-primary-500/30">
-                    <div className="grid grid-cols-2 gap-2">
-                      {mobileColumns.slice(4).map((column) => {
-                        if (column.key === 'actions') return null;
+                {/* Сумма и статус */}
+                <div className="ml-4 text-right flex-shrink-0">
+                  {mobileColumns.find(col => col.key === 'amount') && (
+                    <div className="mb-2">
+                      <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                        СУММА
+                      </div>
+                      <div className="text-base font-bold text-red-400">
+                        {mobileColumns.find(col => col.key === 'amount')?.render?.(row['amount'], row)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                        const value = column.render
-                          ? column.render(row[column.key], row)
-                          : row[column.key];
+              {/* Статья */}
+              {mobileColumns.find(col => col.key === 'article') && (
+                <div className="mb-4">
+                  <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                    СТАТЬЯ
+                  </div>
+                  <div className="text-sm text-dark-100 font-medium">
+                    {mobileColumns.find(col => col.key === 'article')?.render?.(row['article'], row)}
+                  </div>
+                </div>
+              )}
 
-                        if (!value && value !== 0) return null;
+              {/* Статус */}
+              {mobileColumns.find(col => col.key === 'status') && (
+                <div className="mb-4">
+                  <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+                    СТАТУС
+                  </div>
+                  <div className="flex items-center">
+                    {mobileColumns.find(col => col.key === 'status')?.render?.(row['status'], row)}
+                  </div>
+                </div>
+              )}
 
-                        return (
-                          <div key={column.key} className="flex flex-col">
-                            <span className="text-xs text-gray-500 uppercase tracking-wider">
-                              {column.label}
-                            </span>
-                            <div className="text-xs text-dark-200 mt-1">
-                              {value}
-                            </div>
-                          </div>
-                        );
-                      })}
+              {/* Действия и кнопка "Подробнее" */}
+              <div className="pt-3 border-t border-primary-500/30 flex justify-between items-center">
+                {/* Кнопка "Подробнее" для скрытых полей на мобильных */}
+                {columns.filter(col => col.mobileHidden).length > 0 && onViewDetails && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewDetails(row);
+                    }}
+                    className="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium px-2 py-1 rounded hover:bg-primary-500/10"
+                  >
+                    Подробнее
+                  </button>
+                )}
+                
+                {/* Actions */}
+                {columns.find(col => col.key === 'actions') && (
+                  <div className="flex justify-end overflow-visible">
+                    <div className="flex-shrink-0">
+                      {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
                     </div>
                   </div>
                 )}
-
-                {/* ✨ Действия и кнопка "Подробнее" для мобильных */}
-                <div className="pt-3 border-t border-primary-500/30 flex justify-between items-center">
-                  {/* Кнопка "Подробнее" для скрытых полей на мобильных */}
-                  {columns.filter(col => col.mobileHidden).length > 0 && onViewDetails && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onViewDetails(row);
-                      }}
-                      className="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium"
-                    >
-                      Подробнее
-                    </button>
-                  )}
-                  
-                  {/* Actions */}
-                  {columns.find(col => col.key === 'actions') && (
-                    <div className="flex justify-end overflow-visible">
-                      <div className="flex-shrink-0">
-                        {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
             </motion.div>
           ))}

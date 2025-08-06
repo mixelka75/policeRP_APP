@@ -22,11 +22,11 @@ interface ActionsDropdownProps {
   className?: string;
   buttonClassName?: string;
   dropdownClassName?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   align?: 'left' | 'right';
   label?: string;
   icon?: React.ComponentType<{ className?: string }>;
-  variant?: 'icon' | 'button';
+  variant?: 'icon' | 'button' | 'compact' | 'auto';
 }
 
 export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
@@ -38,7 +38,7 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
   align = 'right',
   label = 'Действия',
   icon: IconComponent = Settings,
-  variant = 'button'
+  variant = 'auto'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
@@ -110,7 +110,7 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
       <button
         ref={buttonRef}
         onClick={() => {
-          if (isMobile) {
+          if (isMobile || variant === 'auto') {
             setIsMobileModalOpen(true);
           } else {
             setIsOpen(!isOpen);
@@ -118,8 +118,12 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
         }}
         className={`
           ${variant === 'icon' 
-            ? 'p-2 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800'
-            : 'px-3 py-1.5 text-sm bg-dark-700 hover:bg-dark-600 text-gray-300 hover:text-white border border-dark-600 rounded-lg transition-colors flex items-center space-x-2'
+            ? 'p-2 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800 flex-shrink-0'
+            : variant === 'compact'
+            ? 'p-1.5 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800/50 border border-gray-700/50 flex-shrink-0'
+            : variant === 'auto'
+            ? 'p-1.5 sm:p-2 text-gray-400 hover:text-gray-100 transition-colors rounded-md hover:bg-gray-800/50 border border-gray-700/50 flex-shrink-0'
+            : 'px-3 py-1.5 text-sm bg-dark-700 hover:bg-dark-600 text-gray-300 hover:text-white border border-dark-600 rounded-lg transition-colors flex items-center space-x-2 flex-shrink-0'
           }
           ${buttonClassName}
         `}
@@ -127,10 +131,14 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
       >
         {variant === 'icon' ? (
           <IconComponent className="h-4 w-4" />
+        ) : variant === 'compact' ? (
+          <IconComponent className="h-3.5 w-3.5" />
+        ) : variant === 'auto' ? (
+          <IconComponent className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         ) : (
           <>
             <IconComponent className="h-4 w-4" />
-            <span>{label}</span>
+            <span className="hidden sm:inline">{label}</span>
             <ChevronDown className={`h-3 w-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
           </>
         )}
@@ -145,8 +153,8 @@ export const ActionsDropdown: React.FC<ActionsDropdownProps> = ({
               boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
               top: buttonRef.current ? buttonRef.current.getBoundingClientRect().bottom + 8 : 0,
               [align === 'right' ? 'right' : 'left']: align === 'right'
-                ? window.innerWidth - (buttonRef.current?.getBoundingClientRect().right || 0)
-                : buttonRef.current?.getBoundingClientRect().left || 0
+                ? Math.max(8, window.innerWidth - (buttonRef.current?.getBoundingClientRect().right || 0))
+                : Math.max(8, buttonRef.current?.getBoundingClientRect().left || 0)
             }}
             {...dropdownAnimation}
             transition={{ duration: 0.15 }}

@@ -74,15 +74,15 @@ const Table: React.FC<TableProps> = ({
 
   return (
     <div className={cn('bg-dark-800/50 backdrop-blur-sm border border-primary-500/30 rounded-lg overflow-hidden', className)}>
-      {/* ✨ УЛУЧШЕННАЯ Desktop Table */}
+      {/* ✨ Desktop Table - адаптивные колонки без прокрутки */}
       <div className="hidden lg:block">
         {/* Header */}
         <div className="bg-black/20 backdrop-blur-sm border-b border-primary-500/30 px-6 py-4">
-          <div className="grid gap-4" style={{ gridTemplateColumns: columns.map(col => col.width || '1fr').join(' ') }}>
+          <div className="grid gap-2" style={{ gridTemplateColumns: columns.map(col => col.width || '1fr').join(' ') }}>
             {columns.map((column) => (
               <div
                 key={column.key}
-                className="text-sm font-medium text-primary-300 uppercase tracking-wider"
+                className="text-sm font-medium text-primary-300 uppercase tracking-wider truncate"
               >
                 {column.label}
               </div>
@@ -106,16 +106,26 @@ const Table: React.FC<TableProps> = ({
               )}
               onClick={() => onRowClick?.(row)}
             >
-              <div className="grid gap-4" style={{ gridTemplateColumns: columns.map(col => col.width || '1fr').join(' ') }}>
+              <div className="grid gap-2" style={{ gridTemplateColumns: columns.map(col => col.width || '1fr').join(' ') }}>
                 {columns.map((column) => (
                   <div
                     key={column.key}
-                    className="text-sm text-dark-100"
+                    className="text-sm text-dark-100 min-w-0"
                   >
-                    {column.render
-                      ? column.render(row[column.key], row)
-                      : row[column.key]
-                    }
+                    <div className={column.key === 'actions' ? 'flex justify-end overflow-visible' : 'truncate'}>
+                      {column.key === 'actions' ? (
+                        <div className="flex-shrink-0">
+                          {column.render
+                            ? column.render(row[column.key], row)
+                            : row[column.key]
+                          }
+                        </div>
+                      ) : (
+                        column.render
+                          ? column.render(row[column.key], row)
+                          : row[column.key]
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -162,10 +172,14 @@ const Table: React.FC<TableProps> = ({
                 })}
               </div>
 
-              {/* Actions для планшетов */}
+              {/* Actions для планшетов с overflow защитой */}
               {columns.find(col => col.key === 'actions') && (
                 <div className="mt-4 pt-4 border-t border-primary-500/30">
-                  {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
+                  <div className="flex justify-end overflow-visible">
+                    <div className="flex-shrink-0">
+                      {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
+                    </div>
+                  </div>
                 </div>
               )}
             </motion.div>
@@ -244,11 +258,13 @@ const Table: React.FC<TableProps> = ({
                   </div>
                 )}
 
-                {/* ✨ Mobile Actions в отдельном блоке */}
+                {/* ✨ Mobile Actions в отдельном блоке с overflow защитой */}
                 {columns.find(col => col.key === 'actions') && (
                   <div className="pt-3 border-t border-primary-500/30">
-                    <div className="flex justify-end">
-                      {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
+                    <div className="flex justify-end overflow-visible">
+                      <div className="flex-shrink-0">
+                        {columns.find(col => col.key === 'actions')?.render?.(row['actions'], row)}
+                      </div>
                     </div>
                   </div>
                 )}

@@ -321,7 +321,7 @@ const Users: React.FC = () => {
           }
         ];
 
-        return <ActionsDropdown actions={actions} variant="button" />;
+        return <ActionsDropdown actions={actions} variant="auto" />;
       },
     },
   ];

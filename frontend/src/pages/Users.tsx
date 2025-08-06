@@ -24,7 +24,7 @@ import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { useAuthStore } from '@/store/auth';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal, Card, Badge, ActionsDropdown, ActionItem } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, Card, Badge, ActionsDropdown, ActionItem, UsersMobileCard } from '@/components/ui';
 import { FilterModal, FilterOptions } from '@/components/modals';
 import UserAvatar from '@/components/common/UserAvatar';
 import {
@@ -201,6 +201,11 @@ const Users: React.FC = () => {
 
   const handleResetFilters = () => {
     setAppliedFilters({});
+  };
+
+  const handleViewDetails = (user: User) => {
+    // В будущем здесь можно открыть модальное окно с подробной информацией
+    console.log('View user details:', user);
   };
 
   const getRoleColor = (role: string) => {
@@ -455,22 +460,75 @@ const Users: React.FC = () => {
           ))}
         </div>
 
-        {/* Table */}
+        {/* Desktop/Tablet Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className="hidden md:block"
         >
           <Table
             columns={columns}
             data={filteredUsers}
             isLoading={isLoading}
+            onViewDetails={handleViewDetails}
             emptyMessage={
               searchTerm
                 ? `Пользователи не найдены по запросу "${searchTerm}"`
                 : 'Пользователи появятся после авторизации через Discord'
             }
           />
+        </motion.div>
+
+        {/* Mobile Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="md:hidden"
+        >
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-dark-800/50 rounded-3xl p-6 h-80">
+                    <div className="flex justify-center mb-4">
+                      <div className="w-20 h-20 bg-primary-500/20 rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-6 bg-primary-500/20 rounded mx-auto w-3/4" />
+                      <div className="h-4 bg-secondary-500/20 rounded mx-auto w-1/2" />
+                      <div className="h-4 bg-secondary-500/20 rounded mx-auto w-2/3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400 text-lg">
+                {searchTerm
+                  ? `Пользователи не найдены по запросу "${searchTerm}"`
+                  : 'Пользователи появятся после авторизации через Discord'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredUsers.map((user, index) => (
+                <motion.div
+                  key={user.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <UsersMobileCard
+                    user={user}
+                    onViewDetails={handleViewDetails}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
 

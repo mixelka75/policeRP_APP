@@ -19,7 +19,7 @@ import { Fine, Passport } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Modal, ActionsDropdown, ActionItem } from '@/components/ui';
+import { Button, Input, Table, StatCard, Modal, ActionsDropdown, ActionItem, FinesMobileCard } from '@/components/ui';
 import { FineForm } from '@/components/forms';
 import { FilterModal, FilterOptions, FineDetailsModal } from '@/components/modals';
 import { formatDate, formatMoney, getInitials } from '@/utils';
@@ -418,11 +418,12 @@ const Fines: React.FC = () => {
           ))}
         </div>
 
-        {/* Table */}
+        {/* Desktop/Tablet Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
+          className="hidden md:block"
         >
           <Table
             columns={columns}
@@ -435,6 +436,70 @@ const Fines: React.FC = () => {
                 : 'Штрафов пока нет. Выпишите первый штраф.'
             }
           />
+        </motion.div>
+
+        {/* Mobile Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="md:hidden"
+        >
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-dark-800/50 rounded-3xl p-6 h-80">
+                    <div className="flex justify-center mb-4">
+                      <div className="w-20 h-20 bg-primary-500/20 rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-6 bg-primary-500/20 rounded mx-auto w-3/4" />
+                      <div className="h-4 bg-secondary-500/20 rounded mx-auto w-1/2" />
+                      <div className="h-4 bg-secondary-500/20 rounded mx-auto w-2/3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredFines.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400 text-lg">
+                {searchTerm
+                  ? `Штрафы не найдены по запросу "${searchTerm}"`
+                  : 'Штрафов пока нет. Выпишите первый штраф.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredFines.map((fine, index) => {
+                // Добавляем информацию о паспорте в fine
+                const passport = passportMap.get(fine.passport_id);
+                const fineWithPassportInfo = {
+                  ...fine,
+                  passport_info: passport ? {
+                    first_name: passport.first_name,
+                    last_name: passport.last_name,
+                    nickname: passport.nickname
+                  } : undefined
+                };
+
+                return (
+                  <motion.div
+                    key={fine.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <FinesMobileCard
+                      fine={fineWithPassportInfo}
+                      onViewDetails={handleViewDetails}
+                    />
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
       </div>
 

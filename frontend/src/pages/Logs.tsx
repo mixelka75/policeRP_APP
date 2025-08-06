@@ -49,12 +49,12 @@ const Logs: React.FC = () => {
 
   // Функция для загрузки логов с пагинацией
   const fetchLogsData = useCallback(async (page: number, pageSize: number) => {
-    const result = await apiService.getLogs(page, pageSize);
+    const result = await apiService.getLogs(page, pageSize, searchTerm, selectedAction);
     return {
       data: result.logs,
       pagination: result.pagination
     };
-  }, []);
+  }, [searchTerm, selectedAction]);
 
   // Использование infinite scroll
   const {
@@ -74,6 +74,11 @@ const Logs: React.FC = () => {
     loadUsers();
   }, []);
 
+  // Перезагружаем данные при изменении поисковых параметров
+  useEffect(() => {
+    refreshLogs();
+  }, [searchTerm, selectedAction]);
+
   const loadUsers = async () => {
     try {
       const users = await fetchUsers();
@@ -87,62 +92,10 @@ const Logs: React.FC = () => {
     }
   };
 
+  // Теперь фильтрация происходит на бэкенде, поэтому просто исключаем нежелательные действия
   const filteredLogs = logs?.filter(log => {
-    const user = usersMap.get(log.user_id);
-
-    // Фильтрация исключенных событий
-    if (EXCLUDED_LOG_ACTIONS.includes(log.action as any)) {
-      return false;
-    }
-
-    // Поиск
-    const matchesSearch = !searchTerm ||
-      log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.entity_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user?.discord_username && user.discord_username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (user?.minecraft_username && user.minecraft_username.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (log.ip_address && log.ip_address.includes(searchTerm));
-
-    // Фильтр по действию (из выпадающего списка на странице)
-    const matchesAction = !selectedAction || log.action === selectedAction;
-
-    // Фильтры из модального окна
-    let matchesFilters = true;
-
-    // Action filter (from modal)
-    if (appliedFilters.action && log.action !== appliedFilters.action) {
-      matchesFilters = false;
-    }
-
-    // Entity type filter
-    if (appliedFilters.entityType && log.entity_type !== appliedFilters.entityType) {
-      matchesFilters = false;
-    }
-
-    // User role filter
-    if (appliedFilters.userRole && user && user.role !== appliedFilters.userRole) {
-      matchesFilters = false;
-    }
-
-    // IP address filter
-    if (appliedFilters.ipAddress && (!log.ip_address || !log.ip_address.includes(appliedFilters.ipAddress))) {
-      matchesFilters = false;
-    }
-
-    // Date range filter
-    if (appliedFilters.dateRange?.start) {
-      const logDate = new Date(log.created_at);
-      const startDate = new Date(appliedFilters.dateRange.start);
-      if (logDate < startDate) matchesFilters = false;
-    }
-
-    if (appliedFilters.dateRange?.end) {
-      const logDate = new Date(log.created_at);
-      const endDate = new Date(appliedFilters.dateRange.end);
-      if (logDate > endDate) matchesFilters = false;
-    }
-
-    return matchesSearch && matchesAction && matchesFilters;
+    // Фильтрация исключенных событий (остается только это)
+    return !EXCLUDED_LOG_ACTIONS.includes(log.action as any);
   }) || [];
 
   const handleApplyFilters = (filters: FilterOptions) => {
@@ -723,8 +676,8 @@ const Logs: React.FC = () => {
                         {columns.map((column) => (
                           <td key={column.key} className="px-4 py-4">
                             {column.render ? 
-                              column.render(log[column.key as keyof Log], log) : 
-                              log[column.key as keyof Log]
+                              column.render(log[column.key as keyof Log] as any, log) : 
+                              String(log[column.key as keyof Log] || '')
                             }
                           </td>
                         ))}

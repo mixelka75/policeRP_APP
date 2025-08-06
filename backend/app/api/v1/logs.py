@@ -19,6 +19,7 @@ async def read_logs(
         db: Session = Depends(get_db),
         page: int = Query(0, ge=0, description="Номер страницы (с 0)"),
         page_size: int = Query(20, ge=1, le=100, description="Размер страницы"),
+        search: Optional[str] = Query(None, description="Поиск по действию, пользователю, типу сущности или IP"),
         user_id: Optional[int] = Query(None, description="Фильтр по ID пользователя"),
         action: Optional[str] = Query(None, description="Фильтр по типу действия"),
         entity_type: Optional[str] = Query(None, description="Фильтр по типу сущности"),
@@ -42,6 +43,7 @@ async def read_logs(
     limit = page_size
     
     # Базовый запрос с джойном на пользователя для фильтрации по роли
+    # Администраторы видят все логи, поэтому никаких ограничений по user_id не добавляем
     query = db.query(LogModel).join(UserModel, LogModel.user_id == UserModel.id, isouter=True)
     count_query = db.query(LogModel).join(UserModel, LogModel.user_id == UserModel.id, isouter=True)
     
@@ -86,10 +88,25 @@ async def read_logs(
     if ip_address:
         filters.append(LogModel.ip_address.ilike(f"%{ip_address}%"))
     
+    # Поиск по различным полям (новая функциональность)
+    if search:
+        search_term = f"%{search}%"
+        search_filters = [
+            LogModel.action.ilike(search_term),
+            LogModel.entity_type.ilike(search_term),
+            LogModel.ip_address.ilike(search_term),
+            UserModel.discord_username.ilike(search_term),
+            UserModel.minecraft_username.ilike(search_term)
+        ]
+        filters.append(or_(*search_filters))
+    
     # Применяем все фильтры
     if filters:
         query = query.filter(and_(*filters))
         count_query = count_query.filter(and_(*filters))
+    
+    # Сортировка по времени создания (новые записи сначала)
+    query = query.order_by(LogModel.created_at.desc())
     
     # Применяем пагинацию
     logs = query.offset(skip).limit(limit).all()

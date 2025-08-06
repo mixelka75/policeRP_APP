@@ -595,10 +595,29 @@ class ApiService {
     }
   }
 
-  async getLogs(page: number = 0, pageSize: number = 20): Promise<{logs: Log[], pagination: any}> {
+  async getLogs(
+    page: number = 0, 
+    pageSize: number = 20, 
+    searchTerm?: string,
+    selectedAction?: string
+  ): Promise<{logs: Log[], pagination: any}> {
     try {
+      const params: any = { 
+        page, 
+        page_size: pageSize 
+      };
+
+      // Добавляем параметры поиска если они есть
+      if (searchTerm && searchTerm.trim()) {
+        params.search = searchTerm.trim();
+      }
+      
+      if (selectedAction && selectedAction.trim()) {
+        params.action = selectedAction;
+      }
+
       const response = await this.axiosInstance.get<{logs: Log[], pagination: any}>('/logs/', {
-        params: { page, page_size: pageSize },
+        params,
       });
       return response.data;
     } catch (error) {

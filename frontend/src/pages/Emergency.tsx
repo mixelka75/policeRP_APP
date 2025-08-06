@@ -17,7 +17,7 @@ import { Passport } from '@/types';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Layout } from '@/components/layout';
-import { Button, Input, Table, StatCard, Card } from '@/components/ui';
+import { Button, Input, Table, StatCard, Card, ActionsDropdown, ActionItem, EmergencyMobileCard } from '@/components/ui';
 import { EmergencyModal } from '@/components/modals';
 import { formatDate, getInitials, formatRelativeTime } from '@/utils';
 import MinecraftAvatar from '@/components/common/MinecraftAvatar';
@@ -59,6 +59,10 @@ const Emergency: React.FC = () => {
   const handleManageEmergency = (passport: Passport) => {
     setSelectedPassport(passport);
     setIsEmergencyModalOpen(true);
+  };
+
+  const handleViewDetails = (passport: Passport) => {
+    console.log('View passport details', passport.id);
   };
 
   const handleEmergencySuccess = () => {
@@ -134,28 +138,26 @@ const Emergency: React.FC = () => {
       key: 'actions',
       label: 'Действия',
       width: '120px',
-      render: (_: any, passport: Passport) => (
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleManageEmergency(passport)}
-            className="!p-2 text-green-400 hover:text-green-300"
-            title="Убрать из ЧС"
-          >
-            <Shield className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => console.log('View passport', passport.id)}
-            className="!p-2 text-primary-400 hover:text-primary-300"
-            title="Подробнее"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
+      render: (_: any, passport: Passport) => {
+        const actions: ActionItem[] = [
+          {
+            key: 'remove',
+            label: 'Убрать из ЧС',
+            icon: Shield,
+            onClick: () => handleManageEmergency(passport),
+            color: 'success'
+          },
+          {
+            key: 'view',
+            label: 'Подробнее',
+            icon: Eye,
+            onClick: () => handleViewDetails(passport),
+            color: 'primary'
+          }
+        ];
+
+        return <ActionsDropdown actions={actions} variant="auto" />;
+      },
     },
   ];
 
@@ -331,11 +333,12 @@ const Emergency: React.FC = () => {
           </motion.div>
         </div>
 
-        {/* Table */}
+        {/* Desktop/Tablet Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
+          className="hidden md:block"
         >
           <Table
             columns={columns}
@@ -347,6 +350,58 @@ const Emergency: React.FC = () => {
                 : 'В списке ЧС пока никого нет.'
             }
           />
+        </motion.div>
+
+        {/* Mobile Cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="md:hidden"
+        >
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-dark-800/50 rounded-3xl p-6 h-96">
+                    <div className="flex justify-center mb-4">
+                      <div className="w-20 h-20 bg-red-500/20 rounded-2xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="h-6 bg-red-500/20 rounded mx-auto w-3/4" />
+                      <div className="h-4 bg-secondary-500/20 rounded mx-auto w-1/2" />
+                      <div className="h-4 bg-secondary-500/20 rounded mx-auto w-2/3" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredEmergencyPassports.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400 text-lg">
+                {searchTerm
+                  ? `Паспорта в ЧС не найдены по запросу "${searchTerm}"`
+                  : 'В списке ЧС пока никого нет.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredEmergencyPassports.map((passport, index) => (
+                <motion.div
+                  key={passport.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <EmergencyMobileCard
+                    passport={passport}
+                    onRemoveFromEmergency={handleManageEmergency}
+                    onViewDetails={handleViewDetails}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
 

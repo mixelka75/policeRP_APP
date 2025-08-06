@@ -70,7 +70,7 @@ const FinesMobileCard: React.FC<FinesMobileCardProps> = ({
           'text-2xl font-bold',
           fine.is_paid ? 'text-green-400' : 'text-red-400'
         )}>
-          {formatMoney(fine.amount)} ₽
+          {formatMoney(fine.amount)}
         </span>
       </div>
 

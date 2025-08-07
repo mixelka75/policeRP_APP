@@ -1,7 +1,10 @@
 // src/components/debug/AvatarTest.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import UserAvatar from '@/components/common/UserAvatar';
 import { getDiscordAvatarUrl } from '@/utils';
+import { apiService } from '@/services/api';
+import { useAuthStore } from '@/store/auth';
+import { User } from '@/types';
 
 // Тестовые пользователи для проверки аватарок
 const testUsers = [
@@ -53,17 +56,124 @@ const testUsers = [
 ];
 
 const AvatarTest: React.FC = () => {
+  const [realUsers, setRealUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user: currentUser } = useAuthStore();
+  
   console.log('=== AVATAR TEST COMPONENT LOADED ===');
+  
+  useEffect(() => {
+    const fetchRealUsers = async () => {
+      try {
+        console.log('AvatarTest: Fetching real users from API...');
+        const users = await apiService.getUsers();
+        console.log('AvatarTest: Received users from API:', users);
+        setRealUsers(users);
+      } catch (error) {
+        console.error('AvatarTest: Error fetching users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchRealUsers();
+  }, []);
   
   return (
     <div className="p-8 space-y-8 bg-dark-900 text-white">
       <h1 className="text-2xl font-bold mb-6">Discord Avatar Test</h1>
       
-      {testUsers.map((user) => {
-        const avatarUrl = getDiscordAvatarUrl(user);
-        
-        return (
-          <div key={user.id} className="border border-gray-600 rounded-lg p-6 space-y-4">
+      {/* Current User Section */}
+      {currentUser && (
+        <div className="border-2 border-green-500 rounded-lg p-6 space-y-4">
+          <h2 className="text-xl font-bold text-green-400">Current User (Auth Store)</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="font-medium mb-2">Current User Data:</h4>
+              <pre className="text-sm bg-dark-800 p-3 rounded text-gray-300">
+                {JSON.stringify({
+                  discord_id: currentUser.discord_id,
+                  discord_username: currentUser.discord_username,
+                  discord_discriminator: currentUser.discord_discriminator,
+                  discord_avatar: currentUser.discord_avatar,
+                  role: currentUser.role,
+                  is_active: currentUser.is_active
+                }, null, 2)}
+              </pre>
+            </div>
+            <div>
+              <h4 className="font-medium mb-2">Current User Avatar:</h4>
+              <UserAvatar user={currentUser} size={100} preferDiscord={true} showStatus={true} />
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Real Users from API */}
+      {loading && <div className="text-center">Loading real users...</div>}
+      
+      {!loading && realUsers.length > 0 && (
+        <div className="space-y-6">
+          <h2 className="text-xl font-bold text-blue-400">Real Users from API</h2>
+          {realUsers.map((user) => {
+            const avatarUrl = getDiscordAvatarUrl(user);
+            
+            return (
+              <div key={user.id} className="border border-blue-500 rounded-lg p-6 space-y-4">
+                <h3 className="text-lg font-semibold">
+                  {user.discord_username} (ID: {user.discord_id || 'MISSING!'})
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">User Data:</h4>
+                    <pre className="text-sm bg-dark-800 p-3 rounded text-gray-300">
+                      {JSON.stringify({
+                        id: user.id,
+                        discord_id: user.discord_id,
+                        discord_username: user.discord_username,
+                        discord_discriminator: user.discord_discriminator,
+                        discord_avatar: user.discord_avatar,
+                        role: user.role,
+                        is_active: user.is_active
+                      }, null, 2)}
+                    </pre>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Generated Avatar URL:</h4>
+                    <div className="text-sm bg-dark-800 p-3 rounded text-gray-300 mb-3">
+                      <a href={avatarUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline break-all">
+                        {avatarUrl}
+                      </a>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4">
+                      <div>
+                        <h5 className="text-sm font-medium mb-2">Discord Preferred:</h5>
+                        <UserAvatar user={user} size={64} preferDiscord={true} />
+                      </div>
+                      <div>
+                        <h5 className="text-sm font-medium mb-2">With Status:</h5>
+                        <UserAvatar user={user} size={64} preferDiscord={true} showStatus={true} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      
+      {/* Test Users Section */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-yellow-400">Test Users (Hardcoded)</h2>
+        {testUsers.map((user) => {
+          const avatarUrl = getDiscordAvatarUrl(user);
+          
+          return (
+            <div key={user.id} className="border border-gray-600 rounded-lg p-6 space-y-4">
             <h3 className="text-lg font-semibold">
               {user.discord_username} (ID: {user.discord_id})
             </h3>

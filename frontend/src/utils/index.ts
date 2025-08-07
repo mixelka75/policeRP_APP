@@ -544,3 +544,6 @@ export function testDiscordCDN(): Promise<boolean> {
 
 // Export avatar cache utilities
 export { default as AvatarCache } from './avatarCache';
+
+// Export currency utilities
+export * from './currency';

@@ -10,14 +10,14 @@ import {
   Check
 } from 'lucide-react';
 import { Modal, Button } from '@/components/ui';
-import { formatMoney } from '@/utils';
+import { formatMoney, convertArToBt, canPayWithBt } from '@/utils';
 import { apiService } from '@/services/api';
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
   onClose: () => void;
   fineIds: number[];
-  totalAmount: number;
+  totalAmount: number; // в АР
   onPaymentInitiated?: () => void;
 }
 
@@ -79,7 +79,8 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
   };
 
   const handleBTPayment = async () => {
-    if (!btBalance || btBalance < totalAmount) return;
+    const totalBtRequired = convertArToBt(totalAmount);
+    if (!btBalance || btBalance < totalBtRequired) return;
 
     setIsLoading(true);
     try {
@@ -107,7 +108,8 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
     }
   };
 
-  const canPayWithBT = btBalance !== null && btBalance >= totalAmount;
+  const totalBtRequired = convertArToBt(totalAmount);
+  const canPayWithBT = btBalance !== null && canPayWithBt(btBalance, totalAmount);
 
   return (
     <Modal
@@ -203,15 +205,15 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
                   {btBalance === null 
                     ? 'Не удалось загрузить баланс'
                     : canPayWithBT 
-                      ? 'Оплата с помощью баллов труда'
-                      : `Недостаточно баллов (нужно ${totalAmount} БТ)`
+                      ? `Оплата ${totalBtRequired} БТ (курс 1 АР = 3 БТ)`
+                      : `Недостаточно баллов (нужно ${totalBtRequired} БТ)`
                   }
                 </p>
                 {!canPayWithBT && btBalance !== null && (
                   <div className="flex items-center space-x-1 mt-1">
                     <AlertTriangle className="h-3 w-3 text-red-400" />
                     <span className="text-xs text-red-400">
-                      Не хватает {totalAmount - btBalance} БТ
+                      Не хватает {totalBtRequired - btBalance} БТ
                     </span>
                   </div>
                 )}
@@ -242,7 +244,7 @@ const PaymentMethodModal: React.FC<PaymentMethodModalProps> = ({
             {selectedMethod === 'card' 
               ? 'Перейти к оплате' 
               : selectedMethod === 'bt'
-                ? 'Оплатить БТ'
+                ? `Оплатить ${totalBtRequired} БТ`
                 : 'Выберите способ'
             }
           </Button>

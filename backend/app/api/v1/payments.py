@@ -19,6 +19,7 @@ from app.schemas.payment import (
 )
 from app.clients.spworlds import spworlds_client
 from app.clients.bt_api import bt_client
+from app.utils.currency import convert_ar_to_bt
 
 router = APIRouter()
 
@@ -318,8 +319,9 @@ async def pay_fines_with_bt(
             detail="Некоторые штрафы уже оплачены или не существуют"
         )
     
-    # Рассчитываем общую сумму в БТ (1:1 с рублями)
-    total_bt_required = sum(fine.amount for fine in fines)
+    # Рассчитываем общую сумму в БТ
+    total_ar = sum(fine.amount for fine in fines)
+    total_bt_required = convert_ar_to_bt(total_ar)
     
     # Проверяем баланс БТ пользователя
     user_bt_balance = await bt_client.get_user_bt(str(current_user.discord_id))
@@ -366,7 +368,9 @@ async def pay_fines_with_bt(
         entity_type="payment",
         details={
             "fine_ids": fine_ids,
+            "total_amount_ar": total_ar,
             "total_amount_bt": total_bt_required,
+            "exchange_rate": "1 АР = 3 БТ",
             "old_balance": user_bt_balance,
             "new_balance": new_bt_balance or (user_bt_balance - total_bt_required),
             "fines_count": len(fines)
@@ -376,5 +380,5 @@ async def pay_fines_with_bt(
     return {
         "success": True,
         "new_balance": new_bt_balance or (user_bt_balance - total_bt_required),
-        "message": f"Оплачено {len(fines)} штрафов на сумму {total_bt_required} БТ"
+        "message": f"Оплачено {len(fines)} штрафов на сумму {total_ar} АР ({total_bt_required} БТ)"
     }

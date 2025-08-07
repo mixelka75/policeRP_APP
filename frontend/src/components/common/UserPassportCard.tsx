@@ -7,7 +7,8 @@ import {
   Calendar,
   AlertTriangle,
   Gamepad2,
-  MessageCircle
+  MessageCircle,
+  Coins
 } from 'lucide-react';
 import { Card, Badge, Loading } from '@/components/ui';
 import { useApi } from '@/hooks/useApi';
@@ -115,6 +116,12 @@ const UserPassportCard: React.FC = () => {
                   В СПИСКЕ ЧС
                 </Badge>
               )}
+              {passport.bt_balance !== null && passport.bt_balance !== undefined && (
+                <Badge variant="secondary" size="sm" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                  <Coins className="h-3 w-3 mr-1" />
+                  {passport.bt_balance} БТ
+                </Badge>
+              )}
               <div className="text-primary-300 text-xs sm:text-sm whitespace-nowrap">
                 Паспорт №{passport.id}
               </div>
@@ -124,7 +131,7 @@ const UserPassportCard: React.FC = () => {
 
         <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Основная информация */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-white mb-3">
                 Личные данные
@@ -171,6 +178,22 @@ const UserPassportCard: React.FC = () => {
                 </Badge>
               </div>
             </div>
+
+            {/* Баллы труда */}
+            {passport.bt_balance !== null && passport.bt_balance !== undefined && (
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  Баллы труда
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <Coins className="h-4 w-4 text-orange-400" />
+                  <span className="text-gray-300 text-sm">Баланс:</span>
+                  <Badge variant="secondary" size="sm" className="bg-orange-500/20 text-orange-400 border-orange-500/30">
+                    {passport.bt_balance} БТ
+                  </Badge>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Дополнительная информация */}

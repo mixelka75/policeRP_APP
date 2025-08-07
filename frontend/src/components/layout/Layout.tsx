@@ -48,111 +48,37 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
         <header className="bg-black/20 backdrop-blur-sm border-b border-primary-500/30 flex-shrink-0">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              {/* Left side - адаптивный для мобильных */}
-              <div className="flex items-center min-w-0 flex-1">
+              {/* Mobile menu button - только на мобильных */}
+              <div className="flex items-center justify-center w-full">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setSidebarOpen(true)}
-                  className="lg:hidden mr-2 flex-shrink-0"
+                  className="lg:hidden absolute left-4 flex-shrink-0"
                 >
                   <Menu className="h-5 w-5" />
                 </Button>
 
+                {/* Центрированный заголовок с логотипом */}
                 {title && (
-                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                  <div className="flex items-center space-x-2">
                     <img
                       src={logoImage}
                       alt="Панд-Ратония Logo"
                       className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 object-contain drop-shadow-lg flex-shrink-0"
                     />
-                    <div className="min-w-0 flex-1">
-                      <h1 className="text-sm sm:text-lg lg:text-xl font-semibold text-white truncate">
+                    <div className="text-center">
+                      <h1 className="text-sm sm:text-lg lg:text-xl font-semibold text-white">
                         {title}
                       </h1>
                       {subtitle && (
-                        <p className="text-xs sm:text-sm text-gray-300 truncate hidden sm:block">
+                        <p className="text-xs sm:text-sm text-gray-300 hidden sm:block">
                           {subtitle}
                         </p>
                       )}
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Right side - упрощенный для мобильных */}
-              <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-                {/* ✨ Кнопка обновления только на больших экранах */}
-                {user && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleRefreshUserData}
-                    disabled={isRefreshing}
-                    className={cn(
-                      "p-2 hidden sm:flex",
-                      isDataOutdated && "text-warning-400 hover:text-warning-300"
-                    )}
-                    title={isDataOutdated ? "Данные пользователя устарели" : "Обновить данные"}
-                  >
-                    <RefreshCw className={cn(
-                      "h-4 w-4",
-                      isRefreshing && "animate-spin",
-                      isDataOutdated && "animate-pulse"
-                    )} />
-                  </Button>
-                )}
-
-                {/* ✨ Упрощенная информация о пользователе для мобильных */}
-                <div className="flex items-center space-x-2">
-                  {user ? (
-                    <>
-                      <UserAvatar
-                        user={user}
-                        size={24}
-                        showStatus={true}
-                        className="sm:w-7 sm:h-7 lg:w-8 lg:h-8"
-                      />
-
-                      {/* Информация о пользователе только на больших экранах */}
-                      <div className="hidden lg:block min-w-0">
-                        <div className="flex items-center space-x-2">
-                          <p className="text-sm font-medium text-white truncate">
-                            {getDisplayName(user)}
-                          </p>
-                          <MessageCircle className="h-3 w-3 text-secondary-400 flex-shrink-0" />
-                          {isDataOutdated && (
-                            <AlertTriangle className="h-3 w-3 text-warning-400 flex-shrink-0" />
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <p className="text-xs text-gray-300 truncate">
-                            {getRoleDisplayName(user.role)}
-                          </p>
-                          {isDataOutdated && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-warning-500/20 text-warning-400 flex-shrink-0">
-                              Устарело
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
-                        <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                      </div>
-                      <div className="hidden lg:block">
-                        <p className="text-sm font-medium text-white">
-                          Не авторизован
-                        </p>
-                        <p className="text-xs text-gray-300">
-                          Гость
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
               </div>
             </div>
           </div>

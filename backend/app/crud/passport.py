@@ -201,11 +201,16 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         if not passport:
             return None
         
-        # Получаем баланс баллов труда
-        bt_balance = await bt_client.get_user_bt(passport.discord_id)
-        
-        # Добавляем баланс к объекту паспорта (динамически)
-        passport.bt_balance = bt_balance
+        try:
+            # Получаем баланс баллов труда
+            bt_balance = await bt_client.get_user_bt(passport.discord_id)
+            # Добавляем баланс к объекту паспорта (динамически)
+            passport.bt_balance = bt_balance
+            print(f"DEBUG CRUD: BT balance for passport {id}: {bt_balance}")  # Отладка
+        except Exception as e:
+            print(f"DEBUG CRUD: Error getting BT balance for passport {id}: {e}")  # Отладка
+            passport.bt_balance = None
+            
         return passport
 
 

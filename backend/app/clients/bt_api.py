@@ -14,7 +14,7 @@ class BTAPIClient:
     """Клиент для работы с API баллов труда"""
     
     def __init__(self):
-        self.base_url = "http://localhost:5000/api/users"
+        self.base_url = "http://82.117.84.218:5000/api/users"
         self.token = "sdfusdufusdufus3f9g7f73g6fg3"
         self.headers = {
             "Authorization": f"Bearer {self.token}",
@@ -24,6 +24,7 @@ class BTAPIClient:
     async def get_user_bt(self, user_id: str) -> Optional[int]:
         """Получить количество баллов труда пользователя"""
         try:
+            print(f"DEBUG: Requesting BT for user {user_id} from {self.base_url}")  # Отладка
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     self.base_url,
@@ -31,18 +32,26 @@ class BTAPIClient:
                     timeout=10.0
                 )
                 
+                print(f"DEBUG: BT API response status: {response.status_code}")  # Отладка
+                
                 if response.status_code == 200:
                     users = response.json()
+                    print(f"DEBUG: BT API returned {len(users)} users")  # Отладка
                     for user in users:
                         if str(user.get("user_id")) == str(user_id):
-                            return user.get("bt", 0)
+                            bt_value = user.get("bt", 0)
+                            print(f"DEBUG: Found user {user_id} with BT: {bt_value}")  # Отладка
+                            return bt_value
+                    print(f"DEBUG: User {user_id} not found in BT API")  # Отладка
                     return None
                 else:
                     logger.error(f"BT API error: {response.status_code} - {response.text}")
+                    print(f"DEBUG: BT API error: {response.status_code} - {response.text}")  # Отладка
                     return None
                     
         except Exception as e:
             logger.error(f"Error getting BT for user {user_id}: {e}")
+            print(f"DEBUG: Exception getting BT for user {user_id}: {e}")  # Отладка
             return None
     
     async def subtract_bt(self, user_id: str, amount: int) -> bool:

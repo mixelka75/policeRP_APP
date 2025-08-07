@@ -151,8 +151,13 @@ async def get_my_passport(
         )
 
     # Получаем баланс баллов труда
-    bt_balance = await bt_client.get_user_bt(str(current_user.discord_id))
-    passport.bt_balance = bt_balance
+    try:
+        bt_balance = await bt_client.get_user_bt(str(current_user.discord_id))
+        passport.bt_balance = bt_balance
+        print(f"DEBUG: BT balance for user {current_user.discord_id}: {bt_balance}")  # Отладка
+    except Exception as e:
+        print(f"DEBUG: Error getting BT balance for user {current_user.discord_id}: {e}")
+        passport.bt_balance = None
 
     # Логируем просмотр собственного паспорта
     ActionLogger.log_action(
@@ -739,3 +744,30 @@ async def get_avatar_by_nickname(
         uuid=user_data["uuid"],
         skin_url=skin_url
     )
+
+
+@router.get("/debug/bt/{discord_id}")
+async def debug_bt_balance(
+        discord_id: str,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_police_or_admin),
+):
+    """
+    Тестовый endpoint для проверки работы BT API
+    """
+    try:
+        bt_balance = await bt_client.get_user_bt(discord_id)
+        return {
+            "discord_id": discord_id,
+            "bt_balance": bt_balance,
+            "api_url": bt_client.base_url,
+            "status": "success" if bt_balance is not None else "user_not_found"
+        }
+    except Exception as e:
+        return {
+            "discord_id": discord_id,
+            "bt_balance": None,
+            "api_url": bt_client.base_url,
+            "status": "error",
+            "error": str(e)
+        }

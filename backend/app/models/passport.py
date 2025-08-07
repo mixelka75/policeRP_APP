@@ -19,6 +19,9 @@ class Passport(BaseModel):
     Модель паспорта жителя
     """
     __tablename__ = "passports"
+    
+    # Разрешаем добавление дополнительных атрибутов (например, bt_balance)
+    __allow_unmapped__ = True
 
     first_name = Column(String(100), nullable=False, index=True)
     last_name = Column(String(100), nullable=False, index=True)

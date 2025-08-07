@@ -18,6 +18,7 @@ from app.schemas.payment import (
     SPWorldsPaymentItem
 )
 from app.clients.spworlds import spworlds_client
+from app.clients.bt_api import bt_client
 
 router = APIRouter()
 
@@ -265,3 +266,115 @@ def get_payment(
         paid_at=db_payment.paid_at,
         expires_at=db_payment.expires_at
     )
+
+
+@router.post("/pay-with-bt")
+async def pay_fines_with_bt(
+    request_data: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Оплатить штрафы баллами труда
+    """
+    fine_ids = request_data.get("fine_ids", [])
+    
+    if not fine_ids:
+        raise HTTPException(
+            status_code=400,
+            detail="Не указаны штрафы для оплаты"
+        )
+    
+    # Проверяем, что пользователь может оплачивать штрафы этого паспорта
+    # Для обычных жителей - только свои штрафы
+    if current_user.role != "admin":
+        from app.models.passport import Passport
+        user_fines = db.query(Fine).join(Passport).filter(
+            Fine.id.in_(fine_ids),
+            Passport.discord_id == str(current_user.discord_id)
+        ).all()
+        
+        if len(user_fines) != len(fine_ids):
+            raise HTTPException(
+                status_code=403,
+                detail="Вы можете оплачивать только свои штрафы"
+            )
+    
+    # Получаем неоплаченные штрафы
+    fines = db.query(Fine).filter(
+        Fine.id.in_(fine_ids),
+        Fine.is_paid == False
+    ).all()
+    
+    if not fines:
+        raise HTTPException(
+            status_code=400,
+            detail="Нет неоплаченных штрафов для оплаты"
+        )
+    
+    if len(fines) != len(fine_ids):
+        raise HTTPException(
+            status_code=400,
+            detail="Некоторые штрафы уже оплачены или не существуют"
+        )
+    
+    # Рассчитываем общую сумму в БТ (1:1 с рублями)
+    total_bt_required = sum(fine.amount for fine in fines)
+    
+    # Проверяем баланс БТ пользователя
+    user_bt_balance = await bt_client.get_user_bt(str(current_user.discord_id))
+    
+    if user_bt_balance is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Не удалось получить баланс баллов труда"
+        )
+    
+    if user_bt_balance < total_bt_required:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Недостаточно баллов труда. Требуется {total_bt_required} БТ, доступно {user_bt_balance} БТ"
+        )
+    
+    # Списываем БТ
+    bt_success = await bt_client.subtract_bt(str(current_user.discord_id), total_bt_required)
+    
+    if not bt_success:
+        raise HTTPException(
+            status_code=400,
+            detail="Не удалось списать баллы труда"
+        )
+    
+    # Помечаем штрафы как оплаченные
+    for fine in fines:
+        fine.is_paid = True
+        fine.paid_at = datetime.now()
+        # fine.payment_method = "bt"  # Если есть такое поле
+        db.add(fine)
+    
+    # Получаем новый баланс БТ
+    new_bt_balance = await bt_client.get_user_bt(str(current_user.discord_id))
+    
+    db.commit()
+    
+    # Логируем операцию
+    from app.utils.logger import ActionLogger
+    ActionLogger.log_action(
+        db=db,
+        user=current_user,
+        action="PAY_FINES_WITH_BT",
+        entity_type="payment",
+        details={
+            "fine_ids": fine_ids,
+            "total_amount_bt": total_bt_required,
+            "old_balance": user_bt_balance,
+            "new_balance": new_bt_balance or (user_bt_balance - total_bt_required),
+            "fines_count": len(fines)
+        }
+    )
+    
+    return {
+        "success": True,
+        "new_balance": new_bt_balance or (user_bt_balance - total_bt_required),
+        "message": f"Оплачено {len(fines)} штрафов на сумму {total_bt_required} БТ"
+    }

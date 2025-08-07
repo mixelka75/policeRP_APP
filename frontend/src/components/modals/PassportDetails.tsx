@@ -13,7 +13,8 @@ import {
   Plus,
   MapPin,
   Shield,
-  ShieldAlert
+  ShieldAlert,
+  Coins
 } from 'lucide-react';
 import { Passport, Fine } from '@/types';
 import { apiService } from '@/services/api';
@@ -201,6 +202,17 @@ const PassportDetails: React.FC<PassportDetailsProps> = ({
                   </p>
                 </div>
               </div>
+              {passport.bt_balance !== null && passport.bt_balance !== undefined && (
+                <div className="flex items-center space-x-3">
+                  <Coins className="h-5 w-5 text-orange-400" />
+                  <div>
+                    <p className="text-sm text-dark-400">Баллы труда</p>
+                    <p className="text-lg font-medium text-orange-400">
+                      {passport.bt_balance} БТ
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 

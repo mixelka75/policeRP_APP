@@ -7,5 +7,6 @@ export { default as LogDetailsModal } from './LogDetailsModal';
 export { default as PassportLogFilters } from './PassportLogFilters';
 export { default as PassportFinesModal } from './PassportFinesModal';
 export { default as FineDetailsModal } from './FineDetailsModal'; // ✨ НОВОЕ
+export { default as PaymentMethodModal } from './PaymentMethodModal'; // ✨ НОВОЕ
 export type { FilterOptions } from './FilterModal';
 export type { PassportLogFilterOptions } from './PassportLogFilters';

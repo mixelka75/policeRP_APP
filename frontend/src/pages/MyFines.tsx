@@ -21,11 +21,14 @@ import { useApi } from '@/hooks/useApi';
 import { apiService } from '@/services/api';
 import { Fine } from '@/types';
 import { formatDate, formatMoney, getErrorMessage } from '@/utils';
+import { PaymentMethodModal } from '@/components/modals';
 
 const MyFines: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFines, setSelectedFines] = useState<number[]>([]);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentFineIds, setPaymentFineIds] = useState<number[]>([]);
 
   const {
     data: fines,
@@ -68,33 +71,18 @@ const MyFines: React.FC = () => {
     }
   };
 
-  const handlePayment = async (fineIds: number[]) => {
+  const handlePayment = (fineIds: number[]) => {
     if (fineIds.length === 0) return;
+    
+    // Открываем модальное окно выбора способа оплаты
+    setPaymentFineIds(fineIds);
+    setIsPaymentModalOpen(true);
+  };
 
-    setPaymentLoading(true);
-    try {
-      // Получаем паспорт пользователя
-      const passport = await apiService.getMyPassport();
-      
-      // Создаём платеж
-      const payment = await apiService.createPayment({
-        passport_id: passport.id,
-        fine_ids: fineIds
-      });
-
-      // Открываем ссылку на оплату в новой вкладке
-      if (payment.payment_url) {
-        window.open(payment.payment_url, '_blank');
-      }
-
-      // Сбрасываем выбор
-      setSelectedFines([]);
-    } catch (error) {
-      console.error('Payment creation failed:', error);
-      // Здесь можно добавить toast уведомление об ошибке
-    } finally {
-      setPaymentLoading(false);
-    }
+  const handlePaymentInitiated = () => {
+    // Сбрасываем выбранные штрафы и обновляем список
+    setSelectedFines([]);
+    fetchMyFines();
   };
 
   if (isLoading) {
@@ -422,6 +410,16 @@ const MyFines: React.FC = () => {
           )}
         </Card>
 
+        {/* Payment Method Modal */}
+        <PaymentMethodModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          fineIds={paymentFineIds}
+          totalAmount={unpaidFines
+            .filter(fine => paymentFineIds.includes(fine.id))
+            .reduce((sum, fine) => sum + fine.amount, 0)}
+          onPaymentInitiated={handlePaymentInitiated}
+        />
 
       </div>
     </Layout>

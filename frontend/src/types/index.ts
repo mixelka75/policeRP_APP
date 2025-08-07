@@ -133,6 +133,7 @@ export interface Passport {
   violations_count: number;
   entry_date: string;
   is_emergency: boolean;
+  bt_balance?: number | null;
   created_at: string;
   updated_at: string;
 }

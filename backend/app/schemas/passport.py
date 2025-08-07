@@ -68,6 +68,7 @@ class Passport(PassportBase):
     violations_count: int
     entry_date: datetime
     is_emergency: bool
+    bt_balance: Optional[int] = Field(None, description="Баланс баллов труда")
     created_at: datetime
     updated_at: datetime
 

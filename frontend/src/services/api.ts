@@ -703,6 +703,17 @@ class ApiService {
     }
   }
 
+  async payFinesWithBT(fineIds: number[]): Promise<{ success: boolean; new_balance: number; message: string }> {
+    try {
+      const response = await this.axiosInstance.post<{ success: boolean; new_balance: number; message: string }>('/payments/pay-with-bt', {
+        fine_ids: fineIds
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
+
   async getPayments(): Promise<Payment[]> {
     try {
       const response = await this.axiosInstance.get<Payment[]>('/payments/');

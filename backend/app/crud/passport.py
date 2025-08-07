@@ -6,6 +6,7 @@ from app.crud.base import CRUDBase
 from app.models.passport import Passport
 from app.schemas.passport import PassportCreate, PassportUpdate
 from app.clients.spworlds import spworlds_client
+from app.clients.bt_api import bt_client
 
 
 class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
@@ -191,6 +192,21 @@ class CRUDPassport(CRUDBase[Passport, PassportCreate, PassportUpdate]):
         if exclude_id:
             query = query.filter(Passport.id != exclude_id)
         return query.first() is not None
+
+    async def get_with_bt_balance(self, db: Session, id: int) -> Optional[Passport]:
+        """
+        Получить паспорт с балансом баллов труда
+        """
+        passport = self.get(db, id=id)
+        if not passport:
+            return None
+        
+        # Получаем баланс баллов труда
+        bt_balance = await bt_client.get_user_bt(passport.discord_id)
+        
+        # Добавляем баланс к объекту паспорта (динамически)
+        passport.bt_balance = bt_balance
+        return passport
 
 
 passport_crud = CRUDPassport(Passport)

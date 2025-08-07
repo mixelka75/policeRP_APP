@@ -19,6 +19,7 @@ from app.schemas.passport import (
 from app.models.user import User
 from app.utils.logger import ActionLogger
 from app.clients.spworlds import spworlds_client
+from app.clients.bt_api import bt_client
 
 router = APIRouter()
 
@@ -140,7 +141,7 @@ async def get_my_passport(
         current_user: User = Depends(get_current_user),
 ):
     """
-    Получить свой паспорт (для обычных пользователей с паспортом)
+    Получить свой паспорт (для обычных пользователей с паспортом) с балансом баллов труда
     """
     passport = passport_crud.get_by_discord_id(db, discord_id=str(current_user.discord_id))
     if not passport:
@@ -148,6 +149,10 @@ async def get_my_passport(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="У вас нет паспорта в системе",
         )
+
+    # Получаем баланс баллов труда
+    bt_balance = await bt_client.get_user_bt(str(current_user.discord_id))
+    passport.bt_balance = bt_balance
 
     # Логируем просмотр собственного паспорта
     ActionLogger.log_action(
@@ -160,7 +165,8 @@ async def get_my_passport(
             "nickname": passport.nickname,
             "city": passport.city,
             "violations_count": passport.violations_count,
-            "is_emergency": passport.is_emergency
+            "is_emergency": passport.is_emergency,
+            "bt_balance": bt_balance
         },
         request=request
     )
@@ -233,7 +239,7 @@ async def create_passport(
 
 
 @router.get("/{passport_id}", response_model=Passport)
-def read_passport(
+async def read_passport(
         request: Request,
         *,
         db: Session = Depends(get_db),
@@ -241,9 +247,9 @@ def read_passport(
         current_user: User = Depends(get_current_police_or_admin),
 ):
     """
-    Получить паспорт по ID
+    Получить паспорт по ID с балансом баллов труда
     """
-    passport = passport_crud.get(db, id=passport_id)
+    passport = await passport_crud.get_with_bt_balance(db, id=passport_id)
     if not passport:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -262,6 +268,7 @@ def read_passport(
             "city": passport.city,
             "violations_count": passport.violations_count,
             "is_emergency": passport.is_emergency,
+            "bt_balance": passport.bt_balance,
             "officer": current_user.minecraft_username
         },
         request=request

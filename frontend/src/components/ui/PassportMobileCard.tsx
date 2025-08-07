@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, AlertTriangle, Shield, Edit, Trash2, ShieldAlert, Receipt, ScrollText, MoreHorizontal } from 'lucide-react';
+import { MapPin, AlertTriangle, Shield, Edit, Trash2, ShieldAlert, Receipt, ScrollText, MoreHorizontal, Coins } from 'lucide-react';
 import { Passport } from '@/types';
 import { MinecraftHead } from '@/components/common';
 import { Badge, ActionsDropdown, ActionItem } from '@/components/ui';
@@ -91,7 +91,7 @@ const PassportMobileCard: React.FC<PassportMobileCardProps> = ({
       </div>
 
       {/* Stats */}
-      <div className="flex justify-center space-x-6 mb-6">
+      <div className="flex justify-center space-x-4 mb-6">
         {/* Violations */}
         <div className="text-center">
           <div className={cn(
@@ -121,6 +121,18 @@ const PassportMobileCard: React.FC<PassportMobileCardProps> = ({
             Статус
           </div>
         </div>
+
+        {/* BT Balance */}
+        {passport.bt_balance !== null && passport.bt_balance !== undefined && (
+          <div className="text-center">
+            <div className="text-2xl font-bold mb-1 flex items-center justify-center text-orange-400">
+              <Coins className="h-6 w-6" />
+            </div>
+            <div className="text-xs text-gray-400 uppercase tracking-wide">
+              {passport.bt_balance} БТ
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}

@@ -238,6 +238,7 @@ const AvatarTest: React.FC = () => {
           </div>
         );
       })}
+      </div>
     </div>
   );
 };

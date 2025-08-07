@@ -91,9 +91,8 @@ const PassportLogsModal: React.FC<PassportLogsModalProps> = ({
       console.log('Fetching logs with extended date range...');
       
       // Get logs for the last 90 days to ensure we don't miss any logs
-      const result = await apiService.getLogs(0, 500, undefined, undefined, {
-        days: 90 // Get logs for last 90 days instead of default 7
-      });
+      // Try a simpler approach - just get more logs and rely on backend default
+      const result = await apiService.getLogs(0, 500);
       console.log('Filtering through all logs:', result.logs);
       console.log('Looking for passport:', passport);
       

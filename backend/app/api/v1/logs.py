@@ -28,7 +28,7 @@ async def read_logs(
         ip_address: Optional[str] = Query(None, description="Фильтр по IP адресу"),
         date_from: Optional[str] = Query(None, description="Дата с (YYYY-MM-DD)"),
         date_to: Optional[str] = Query(None, description="Дата до (YYYY-MM-DD)"),
-        days: Optional[int] = Query(90, description="Количество дней назад (по умолчанию 90)"),
+        days: Optional[int] = Query(90, ge=1, le=365, description="Количество дней назад (по умолчанию 90)"),
         current_user: User = Depends(get_current_active_admin),
 ):
     """
@@ -150,7 +150,7 @@ async def read_my_logs(
         limit: int = 100,
         action: Optional[str] = Query(None, description="Фильтр по типу действия"),
         entity_type: Optional[str] = Query(None, description="Фильтр по типу сущности"),
-        days: Optional[int] = Query(90, description="Количество дней назад (по умолчанию 90)"),
+        days: Optional[int] = Query(90, ge=1, le=365, description="Количество дней назад (по умолчанию 90)"),
         current_user: User = Depends(get_current_police_or_admin),
 ):
     """

@@ -18,7 +18,7 @@ router = APIRouter()
 async def read_logs(
         db: Session = Depends(get_db),
         page: int = Query(0, ge=0, description="Номер страницы (с 0)"),
-        page_size: int = Query(20, ge=1, le=100, description="Размер страницы"),
+        page_size: int = Query(20, ge=1, le=500, description="Размер страницы"),
         search: Optional[str] = Query(None, description="Поиск по действию, пользователю, типу сущности или IP"),
         user_id: Optional[int] = Query(None, description="Фильтр по ID пользователя"),
         action: Optional[str] = Query(None, description="Фильтр по типу действия"),

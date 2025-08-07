@@ -170,29 +170,36 @@ export function getDiscordAvatarUrl(user: User | null | undefined, size: number 
       return defaultUrl;
     }
 
-    // Валидируем формат discord_avatar (должен содержать только разрешенные символы)
-    const avatarHashPattern = /^[a-f0-9]{32}$|^a_[a-f0-9]{31}$/;
-    if (!avatarHashPattern.test(user.discord_avatar)) {
-      console.warn('getDiscordAvatarUrl: Invalid avatar hash format:', user.discord_avatar);
-      // Возвращаем дефолтный аватар при неправильном формате
-      let defaultAvatarId = 0;
-      try {
-        const userId = BigInt(user.discord_id);
-        defaultAvatarId = Number((userId >> 22n) % 6n);
-      } catch (error) {
-        defaultAvatarId = parseInt(user.discord_id.slice(-1)) % 6;
-      }
-      const defaultUrl = `https://cdn.discordapp.com/embed/avatars/${defaultAvatarId}.png`;
-      console.log('getDiscordAvatarUrl: Using default avatar due to invalid hash:', defaultUrl);
-      return defaultUrl;
+    // Более мягкая валидация формата discord_avatar
+    // Discord аватары могут быть как 32-символьными хешами, так и анимированными с префиксом a_
+    const avatarHashPattern = /^[a-f0-9]{32}$|^a_[a-f0-9]{31}$|^[A-Fa-f0-9]{32}$|^a_[A-Fa-f0-9]{31}$/;
+    
+    console.log('getDiscordAvatarUrl: Validating avatar hash:', {
+      hash: user.discord_avatar,
+      length: user.discord_avatar.length,
+      isValid: avatarHashPattern.test(user.discord_avatar),
+      pattern: avatarHashPattern.toString()
+    });
+    
+    if (user.discord_avatar && !avatarHashPattern.test(user.discord_avatar)) {
+      console.warn('getDiscordAvatarUrl: Invalid avatar hash format, but proceeding anyway:', user.discord_avatar);
+      // НЕ возвращаем дефолтный аватар, пробуем использовать как есть
     }
 
     // Проверяем, анимированный ли аватар (начинается с 'a_')
     const isAnimated = user.discord_avatar.startsWith('a_');
     const extension = isAnimated ? 'gif' : 'png';
 
+    // Формируем URL согласно Discord CDN API
     const customUrl = `https://cdn.discordapp.com/avatars/${user.discord_id}/${user.discord_avatar}.${extension}?size=${validSize}`;
-    console.log('getDiscordAvatarUrl: Using custom avatar:', customUrl, 'isAnimated:', isAnimated);
+    console.log('getDiscordAvatarUrl: Using custom avatar:', {
+      url: customUrl, 
+      isAnimated: isAnimated,
+      extension: extension,
+      discord_id: user.discord_id,
+      avatar_hash: user.discord_avatar,
+      size: validSize
+    });
     return customUrl;
   } catch (error) {
     console.error('Discord avatar URL generation error:', error, 'User:', user);
@@ -508,23 +515,29 @@ export function testDiscordCDN(): Promise<boolean> {
     const testImage = new Image();
     const testUrl = 'https://cdn.discordapp.com/embed/avatars/0.png';
     
+    console.log('testDiscordCDN: Starting CDN accessibility test with URL:', testUrl);
+    
     const timeout = setTimeout(() => {
-      console.warn('Discord CDN test timeout');
+      console.warn('testDiscordCDN: Discord CDN test timeout after 5 seconds');
       resolve(false);
     }, 5000);
 
     testImage.onload = () => {
       clearTimeout(timeout);
-      console.log('Discord CDN is accessible');
+      console.log('testDiscordCDN: Discord CDN is accessible, image dimensions:', {
+        width: testImage.naturalWidth,
+        height: testImage.naturalHeight
+      });
       resolve(true);
     };
 
-    testImage.onerror = () => {
+    testImage.onerror = (error) => {
       clearTimeout(timeout);
-      console.error('Discord CDN is not accessible');
+      console.error('testDiscordCDN: Discord CDN is not accessible, error:', error);
       resolve(false);
     };
 
+    console.log('testDiscordCDN: Setting image source...');
     testImage.src = testUrl;
   });
 }

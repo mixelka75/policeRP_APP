@@ -15,6 +15,7 @@ import Users from '@/pages/Users';
 import RoleManagement from '@/pages/RoleManagement';
 import Logs from '@/pages/Logs';
 import MyFines from '@/pages/MyFines';
+import AvatarTest from '@/components/debug/AvatarTest';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean; policeOrAdminOnly?: boolean }> = ({
   children,
@@ -148,6 +149,16 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute adminOnly>
                 <Logs />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Debug/Test routes */}
+          <Route
+            path="/debug/avatar-test"
+            element={
+              <ProtectedRoute>
+                <AvatarTest />
               </ProtectedRoute>
             }
           />

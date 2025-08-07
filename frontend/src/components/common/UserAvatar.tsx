@@ -46,7 +46,15 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
   // If preferDiscord is true, try Discord avatar first
   if (preferDiscord && !discordFailed) {
     const avatarUrl = getDiscordAvatarUrl(user, size);
-    console.log('UserAvatar: Using Discord avatar for user:', user.discord_username, 'URL:', avatarUrl);
+    console.log('UserAvatar: Processing Discord avatar for user:', {
+      discord_username: user.discord_username,
+      discord_id: user.discord_id,
+      discord_avatar: user.discord_avatar,
+      discord_discriminator: user.discord_discriminator,
+      generated_url: avatarUrl,
+      preferDiscord,
+      discordFailed
+    });
     
     return (
       <div className={`relative ${className}`} style={{ width: size, height: size }}>
@@ -108,13 +116,13 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
     );
   }
 
-  // Fallback to Discord avatar or initials  
-  const fallbackAvatarUrl = getDiscordAvatarUrl(user, size);
-  console.log('UserAvatar: Using fallback Discord avatar for user:', user.discord_username, 'URL:', fallbackAvatarUrl);
-  
-  return (
-    <div className={`relative ${className}`} style={{ width: size, height: size }}>
-      {!discordFailed && (
+  // Final fallback - try Discord avatar once more, if fails show initials
+  if (!discordFailed) {
+    const fallbackAvatarUrl = getDiscordAvatarUrl(user, size);
+    console.log('UserAvatar: Using fallback Discord avatar for user:', user.discord_username, 'URL:', fallbackAvatarUrl);
+    
+    return (
+      <div className={`relative ${className}`} style={{ width: size, height: size }}>
         <img
           src={fallbackAvatarUrl}
           alt={`${getDisplayName(user)} avatar`}
@@ -135,21 +143,33 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
             console.log('UserAvatar: Fallback Discord avatar loaded successfully for user:', user.discord_username);
           }}
         />
-      )}
-      {discordFailed && (
-        <div
-          className={`rounded-full flex items-center justify-center ${
-            user.role === 'admin' 
-              ? 'bg-gradient-to-br from-red-500 to-red-600'
-              : 'bg-gradient-to-br from-primary-500 to-secondary-500'
-          }`}
-          style={{ width: size, height: size }}
-        >
-          <span className="text-white font-medium" style={{ fontSize: `${size * 0.4}px` }}>
-            {getDisplayName(user).charAt(0).toUpperCase()}
-          </span>
-        </div>
-      )}
+        {showStatus && (
+          <div className={`absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-dark-800 ${
+            user.is_active ? 'bg-green-500' : 'bg-red-500'
+          }`} style={{ width: size * 0.3, height: size * 0.3 }} />
+        )}
+      </div>
+    );
+  }
+
+  // Ultimate fallback - show initials
+  console.log('UserAvatar: All Discord options failed, showing initials for user:', user.discord_username);
+  return (
+    <div className={`relative ${className}`} style={{ width: size, height: size }}>
+      <div
+        className={`rounded-full flex items-center justify-center ${
+          user.role === 'admin' 
+            ? 'bg-gradient-to-br from-red-500 to-red-600'
+            : user.role === 'police'
+            ? 'bg-gradient-to-br from-blue-500 to-blue-600'
+            : 'bg-gradient-to-br from-gray-500 to-gray-600'
+        }`}
+        style={{ width: size, height: size }}
+      >
+        <span className="text-white font-medium" style={{ fontSize: `${size * 0.4}px` }}>
+          {getDisplayName(user).charAt(0).toUpperCase()}
+        </span>
+      </div>
       {showStatus && (
         <div className={`absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-dark-800 ${
           user.is_active ? 'bg-green-500' : 'bg-red-500'

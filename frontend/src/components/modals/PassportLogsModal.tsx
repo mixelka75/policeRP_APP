@@ -87,13 +87,13 @@ const PassportLogsModal: React.FC<PassportLogsModalProps> = ({
     
     try {
       console.log('Loading passport logs for:', passport);
-      // Filter logs related to this passport - get multiple pages to ensure we get recent logs
-      console.log('Fetching logs from multiple pages...');
-      const page1 = await apiService.getLogs(0, 100); // Page 0 - newest
-      const page2 = await apiService.getLogs(1, 100); // Page 1 - older
+      // Filter logs related to this passport - get more logs by extending the date range
+      console.log('Fetching logs with extended date range...');
       
-      const allLogs = [...page1.logs, ...page2.logs];
-      const result = { logs: allLogs, pagination: page1.pagination };
+      // Get logs for the last 90 days to ensure we don't miss any logs
+      const result = await apiService.getLogs(0, 500, undefined, undefined, {
+        days: 90 // Get logs for last 90 days instead of default 7
+      });
       console.log('Filtering through all logs:', result.logs);
       console.log('Looking for passport:', passport);
       

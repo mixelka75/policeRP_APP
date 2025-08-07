@@ -599,7 +599,8 @@ class ApiService {
     page: number = 0, 
     pageSize: number = 20, 
     searchTerm?: string,
-    selectedAction?: string
+    selectedAction?: string,
+    additionalParams?: Record<string, any>
   ): Promise<{logs: Log[], pagination: any}> {
     try {
       const params: any = { 
@@ -614,6 +615,11 @@ class ApiService {
       
       if (selectedAction && selectedAction.trim() && selectedAction !== '') {
         params.action = selectedAction;
+      }
+
+      // Добавляем дополнительные параметры
+      if (additionalParams) {
+        Object.assign(params, additionalParams);
       }
 
       const response = await this.axiosInstance.get<{logs: Log[], pagination: any}>('/logs/', {

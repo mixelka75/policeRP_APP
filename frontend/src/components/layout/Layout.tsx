@@ -61,13 +61,13 @@ const Layout: React.FC<LayoutProps> = ({ children, title, subtitle, actions }) =
 
                 {/* Центрированный заголовок с логотипом */}
                 {title && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3">
                     <img
                       src={logoImage}
                       alt="Панд-Ратония Logo"
                       className="w-6 h-6 sm:w-8 sm:h-8 lg:w-12 lg:h-12 object-contain drop-shadow-lg flex-shrink-0"
                     />
-                    <div className="text-center">
+                    <div className="text-left">
                       <h1 className="text-sm sm:text-lg lg:text-xl font-semibold text-white">
                         {title}
                       </h1>

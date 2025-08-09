@@ -60,7 +60,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8000",
         # Для обработки дублированных заголовков Origin
-        "https://police.test.yuuri.online, https://police.test.yuuri.online"
+        "https://police.pandrat.ru, https://police.pandrat.ru"
     ]
     
     @field_validator('ALLOWED_ORIGINS', mode='before')

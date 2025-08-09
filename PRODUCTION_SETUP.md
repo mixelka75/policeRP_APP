@@ -102,10 +102,10 @@ sudo systemctl reload nginx
 
 ```bash
 # Получить сертификат для домена фронтенда
-sudo certbot --nginx -d police.test.yuuri.online
+sudo certbot --nginx -d police.pandrat.ru
 
 # Получить сертификат для домена бэкенда
-sudo certbot --nginx -d apipolice.test.yuuri.online
+sudo certbot --nginx -d apipolice.pandrat.ru
 ```
 
 При запросе:

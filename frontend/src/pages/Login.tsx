@@ -29,7 +29,7 @@ const Login: React.FC = () => {
     }
   );
 
-  const { execute: getDiscordStatus, data: discordStatus } = useApi(
+  const { execute: getDiscordStatus, data: discordStatus, isLoading: isLoadingStatus } = useApi(
     apiService.getDiscordStatus,
     {
       showErrorToast: false,
@@ -66,7 +66,13 @@ const Login: React.FC = () => {
   const handleDiscordLogin = async () => {
     setAuthError(null);
 
-    if (!discordStatus?.discord_configured) {
+    // Дождемся загрузки статуса, если еще не загружен
+    if (isLoadingStatus || !discordStatus) {
+      setAuthError('Проверка конфигурации Discord...');
+      return;
+    }
+
+    if (!discordStatus.discord_configured) {
       setAuthError('Discord интеграция не настроена');
       return;
     }
@@ -241,17 +247,17 @@ const Login: React.FC = () => {
             <Button
               onClick={handleDiscordLogin}
               variant="minecraft"
-              loading={isLoading || isGettingUrl}
-              disabled={!discordStatus?.discord_configured}
+              loading={isLoading || isGettingUrl || isLoadingStatus}
+              disabled={isLoadingStatus || !discordStatus?.discord_configured}
               fullWidth
               size="lg"
               glow
-              leftIcon={!isLoading && !isGettingUrl ? <DiscordIcon className="w-5 h-5" /> : undefined}
+              leftIcon={!isLoading && !isGettingUrl && !isLoadingStatus ? <DiscordIcon className="w-5 h-5" /> : undefined}
             >
-              {isLoading || isGettingUrl ? 'Подключение...' : 'Войти через Discord'}
+              {isLoading || isGettingUrl ? 'Подключение...' : isLoadingStatus ? 'Загрузка...' : 'Войти через Discord'}
             </Button>
 
-            {!discordStatus?.discord_configured && (
+            {!isLoadingStatus && discordStatus && !discordStatus.discord_configured && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}

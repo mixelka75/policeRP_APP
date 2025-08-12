@@ -188,6 +188,13 @@ class DiscordClient:
 
             if response.status_code == 200:
                 return response.json()
+            elif response.status_code == 429:
+                # Rate limit - возвращаем None вместо ошибки
+                rate_limit_data = response.json()
+                retry_after = rate_limit_data.get('retry_after', 60)
+                print(f"Discord guild member error: {response.status_code} - {response.text}")
+                print(f"Rate limited, retry after {retry_after} seconds")
+                return None
             else:
                 print(f"Discord guild member error: {response.status_code} - {response.text}")
                 return None

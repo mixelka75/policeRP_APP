@@ -13,6 +13,7 @@ class PassportBase(BaseModel):
     age: int = Field(..., ge=0, description="Возраст")
     gender: Literal["male", "female"] = Field(..., description="Пол")
     city: str = Field(..., min_length=2, max_length=100, description="Город проживания")
+    entry_date: Optional[datetime] = Field(None, description="Дата въезда в город")
 
     @field_validator('gender')
     @classmethod
@@ -26,7 +27,7 @@ class PassportCreate(PassportBase):
     """
     Схема для создания паспорта
     """
-    pass
+    entry_date: datetime = Field(..., description="Дата въезда в город")
 
 
 class PassportUpdate(BaseModel):
@@ -39,6 +40,7 @@ class PassportUpdate(BaseModel):
     age: Optional[int] = Field(None, ge=0)
     gender: Optional[Literal["male", "female"]] = None
     city: Optional[str] = Field(None, min_length=2, max_length=100)
+    entry_date: Optional[datetime] = Field(None, description="Дата въезда в город")
 
     @field_validator('gender')
     @classmethod

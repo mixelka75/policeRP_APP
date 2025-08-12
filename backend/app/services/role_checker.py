@@ -26,6 +26,9 @@ class RoleCheckerService:
         self.is_running = False
         self.guild_roles_cache: Optional[List[Dict[str, Any]]] = None
         self.cache_updated_at: Optional[datetime] = None
+        # Кеш для пользовательских ролей (кеш на 2 минуты)
+        self.user_roles_cache: Dict[int, Dict[str, Any]] = {}
+        self.user_cache_expiry: Dict[int, datetime] = {}
 
     async def start(self):
         """
@@ -168,6 +171,19 @@ class RoleCheckerService:
             if not member_info:
                 logger.info(f"User {user.discord_username} is not in the guild")
                 
+                # Проверяем кеш пользователя - если данные свежие, не меняем роль
+                if self._is_user_cache_valid(user.id):
+                    cached_data = self.user_roles_cache[user.id]
+                    logger.info(f"Using cached role data for user {user.discord_username}")
+                    return {
+                        "user_id": user.id,
+                        "old_role": user.role,
+                        "new_role": user.role,
+                        "changed": False,
+                        "has_access": True,
+                        "minecraft_data_updated": False
+                    }
+                
                 # Если пользователь администратор, сохраняем его роль даже если он не в гильдии
                 if user.role == "admin":
                     logger.info(f"Preserving admin role for user {user.discord_username} even though not in guild")
@@ -176,6 +192,9 @@ class RoleCheckerService:
                     if not user.is_active:
                         logger.info(f"Reactivating admin user {user.discord_username}")
                         user_crud.activate_user(db, user=user)
+                    
+                    # Обновляем кеш
+                    self._update_user_cache(user.id, {"role": user.role, "has_access": True})
                     
                     return {
                         "user_id": user.id,
@@ -197,6 +216,9 @@ class RoleCheckerService:
                     role=new_role,
                     discord_roles=[]
                 )
+                
+                # Обновляем кеш
+                self._update_user_cache(user.id, {"role": new_role, "has_access": True})
                 
                 # Если пользователь был деактивирован, но теперь получил роль citizen, активируем его
                 if not user.is_active and new_role == "citizen":
@@ -257,6 +279,14 @@ class RoleCheckerService:
                 minecraft_username=minecraft_username,
                 minecraft_uuid=minecraft_uuid
             )
+            
+            # Обновляем кеш
+            self._update_user_cache(user.id, {
+                "role": new_role, 
+                "has_access": True,
+                "discord_roles": member_info.get("roles", []),
+                "minecraft_username": minecraft_username
+            })
             
             # Если пользователь был деактивирован, но теперь у него есть роль, активируем его
             if not user.is_active and new_role and new_role != "none":
@@ -320,6 +350,35 @@ class RoleCheckerService:
         except Exception as e:
             logger.error(f"Error checking roles for user {user.discord_username}: {e}")
             return None
+    
+    def _is_user_cache_valid(self, user_id: int) -> bool:
+        """
+        Проверяет, действителен ли кеш для пользователя
+        """
+        if user_id not in self.user_cache_expiry:
+            return False
+        
+        expiry_time = self.user_cache_expiry[user_id]
+        return datetime.now(timezone.utc) < expiry_time
+    
+    def _update_user_cache(self, user_id: int, data: Dict[str, Any]):
+        """
+        Обновляет кеш пользователя
+        """
+        self.user_roles_cache[user_id] = data
+        # Кеш действует 2 минуты
+        self.user_cache_expiry[user_id] = datetime.now(timezone.utc) + timedelta(minutes=2)
+    
+    def _clear_expired_cache(self):
+        """
+        Очищает устаревшие записи из кеша
+        """
+        now = datetime.now(timezone.utc)
+        expired_users = [user_id for user_id, expiry in self.user_cache_expiry.items() if expiry <= now]
+        
+        for user_id in expired_users:
+            self.user_roles_cache.pop(user_id, None)
+            self.user_cache_expiry.pop(user_id, None)
 
     async def get_guild_roles(self) -> List[Dict[str, Any]]:
         """
@@ -401,6 +460,22 @@ class RoleCheckerService:
         Returns:
             Результат проверки
         """
+        # Очищаем устаревшие записи
+        self._clear_expired_cache()
+        
+        # Проверяем кеш
+        if self._is_user_cache_valid(user_id):
+            cached_data = self.user_roles_cache[user_id]
+            logger.info(f"Using cached role data for user ID {user_id}")
+            return {
+                "user_id": user_id,
+                "old_role": cached_data.get("role"),
+                "new_role": cached_data.get("role"),
+                "changed": False,
+                "has_access": cached_data.get("has_access", True),
+                "minecraft_data_updated": False
+            }
+        
         db = SessionLocal()
         try:
             user = user_crud.get(db, id=user_id)

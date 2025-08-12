@@ -34,7 +34,7 @@ class Passport(BaseModel):
     # НОВЫЕ ПОЛЯ:
     city = Column(String(100), nullable=False, index=True)  # Город проживания
     violations_count = Column(Integer, default=0, nullable=False)  # Количество нарушений
-    entry_date = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)  # Дата входа в город
+    entry_date = Column(DateTime(timezone=True), nullable=False)  # Дата въезда в город
     is_emergency = Column(Boolean, default=False, nullable=False, index=True)  # ЧС статус
 
     # Связи

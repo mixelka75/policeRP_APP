@@ -2,6 +2,7 @@ import asyncio
 import logging
 from functools import wraps
 from typing import Callable, Any
+from datetime import datetime, timedelta, timezone
 from fastapi import Request, Depends
 from sqlalchemy.orm import Session
 
@@ -12,7 +13,11 @@ from app.services.role_checker import role_checker_service
 logger = logging.getLogger(__name__)
 
 # Семафор для ограничения одновременных проверок ролей
-role_check_semaphore = asyncio.Semaphore(5)  # Максимум 5 одновременных проверок
+role_check_semaphore = asyncio.Semaphore(2)  # Максимум 2 одновременных проверки
+
+# Кеш последних проверок пользователей
+last_role_check: dict[int, datetime] = {}
+ROLE_CHECK_COOLDOWN = timedelta(minutes=1)  # Кулдаун 1 минута
 
 
 def check_user_roles_on_action(action_name: str):
@@ -61,7 +66,17 @@ async def trigger_role_check_for_user(user_id: int, action: str):
     """
     Запускает проверку ролей для пользователя при выполнении действия
     """
+    now = datetime.now(timezone.utc)
+    
+    # Проверяем кулдаун
+    if user_id in last_role_check:
+        time_since_last_check = now - last_role_check[user_id]
+        if time_since_last_check < ROLE_CHECK_COOLDOWN:
+            logger.debug(f"Role check for user {user_id} skipped due to cooldown ({time_since_last_check.total_seconds():.1f}s since last check)")
+            return None
+    
     logger.info(f"Triggering role check for user {user_id} due to action: {action}")
+    last_role_check[user_id] = now
     
     async with role_check_semaphore:  # Ограничиваем количество одновременных проверок
         try:

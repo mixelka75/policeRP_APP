@@ -120,9 +120,43 @@ class RoleCheckerService:
                         user.discord_access_token = access_token
                     else:
                         logger.warning(f"Failed to refresh token for user {user.discord_username}")
+                        # Если пользователь администратор, не блокируем его даже при проблемах с токеном
+                        if user.role == "admin":
+                            logger.info(f"Preserving admin access for user {user.discord_username} despite token issues")
+                            
+                            # Если администратор был заблокирован, активируем его обратно
+                            if not user.is_active:
+                                logger.info(f"Reactivating admin user {user.discord_username}")
+                                user_crud.activate_user(db, user=user)
+                            
+                            return {
+                                "user_id": user.id,
+                                "old_role": user.role,
+                                "new_role": user.role,
+                                "changed": False,
+                                "has_access": True,
+                                "minecraft_data_updated": False
+                            }
                         return {"has_access": False, "changed": False}
                 else:
                     logger.warning(f"No refresh token for user {user.discord_username}")
+                    # Если пользователь администратор, не блокируем его даже без refresh токена
+                    if user.role == "admin":
+                        logger.info(f"Preserving admin access for user {user.discord_username} despite missing refresh token")
+                        
+                        # Если администратор был заблокирован, активируем его обратно
+                        if not user.is_active:
+                            logger.info(f"Reactivating admin user {user.discord_username}")
+                            user_crud.activate_user(db, user=user)
+                        
+                        return {
+                            "user_id": user.id,
+                            "old_role": user.role,
+                            "new_role": user.role,
+                            "changed": False,
+                            "has_access": True,
+                            "minecraft_data_updated": False
+                        }
                     return {"has_access": False, "changed": False}
 
             # Получаем информацию о пользователе в гильдии
@@ -132,7 +166,26 @@ class RoleCheckerService:
             )
 
             if not member_info:
-                logger.info(f"User {user.discord_username} is not in the guild, assigning citizen role")
+                logger.info(f"User {user.discord_username} is not in the guild")
+                
+                # Если пользователь администратор, сохраняем его роль даже если он не в гильдии
+                if user.role == "admin":
+                    logger.info(f"Preserving admin role for user {user.discord_username} even though not in guild")
+                    
+                    # Если администратор был заблокирован, активируем его обратно
+                    if not user.is_active:
+                        logger.info(f"Reactivating admin user {user.discord_username}")
+                        user_crud.activate_user(db, user=user)
+                    
+                    return {
+                        "user_id": user.id,
+                        "old_role": user.role,
+                        "new_role": user.role,
+                        "changed": False,
+                        "has_access": True,
+                        "minecraft_data_updated": False
+                    }
+                
                 # Пользователь не в сервере, назначаем роль citizen
                 new_role = "citizen"
                 old_role = user.role

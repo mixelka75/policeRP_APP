@@ -19,7 +19,8 @@ import {
   RefreshCw,
   UserCheck,
   Clock,
-  Gamepad2
+  Gamepad2,
+  User
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 import { usePassportCheck } from '@/hooks/usePassportCheck';

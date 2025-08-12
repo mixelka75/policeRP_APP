@@ -19,6 +19,7 @@ import {
   Gamepad2
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
+import { usePassportCheck } from '@/hooks/usePassportCheck';
 import { getDisplayName, getRoleDisplayName, getFullUserName, isUserDataOutdated } from '@/utils';
 import { cn } from '@/utils';
 import UserAvatar from '@/components/common/UserAvatar';
@@ -32,6 +33,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { user, logout, refreshUserData } = useAuthStore();
+  const { hasPassport, passport } = usePassportCheck();
   const [isLargeScreen, setIsLargeScreen] = useState(false);
 
   useEffect(() => {
@@ -55,15 +57,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     ];
 
     if (user?.role === 'citizen') {
-      return [
-        ...baseItems,
-        {
+      const citizenItems = [...baseItems];
+      
+      // Показываем "Мои штрафы" только если у пользователя есть паспорт
+      if (hasPassport) {
+        citizenItems.push({
           name: 'Мои штрафы',
           href: '/my-fines',
           icon: AlertTriangle,
           current: location.pathname === '/my-fines',
-        }
-      ];
+        });
+      }
+      
+      return citizenItems;
     }
 
     // Для admin и police
@@ -188,7 +194,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                         )}
                       </div>
                       <p className="text-xs text-primary-300 capitalize"> {/* ✨ НОВЫЙ цвет */}
-                        {getRoleDisplayName(user.role)}
+                        {getRoleDisplayName(user.role, passport)}
                       </p>
                     </div>
                   </div>
@@ -288,11 +294,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   })}
                 />
                 <span className="font-medium">{item.name}</span>
-                {item.href === '/emergency' && (
-                  <div className="ml-auto">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                  </div>
-                )}
               </Link>
             ))}
           </nav>

@@ -366,7 +366,7 @@ const LogDetailsModal: React.FC<LogDetailsModalProps> = ({
                   <div>
                     <p className="text-white font-medium">{user.discord_username}</p>
                     <p className="text-sm text-gray-400">
-                      {user.role === 'admin' ? 'Администратор' : user.role === 'police' ? 'Полицейский' : 'Житель'}
+                      {user.role === 'admin' ? 'Администратор' : user.role === 'police' ? 'Полицейский' : 'Гость'}
                     </p>
                     {user.minecraft_username && (
                       <p className="text-xs text-primary-400">Minecraft: {user.minecraft_username}</p>

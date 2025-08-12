@@ -52,7 +52,7 @@ const UsersMobileCard: React.FC<UsersMobileCardProps> = ({
       case 'police':
         return 'ПОЛИЦИЯ';
       default:
-        return 'ЖИТЕЛЬ';
+        return 'ГОСТЬ';
     }
   };
 

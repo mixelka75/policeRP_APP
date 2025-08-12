@@ -22,6 +22,7 @@ import {
   Gamepad2
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
+import { usePassportCheck } from '@/hooks/usePassportCheck';
 import { apiService } from '@/services/api';
 import { useApi } from '@/hooks/useApi';
 import { Passport, Fine } from '@/types';
@@ -41,6 +42,7 @@ import {
 
 const Dashboard: React.FC = () => {
   const { user, refreshUserData } = useAuthStore();
+  const { hasPassport, passport, isLoading: passportLoading } = usePassportCheck();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'fines' | 'passports' | 'emergency'>('emergency');
   const [searchTerm, setSearchTerm] = useState('');
@@ -196,7 +198,7 @@ const Dashboard: React.FC = () => {
     return (
       <Layout
         title="Главная"
-        subtitle="Ваш паспорт"
+        subtitle={hasPassport ? "Ваш паспорт" : "Добро пожаловать"}
       >
         <div className="space-y-4 sm:space-y-6">
           {/* ✨ User Info Banner для мобильных */}
@@ -221,12 +223,12 @@ const Dashboard: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
                         <h3 className="text-lg sm:text-2xl font-bold text-white truncate">
-                          Добро пожаловать, {getDisplayName(user)}!!!!!
+                          Добро пожаловать, {getDisplayName(user)}!
                         </h3>
                         <MessageCircle className="h-4 w-4 sm:h-6 sm:w-6 text-secondary-400 hidden sm:block" />
                       </div>
                       <p className="text-sm sm:text-base text-primary-300 font-medium">
-                        {getRoleDisplayName(user.role)}
+                        {getRoleDisplayName(user.role, passport)}
                       </p>
                     </div>
                   </div>
@@ -235,8 +237,39 @@ const Dashboard: React.FC = () => {
             </motion.div>
           )}
 
-          {/* User Passport Card */}
-          <UserPassportCard />
+          {/* Загрузка паспорта */}
+          {passportLoading && (
+            <Card variant="minecraft" className="p-6">
+              <Loading text="Проверка паспорта..." />
+            </Card>
+          )}
+
+          {/* Если есть паспорт - показываем UserPassportCard */}
+          {!passportLoading && hasPassport && <UserPassportCard />}
+
+          {/* Если нет паспорта - показываем сообщение */}
+          {!passportLoading && !hasPassport && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card variant="minecraft" className="p-6 border-yellow-500/30 bg-yellow-500/5">
+                <div className="text-center">
+                  <User className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-yellow-400 mb-2">
+                    У вас нет паспорта
+                  </h3>
+                  <p className="text-yellow-300 mb-4">
+                    Для получения полного доступа к системе вам необходимо оформить паспорт у администрации.
+                  </p>
+                  <p className="text-gray-400 text-sm">
+                    Обратитесь к администратору сервера для создания паспорта.
+                  </p>
+                </div>
+              </Card>
+            </motion.div>
+          )}
         </div>
       </Layout>
     );
@@ -341,7 +374,7 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mt-1">
                       <p className="text-sm sm:text-base text-primary-300 font-medium">
-                        {getRoleDisplayName(user.role)}
+                        {getRoleDisplayName(user.role, passport)}
                       </p>
                       {user.minecraft_username && (
                         <>

@@ -10,7 +10,7 @@ class PassportBase(BaseModel):
     first_name: str = Field(..., min_length=2, max_length=100, description="Имя")
     last_name: str = Field(..., min_length=2, max_length=100, description="Фамилия")
     discord_id: str = Field(..., min_length=17, max_length=20, description="Discord ID")
-    age: int = Field(..., ge=16, le=100, description="Возраст")
+    age: int = Field(..., ge=0, description="Возраст")
     gender: Literal["male", "female"] = Field(..., description="Пол")
     city: str = Field(..., min_length=2, max_length=100, description="Город проживания")
 
@@ -36,7 +36,7 @@ class PassportUpdate(BaseModel):
     first_name: Optional[str] = Field(None, min_length=2, max_length=100)
     last_name: Optional[str] = Field(None, min_length=2, max_length=100)
     discord_id: Optional[str] = Field(None, min_length=17, max_length=20)
-    age: Optional[int] = Field(None, ge=16, le=100)
+    age: Optional[int] = Field(None, ge=0)
     gender: Optional[Literal["male", "female"]] = None
     city: Optional[str] = Field(None, min_length=2, max_length=100)
 

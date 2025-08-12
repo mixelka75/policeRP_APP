@@ -240,7 +240,7 @@ const Users: React.FC = () => {
             <div className="flex items-center space-x-1">
               <MessageCircle className="h-3 w-3 text-secondary-400" />
               <span className={`text-xs ${getRoleColor(user.role)}`}>
-                {getRoleDisplayName(user.role)}
+                {getRoleDisplayName(user.role, null)}
               </span>
             </div>
           </div>

@@ -361,7 +361,7 @@ const Logs: React.FC = () => {
             <div className="min-w-0">
               <p className="text-sm text-white truncate">{user.discord_username}</p>
               <p className="text-xs text-gray-400">
-                {user.role === 'admin' ? 'Администратор' : user.role === 'police' ? 'Полицейский' : 'Житель'}
+                {user.role === 'admin' ? 'Администратор' : user.role === 'police' ? 'Полицейский' : 'Гость'}
               </p>
             </div>
           </div>

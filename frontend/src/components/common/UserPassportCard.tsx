@@ -39,19 +39,19 @@ const UserPassportCard: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error && typeof error === 'object' && 'status' in error && error.status !== 404) {
     return (
       <Card variant="minecraft" className="p-6 border-red-500/30 bg-red-500/5">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-red-400 mb-2">
-            Паспорт не найден
+            Ошибка загрузки паспорта
           </h3>
           <p className="text-red-300 mb-4">
             {getErrorMessage(error)}
           </p>
           <p className="text-gray-400 text-sm">
-            Обратитесь к администратору для создания паспорта
+            Попробуйте обновить страницу
           </p>
         </div>
       </Card>

@@ -97,70 +97,51 @@ async def discord_callback(
                 target_guild = guild
                 break
 
+        # Если пользователь не в сервере, назначаем роль "citizen" (житель)
         if not target_guild:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Вы не состоите в требуемом Discord сервере"
-            )
-
-        # Получаем информацию о пользователе на сервере через Bot API
-        if settings.DISCORD_BOT_TOKEN:
-            # Используем Bot API для получения информации о члене сервера
-            try:
-                member_info = await discord_client.get_guild_member_by_bot(
-                    settings.DISCORD_BOT_TOKEN, 
-                    settings.DISCORD_GUILD_ID, 
-                    discord_id
-                )
-                if not member_info:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="Вы не состоите в требуемом Discord сервере или бот не имеет доступа"
-                    )
-                
-                user_roles = member_info.get("roles", [])
-                print(f"DEBUG: User roles from Discord Bot API: {user_roles}")
-                print(f"DEBUG: Admin role ID from settings: {settings.DISCORD_ADMIN_ROLE_ID}")
-                print(f"DEBUG: Police role ID from settings: {settings.DISCORD_POLICE_ROLE_ID}")
-
-                # Определяем роль пользователя на основе Discord ролей
-                user_role = discord_client.determine_user_role(member_info)
-                print(f"DEBUG: Determined user role: {user_role}")
-                
-                
-                # Проверяем, что пользователь имеет нужные роли или паспорт
-                if user_role is None:
-                    # Проверяем, есть ли у пользователя паспорт
-                    from app.crud.passport import passport_crud
-                    passport = passport_crud.get_by_discord_id(db, discord_id=str(discord_id))
-                    if passport:
-                        user_role = "citizen"  # Назначаем роль citizen
-                        print(f"DEBUG: User {discord_username} has passport, assigned citizen role")
-                    else:
-                        print(f"DEBUG: User {discord_username} has roles: {user_roles}")
-                        print(f"DEBUG: Expected admin role ID: {settings.DISCORD_ADMIN_ROLE_ID}")
-                        print(f"DEBUG: Expected police role ID: {settings.DISCORD_POLICE_ROLE_ID}")
-                        raise HTTPException(
-                            status_code=status.HTTP_403_FORBIDDEN,
-                            detail="У вас нет необходимых ролей для доступа к системе"
-                        )
-                
-            except HTTPException:
-                # Пере-поднимаем HTTPException
-                raise
-            except Exception as e:
-                print(f"DEBUG: Bot API error: {e}")
-                # Не назначаем роль по умолчанию, блокируем доступ
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Не удалось проверить роли пользователя"
-                )
+            print(f"DEBUG: User {discord_username} is not in the Discord server, assigning citizen role")
+            user_role = "citizen"
+            user_roles = []
         else:
-            print("DEBUG: No bot token configured")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Сервер не настроен для проверки ролей"
-            )
+            # Пользователь в сервере, проверяем его роли через Bot API
+            if settings.DISCORD_BOT_TOKEN:
+                # Используем Bot API для получения информации о члене сервера
+                try:
+                    member_info = await discord_client.get_guild_member_by_bot(
+                        settings.DISCORD_BOT_TOKEN, 
+                        settings.DISCORD_GUILD_ID, 
+                        discord_id
+                    )
+                    if not member_info:
+                        # Если пользователь состоит в сервере, но бот не видит его, назначаем citizen
+                        print(f"DEBUG: User {discord_username} is in server but bot can't access member info, assigning citizen role")
+                        user_role = "citizen"
+                        user_roles = []
+                    else:
+                        user_roles = member_info.get("roles", [])
+                        print(f"DEBUG: User roles from Discord Bot API: {user_roles}")
+                        print(f"DEBUG: Admin role ID from settings: {settings.DISCORD_ADMIN_ROLE_ID}")
+                        print(f"DEBUG: Police role ID from settings: {settings.DISCORD_POLICE_ROLE_ID}")
+
+                        # Определяем роль пользователя на основе Discord ролей
+                        user_role = discord_client.determine_user_role(member_info)
+                        print(f"DEBUG: Determined user role: {user_role}")
+                        
+                        # Если нет admin/police ролей, назначаем citizen
+                        if user_role is None:
+                            user_role = "citizen"
+                            print(f"DEBUG: User {discord_username} has no admin/police roles, assigned citizen role")
+                    
+                except Exception as e:
+                    print(f"DEBUG: Bot API error: {e}")
+                    # При ошибке Bot API назначаем роль citizen
+                    user_role = "citizen"
+                    user_roles = []
+                    print(f"DEBUG: Bot API error, assigning citizen role to {discord_username}")
+            else:
+                print("DEBUG: No bot token configured, assigning citizen role")
+                user_role = "citizen"
+                user_roles = []
 
         # Получаем данные из SP-Worlds API
         print(f"DEBUG: Fetching SP-Worlds data for Discord ID: {discord_id}")
@@ -368,56 +349,48 @@ async def refresh_user_data(
                     # Определяем роль на основе Discord ролей
                     user_role = discord_client.determine_user_role(member_info)
                     
-                    # Если роль None, проверяем паспорт
+                    # Если нет admin/police ролей, назначаем citizen
                     if user_role is None:
-                        from app.crud.passport import passport_crud
-                        passport = passport_crud.get_by_discord_id(db, discord_id=str(current_user.discord_id))
-                        if passport:
-                            user_role = "citizen"
-                        else:
-                            raise HTTPException(
-                                status_code=status.HTTP_403_FORBIDDEN,
-                                detail="У вас больше нет необходимых ролей для доступа к системе"
-                            )
+                        user_role = "citizen"
+                        print(f"DEBUG REFRESH: User {current_user.discord_username} has no admin/police roles, assigned citizen role")
                 else:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="Вы больше не состоите в требуемом Discord сервере"
-                    )
-            except HTTPException:
-                raise
+                    # Пользователь не в сервере или бот не видит его, назначаем citizen
+                    user_role = "citizen"
+                    user_roles = []
+                    print(f"DEBUG REFRESH: User {current_user.discord_username} not in server or bot can't access, assigned citizen role")
             except Exception as e:
                 print(f"DEBUG: Bot API error during refresh: {e}")
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Не удалось проверить ваши роли"
-                )
+                # При ошибке Bot API назначаем роль citizen
+                user_role = "citizen"
+                user_roles = []
+                print(f"DEBUG REFRESH: Bot API error, assigning citizen role to {current_user.discord_username}")
         else:
             # Fallback через обычный OAuth токен (менее надежно)
-            member_info = await discord_client.get_guild_member(
-                current_user.discord_access_token,
-                settings.DISCORD_GUILD_ID
-            )
-
-            if member_info:
-                user_roles = member_info.get("roles", [])
-                user_role = discord_client.determine_user_role(member_info)
-                
-                if user_role is None:
-                    from app.crud.passport import passport_crud
-                    passport = passport_crud.get_by_discord_id(db, discord_id=str(current_user.discord_id))
-                    if passport:
-                        user_role = "citizen"
-                    else:
-                        raise HTTPException(
-                            status_code=status.HTTP_403_FORBIDDEN,
-                            detail="У вас больше нет необходимых ролей для доступа к системе"
-                        )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Вы больше не состоите в требуемом Discord сервере"
+            try:
+                member_info = await discord_client.get_guild_member(
+                    current_user.discord_access_token,
+                    settings.DISCORD_GUILD_ID
                 )
+
+                if member_info:
+                    user_roles = member_info.get("roles", [])
+                    user_role = discord_client.determine_user_role(member_info)
+                    
+                    # Если нет admin/police ролей, назначаем citizen
+                    if user_role is None:
+                        user_role = "citizen"
+                        print(f"DEBUG REFRESH: User {current_user.discord_username} has no admin/police roles, assigned citizen role")
+                else:
+                    # Пользователь не в сервере, назначаем citizen
+                    user_role = "citizen"
+                    user_roles = []
+                    print(f"DEBUG REFRESH: User {current_user.discord_username} not in server, assigned citizen role")
+            except Exception as e:
+                print(f"DEBUG: OAuth API error during refresh: {e}")
+                # При ошибке OAuth API назначаем роль citizen
+                user_role = "citizen"
+                user_roles = []
+                print(f"DEBUG REFRESH: OAuth API error, assigning citizen role to {current_user.discord_username}")
 
         # Проверяем, изменилась ли роль
         role_changed = current_user.role != user_role

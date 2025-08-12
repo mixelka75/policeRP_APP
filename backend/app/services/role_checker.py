@@ -129,8 +129,48 @@ class RoleCheckerService:
             )
 
             if not member_info:
-                logger.warning(f"User {user.discord_username} is not in the guild anymore")
-                return {"has_access": False, "changed": False}
+                logger.info(f"User {user.discord_username} is not in the guild, assigning citizen role")
+                # Пользователь не в сервере, назначаем роль citizen
+                new_role = "citizen"
+                old_role = user.role
+                
+                # Обновляем данные пользователя
+                user_crud.update_discord_data(
+                    db,
+                    user=user,
+                    role=new_role,
+                    discord_roles=[]
+                )
+                
+                # Если пользователь был деактивирован, но теперь получил роль citizen, активируем его
+                if not user.is_active and new_role == "citizen":
+                    logger.info(f"Reactivating user {user.discord_username} due to citizen role assignment")
+                    user_crud.activate_user(db, user=user)
+
+                # Логируем изменения
+                if old_role != new_role:
+                    ActionLogger.log_action(
+                        db=db,
+                        user=user,
+                        action="ROLE_CHANGED",
+                        entity_type="user",
+                        entity_id=user.id,
+                        details={
+                            "old_role": old_role,
+                            "new_role": new_role,
+                            "changed_by": "role_checker_service",
+                            "reason": "user_not_in_guild"
+                        }
+                    )
+                
+                return {
+                    "user_id": user.id,
+                    "old_role": old_role,
+                    "new_role": new_role,
+                    "changed": old_role != new_role,
+                    "has_access": True,
+                    "minecraft_data_updated": False
+                }
 
             # Получаем роли гильдии (кешируем на 5 минут)
             guild_roles = await self.get_guild_roles()
@@ -138,19 +178,6 @@ class RoleCheckerService:
             # Определяем новую роль пользователя
             new_role = self.determine_user_role(member_info, guild_roles, user, db)
             old_role = user.role
-            
-            # Если у пользователя нет нужных ролей, деактивируем его
-            if new_role is None:
-                logger.warning(f"User {user.discord_username} has no valid roles and no passport, deactivating")
-                # Устанавливаем роль "none" для обозначения отсутствия доступа
-                user_crud.update_discord_data(
-                    db,
-                    user=user,
-                    role="none",
-                    discord_roles=member_info.get("roles", [])
-                )
-                user_crud.deactivate_user(db, user=user)
-                return {"has_access": False, "changed": old_role != "none"}
 
             # Получаем обновленные данные из SP-Worlds
             print(f"DEBUG ROLE_CHECKER: Fetching SP-Worlds data for Discord ID: {user.discord_id}")
@@ -304,17 +331,9 @@ class RoleCheckerService:
             if settings.DISCORD_POLICE_ROLE_NAME in user_role_names:
                 return "police"
 
-        # Если нет admin/police ролей, проверяем паспорт для роли citizen
-        if user and db:
-            from app.crud.passport import passport_crud
-            passport = passport_crud.get_by_discord_id(db, discord_id=str(user.discord_id))
-            if passport:
-                logger.info(f"User {user.discord_username} has passport, assigned citizen role")
-                return "citizen"
-
-        # Если нет нужных ролей и паспорта, возвращаем None
-        logger.warning(f"User has no required roles and no passport. User roles: {user_role_ids}")
-        return None
+        # Если нет admin/police ролей, назначаем роль citizen
+        logger.info(f"User has no admin/police roles, assigning citizen role. User roles: {user_role_ids}")
+        return "citizen"
 
     async def check_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
         """

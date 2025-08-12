@@ -290,7 +290,7 @@ export function isUserDataOutdated(user: User | null | undefined, maxAgeMinutes:
 }
 
 // ✅ ИСПРАВЛЕНО: Улучшенная генерация названия роли
-export function getRoleDisplayName(role: string | null | undefined): string {
+export function getRoleDisplayName(role: string | null | undefined, passport?: any): string {
   if (!role || typeof role !== 'string') {
     return 'Неизвестная роль';
   }
@@ -301,14 +301,18 @@ export function getRoleDisplayName(role: string | null | undefined): string {
     case 'police':
       return 'Полицейский';
     case 'citizen':
-      return 'Житель';
+      // Показываем "Житель" только для жителей Панд-Ратонии, иначе "Гость"
+      if (passport && passport.city === 'Панд-Ратония') {
+        return 'Житель';
+      }
+      return 'Гость';
     default:
       return role;
   }
 }
 
 // ✅ ИСПРАВЛЕНО: Улучшенная генерация цвета роли
-export function getRoleColor(role: string | null | undefined): string {
+export function getRoleColor(role: string | null | undefined, passport?: any): string {
   if (!role || typeof role !== 'string') {
     return 'text-gray-400';
   }
@@ -319,14 +323,18 @@ export function getRoleColor(role: string | null | undefined): string {
     case 'police':
       return 'text-blue-400';
     case 'citizen':
-      return 'text-green-400';
+      // Зеленый для жителей Панд-Ратонии, серый для гостей
+      if (passport && passport.city === 'Панд-Ратония') {
+        return 'text-green-400';
+      }
+      return 'text-gray-400';
     default:
       return 'text-gray-400';
   }
 }
 
 // ✅ ИСПРАВЛЕНО: Улучшенная генерация цвета фона роли
-export function getRoleBackgroundColor(role: string | null | undefined): string {
+export function getRoleBackgroundColor(role: string | null | undefined, passport?: any): string {
   if (!role || typeof role !== 'string') {
     return 'bg-gray-500/20';
   }
@@ -337,7 +345,11 @@ export function getRoleBackgroundColor(role: string | null | undefined): string 
     case 'police':
       return 'bg-blue-500/20';
     case 'citizen':
-      return 'bg-green-500/20';
+      // Зеленый фон для жителей Панд-Ратонии, серый для гостей
+      if (passport && passport.city === 'Панд-Ратония') {
+        return 'bg-green-500/20';
+      }
+      return 'bg-gray-500/20';
     default:
       return 'bg-gray-500/20';
   }

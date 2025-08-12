@@ -55,7 +55,8 @@ class RoleCheckerService:
         """
         logger.info("Starting role check for all users")
 
-        with SessionLocal() as db:
+        db = SessionLocal()
+        try:
             # Получаем пользователей, которым нужно проверить роли
             users = user_crud.get_users_for_role_check(
                 db,
@@ -83,6 +84,8 @@ class RoleCheckerService:
 
                 # Небольшая задержка между проверками
                 await asyncio.sleep(0.5)
+        finally:
+            db.close()
 
     async def check_user_roles(self, db: Session, user: User) -> Optional[Dict[str, Any]]:
         """
@@ -345,12 +348,15 @@ class RoleCheckerService:
         Returns:
             Результат проверки
         """
-        with SessionLocal() as db:
+        db = SessionLocal()
+        try:
             user = user_crud.get(db, id=user_id)
             if not user:
                 return None
 
             return await self.check_user_roles(db, user)
+        finally:
+            db.close()
 
 
 # Глобальный экземпляр сервиса

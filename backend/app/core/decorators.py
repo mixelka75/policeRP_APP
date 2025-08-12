@@ -11,6 +11,9 @@ from app.services.role_checker import role_checker_service
 
 logger = logging.getLogger(__name__)
 
+# Семафор для ограничения одновременных проверок ролей
+role_check_semaphore = asyncio.Semaphore(5)  # Максимум 5 одновременных проверок
+
 
 def check_user_roles_on_action(action_name: str):
     """
@@ -60,20 +63,21 @@ async def trigger_role_check_for_user(user_id: int, action: str):
     """
     logger.info(f"Triggering role check for user {user_id} due to action: {action}")
     
-    try:
-        result = await role_checker_service.check_user_by_id(user_id)
-        if result:
-            if result.get("changed"):
-                logger.info(f"User {user_id} role changed during {action}: {result}")
-            
-            if not result.get("has_access"):
-                logger.warning(f"User {user_id} lost access during {action}")
+    async with role_check_semaphore:  # Ограничиваем количество одновременных проверок
+        try:
+            result = await role_checker_service.check_user_by_id(user_id)
+            if result:
+                if result.get("changed"):
+                    logger.info(f"User {user_id} role changed during {action}: {result}")
                 
-            return result
-                
-    except Exception as e:
-        logger.error(f"Error checking roles for user {user_id} during {action}: {e}")
-        return None
+                if not result.get("has_access"):
+                    logger.warning(f"User {user_id} lost access during {action}")
+                    
+                return result
+                    
+        except Exception as e:
+            logger.error(f"Error checking roles for user {user_id} during {action}: {e}")
+            return None
 
 
 def with_role_check(action_name: str):

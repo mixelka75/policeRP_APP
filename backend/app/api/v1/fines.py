@@ -14,6 +14,51 @@ from app.utils.logger import ActionLogger
 router = APIRouter()
 
 
+@router.get("/debug")
+async def debug_fines(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_police_or_admin),
+):
+    """
+    Отладочный эндпоинт для проверки штрафов
+    """
+    from app.models.fine import Fine as FineModel
+    from app.models.user import User as UserModel
+    
+    print(f"DEBUG: User {current_user.discord_username} requesting debug fines")
+    print(f"DEBUG: User role: {current_user.role}")
+    
+    # Простой запрос всех штрафов
+    all_fines = db.query(FineModel).all()
+    print(f"DEBUG: Total fines in DB: {len(all_fines)}")
+    
+    # Простой запрос всех пользователей
+    all_users = db.query(UserModel).all()
+    print(f"DEBUG: Total users in DB: {len(all_users)}")
+    
+    # Проверка JOIN
+    joined_results = db.query(FineModel, UserModel.discord_username).outerjoin(
+        UserModel, FineModel.created_by_user_id == UserModel.id
+    ).all()
+    print(f"DEBUG: JOIN results: {len(joined_results)}")
+    
+    return {
+        "total_fines": len(all_fines),
+        "total_users": len(all_users),
+        "join_results": len(joined_results),
+        "user_role": current_user.role,
+        "user_id": current_user.id,
+        "first_fines": [
+            {
+                "id": f.id,
+                "passport_id": f.passport_id,
+                "article": f.article,
+                "created_by_user_id": f.created_by_user_id
+            } for f in all_fines[:3]
+        ]
+    }
+
+
 @router.get("/", response_model=List[FineWithDetails])
 @with_role_check("view_fines")
 async def read_fines(
@@ -38,10 +83,14 @@ async def read_fines(
     from datetime import datetime
     from sqlalchemy import and_, or_
     
-    # Базовый запрос с джойном на пользователя
-    query = db.query(fine_crud.model, UserModel.discord_username, UserModel.minecraft_username).join(
+    # Базовый запрос с LEFT JOIN на пользователя (чтобы не терять штрафы без пользователя)
+    query = db.query(fine_crud.model, UserModel.discord_username, UserModel.minecraft_username).outerjoin(
         UserModel, fine_crud.model.created_by_user_id == UserModel.id
     )
+    
+    # Отладочная информация
+    print(f"DEBUG: Executing fines query for user {current_user.discord_username} with role {current_user.role}")
+    print(f"DEBUG: Applied filters: passport_id={passport_id}, article={article}, issuer_search={issuer_search}")
     
     # Список фильтров
     filters = []
@@ -88,8 +137,13 @@ async def read_fines(
     if filters:
         query = query.filter(and_(*filters))
     
+    # Отладочная информация перед выполнением
+    print(f"DEBUG: Query before pagination: {query}")
+    
     # Применяем пагинацию и получаем результаты
     results = query.offset(skip).limit(limit).all()
+    
+    print(f"DEBUG: Found {len(results)} results after pagination")
     
     # Формируем ответ с информацией о выписавшем
     fines_with_details = []
@@ -106,12 +160,15 @@ async def read_fines(
             "updated_at": fine.updated_at,
             "issuer_info": {
                 "user_id": fine.created_by_user_id,
-                "discord_username": discord_username,
-                "minecraft_username": minecraft_username
+                "discord_username": discord_username or "Unknown",
+                "minecraft_username": minecraft_username or "Unknown"
             }
         }
+        print(f"DEBUG: Processing fine {fine.id} by user {discord_username}")
         fines_with_details.append(fine_dict)
 
+    print(f"DEBUG: Returning {len(fines_with_details)} fines to client")
+    
     # Логируем просмотр списка штрафов
     ActionLogger.log_action(
         db=db,

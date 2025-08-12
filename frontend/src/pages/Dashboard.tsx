@@ -261,12 +261,6 @@ const Dashboard: React.FC = () => {
                   <h3 className="text-xl font-semibold text-yellow-400 mb-2">
                     У вас нет паспорта
                   </h3>
-                  <p className="text-yellow-300 mb-4">
-                    Для получения полного доступа к системе вам необходимо оформить паспорт у администрации.
-                  </p>
-                  <p className="text-gray-400 text-sm">
-                    Обратитесь к администратору сервера для создания паспорта.
-                  </p>
                 </div>
               </Card>
             </motion.div>

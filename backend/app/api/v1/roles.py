@@ -35,7 +35,7 @@ async def trigger_role_check_all(
     )
 
     # Запускаем принудительную проверку в фоне (игнорируем кеш)
-    background_tasks.add_task(role_checker_service.check_all_users_roles, True)
+    background_tasks.add_task(role_checker_service.check_all_users_roles, force=True)
 
     return {
         "message": "Проверка ролей для всех пользователей запущена в фоновом режиме",

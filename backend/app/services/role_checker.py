@@ -84,7 +84,7 @@ class RoleCheckerService:
             # Проверяем каждого пользователя
             for user in users:
                 try:
-                    result = await self.check_user_roles(db, user)
+                    result = await self.check_user_roles(db, user, force)
                     if result:
                         if result.get("changed"):
                             logger.info(
@@ -103,13 +103,14 @@ class RoleCheckerService:
         finally:
             db.close()
 
-    async def check_user_roles(self, db: Session, user: User) -> Optional[Dict[str, Any]]:
+    async def check_user_roles(self, db: Session, user: User, force: bool = False) -> Optional[Dict[str, Any]]:
         """
         Проверка ролей конкретного пользователя
 
         Args:
             db: Сессия базы данных
             user: Пользователь для проверки
+            force: Принудительная проверка, игнорируя кеш
 
         Returns:
             Результат проверки
@@ -184,8 +185,8 @@ class RoleCheckerService:
             if not member_info:
                 logger.info(f"User {user.discord_username} is not in the guild")
                 
-                # Проверяем кеш пользователя - если данные свежие, не меняем роль
-                if self._is_user_cache_valid(user.id):
+                # Проверяем кеш пользователя - если данные свежие и не принудительная проверка, не меняем роль
+                if not force and self._is_user_cache_valid(user.id):
                     cached_data = self.user_roles_cache[user.id]
                     logger.info(f"Using cached role data for user {user.discord_username}")
                     return {
@@ -503,7 +504,7 @@ class RoleCheckerService:
             if not user:
                 return None
 
-            return await self.check_user_roles(db, user)
+            return await self.check_user_roles(db, user, force)
         finally:
             db.close()
 

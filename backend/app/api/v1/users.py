@@ -345,8 +345,8 @@ async def check_user_roles(
             detail="Пользователь не найден",
         )
 
-    # Выполняем проверку ролей
-    result = await role_checker_service.check_user_by_id(user_id)
+    # Выполняем принудительную проверку ролей (игнорируем кеш)
+    result = await role_checker_service.check_user_by_id(user_id, force=True)
 
     if not result:
         raise HTTPException(

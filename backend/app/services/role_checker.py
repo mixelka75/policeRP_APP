@@ -52,19 +52,32 @@ class RoleCheckerService:
         self.is_running = False
         logger.info("Role checker service stopped")
 
-    async def check_all_users_roles(self):
+    async def check_all_users_roles(self, force: bool = False):
         """
         Проверка ролей всех пользователей
+        
+        Args:
+            force: Принудительная проверка всех пользователей, игнорируя кеш
         """
-        logger.info("Starting role check for all users")
+        logger.info(f"Starting role check for all users (force={force})")
+        
+        # Если принудительная проверка, очищаем весь кеш
+        if force:
+            logger.info("Forcing role check for all users, clearing entire cache")
+            self.user_roles_cache.clear()
+            self.user_cache_expiry.clear()
 
         db = SessionLocal()
         try:
-            # Получаем пользователей, которым нужно проверить роли
-            users = user_crud.get_users_for_role_check(
-                db,
-                minutes_ago=settings.ROLE_CHECK_INTERVAL
-            )
+            if force:
+                # При принудительной проверке берем всех активных пользователей
+                users = user_crud.get_active_users(db)
+            else:
+                # Получаем пользователей, которым нужно проверить роли
+                users = user_crud.get_users_for_role_check(
+                    db,
+                    minutes_ago=settings.ROLE_CHECK_INTERVAL
+                )
 
             logger.info(f"Found {len(users)} users to check")
 
@@ -450,12 +463,13 @@ class RoleCheckerService:
         logger.info(f"User has no admin/police roles, assigning citizen role. User roles: {user_role_ids}")
         return "citizen"
 
-    async def check_user_by_id(self, user_id: int) -> Optional[Dict[str, Any]]:
+    async def check_user_by_id(self, user_id: int, force: bool = False) -> Optional[Dict[str, Any]]:
         """
         Проверка конкретного пользователя по ID
 
         Args:
             user_id: ID пользователя
+            force: Принудительная проверка, игнорируя кеш
 
         Returns:
             Результат проверки
@@ -463,8 +477,8 @@ class RoleCheckerService:
         # Очищаем устаревшие записи
         self._clear_expired_cache()
         
-        # Проверяем кеш
-        if self._is_user_cache_valid(user_id):
+        # Проверяем кеш только если не принудительная проверка
+        if not force and self._is_user_cache_valid(user_id):
             cached_data = self.user_roles_cache[user_id]
             logger.info(f"Using cached role data for user ID {user_id}")
             return {
@@ -475,6 +489,13 @@ class RoleCheckerService:
                 "has_access": cached_data.get("has_access", True),
                 "minecraft_data_updated": False
             }
+        
+        # Если принудительная проверка, сбрасываем кеш для этого пользователя
+        if force and user_id in self.user_roles_cache:
+            logger.info(f"Forcing role check for user ID {user_id}, clearing cache")
+            del self.user_roles_cache[user_id]
+            if user_id in self.user_cache_expiry:
+                del self.user_cache_expiry[user_id]
         
         db = SessionLocal()
         try:

@@ -34,8 +34,8 @@ async def trigger_role_check_all(
         request=request
     )
 
-    # Запускаем проверку в фоне
-    background_tasks.add_task(role_checker_service.check_all_users_roles)
+    # Запускаем принудительную проверку в фоне (игнорируем кеш)
+    background_tasks.add_task(role_checker_service.check_all_users_roles, True)
 
     return {
         "message": "Проверка ролей для всех пользователей запущена в фоновом режиме",
@@ -62,8 +62,8 @@ async def check_specific_user_roles(
             detail="Пользователь не найден"
         )
 
-    # Выполняем проверку ролей
-    result = await role_checker_service.check_user_by_id(user_id)
+    # Выполняем принудительную проверку ролей (игнорируем кеш)
+    result = await role_checker_service.check_user_by_id(user_id, force=True)
 
     if not result:
         raise HTTPException(
